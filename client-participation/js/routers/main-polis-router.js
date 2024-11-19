@@ -260,14 +260,14 @@ var polisRouter = Backbone.Router.extend({
     this.doLaunchConversation2(conversation_id, params);
   },
   getConversationModel: function(conversation_id, suzinvite) {
-    var model;
     if (window.preloadData && window.preloadData.conversation && !suzinvite) {
-      model = new ConversationModel(preloadData);
-      return Promise.resolve(model);
+      return preloadHelper.firstConvPromise.then(function() {
+        return new ConversationModel(window.preloadData);
+      });
     }
     // no preloadData copy of the conversation model, so make an ajax request for it.
     return preloadHelper.firstConvPromise.then(function(conv) {
-      model = new ConversationModel(conv);
+      var model = new ConversationModel(conv);
       if (suzinvite) {
         model.set("suzinvite", suzinvite);
       }

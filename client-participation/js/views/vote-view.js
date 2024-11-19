@@ -11,6 +11,7 @@ var Utils = require("../util/utils");
 var Strings = require("../strings");
 var Constants = require("../util/constants");
 var $ = require("jquery");
+var _ = require("lodash");
 
 var iOS = Utils.isIos();
 

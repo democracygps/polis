@@ -34,7 +34,7 @@ class ConversationStats extends React.Component {
     const until = Number(dddate)
     this.setState(
       {
-        until: until
+        until
       },
       function () {
         this.loadStats()
@@ -46,9 +46,7 @@ class ConversationStats extends React.Component {
     const { match } = this.props
 
     const until = this.state.until
-    this.props.dispatch(
-      populateConversationStatsStore(match.params.conversation_id, until)
-    )
+    this.props.dispatch(populateConversationStatsStore(match.params.conversation_id, until))
   }
 
   componentDidMount() {
@@ -87,21 +85,20 @@ class ConversationStats extends React.Component {
     }
 
     const { conversation_stats } = this.props
-    const loading =
-      !conversation_stats.firstCommentTimes ||
-      !conversation_stats.firstVoteTimes
+    const loading = !conversation_stats.firstCommentTimes || !conversation_stats.firstVoteTimes
 
     if (loading) return <Box>Loading...</Box>
 
     return (
       <div>
         <Heading
-          as="h3"
+          as='h3'
           sx={{
             fontSize: [3, null, 4],
             lineHeight: 'body',
             mb: [3, null, 4]
-          }}>
+          }}
+        >
           Monitor
         </Heading>
         <NumberCards data={conversation_stats} />

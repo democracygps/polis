@@ -116,11 +116,7 @@ function encodeParams(o) {
 }
 
 function isInIframe() {
-  /*eslint-disable */
-  /* jshint ignore:start */
   return window.top != window;
-  /* jshint ignore:end */
-  /*eslint-enable */
 }
 
 // http://www.html5rocks.com/en/tutorials/pagevisibility/intro/

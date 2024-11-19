@@ -1,14 +1,14 @@
-// @ts-nocheck
-// TODO ^^ enable typechecking after refactoring to use
-// TODO modern import syntax for helpers
-
 // Copyright (C) 2012-present, The Authors. This program is free software: you can redistribute it and/or  modify it under the terms of the GNU Affero General Public License, version 3, as published by the Free Software Foundation. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
 "use strict";
+
+import type { Request, Response, NextFunction } from "express";
 
 import * as dotenv from 'dotenv';
 dotenv.config();
 
 import Promise from "bluebird";
+import compression from "compression";
+import cookieParser from "cookie-parser";
 import express from "express";
 import morgan from "morgan";
 
@@ -16,7 +16,43 @@ import Config from "./src/config";
 import server from "./src/server";
 import logger from "./src/utils/logger";
 
+import {
+  assignToP,
+  assignToPCustom,
+  getArrayOfInt,
+  getArrayOfStringNonEmpty,
+  getArrayOfStringNonEmptyLimitLength,
+  getBool,
+  getConversationIdFetchZid,
+  getEmail,
+  getInt,
+  getIntInRange,
+  getNumberInRange,
+  getOptionalStringLimitLength,
+  getPassword,
+  getPasswordWithCreatePasswordRules,
+  getReportIdFetchRid,
+  getStringLimitLength,
+  getUrlLimitLength,
+  moveToBody,
+  need,
+  resolve_pidThing,
+  want,
+  wantCookie,
+  wantHeader
+} from "./src/utils/parameter";
+
 const app = express();
+
+function logRequest(req: Request, res: Response, next: NextFunction) {
+  logger.info(`Request received. Method: ${req.method} Path: ${req.path} Body: ${JSON.stringify(req.body)}`);
+  next();
+}
+
+// function logCookies(req: Request, res: Response, next: NextFunction) {
+//   logger.info(`Request cookies: ${JSON.stringify(req.cookies)}`);
+//   next();
+// }
 
 // 'dev' format is
 // :method :url :status :response-time ms - :res[content-length]
@@ -28,19 +64,18 @@ app.use(morgan('dev'));
 app.set("trust proxy", "uniquelocal");
 
 
-var helpersInitialized = new Promise(function (resolve, reject) {
+const helpersInitialized = new Promise(function (resolve) {
   resolve(server.initializePolisHelpers());
 });
-/* @ts-ignore */
+
 helpersInitialized.then(
-  function (o) {
+  function (o: any) {
     const {
       addCorsHeader,
       auth,
       authOptional,
       COOKIES,
       denyIfNotFromWhitelistedDomain,
-      devMode,
       enableAgid,
       fetchThirdPartyCookieTestPt1,
       fetchThirdPartyCookieTestPt2,
@@ -172,34 +207,6 @@ helpersInitialized.then(
       handle_PUT_users,
     } = o;
 
-    const {
-      assignToP,
-      assignToPCustom,
-      getArrayOfInt,
-      getArrayOfStringNonEmpty,
-      getArrayOfStringNonEmptyLimitLength,
-      getBool,
-      getConversationIdFetchZid,
-      getEmail,
-      getInt,
-      getIntInRange,
-      getNumberInRange,
-      getOptionalStringLimitLength,
-      getPassword,
-      getPasswordWithCreatePasswordRules,
-      getReportIdFetchRid,
-      getStringLimitLength,
-      getUrlLimitLength,
-      moveToBody,
-      need,
-      needCookie,
-      needHeader,
-      resolve_pidThing,
-      want,
-      wantCookie,
-      wantHeader,
-    } = require("./src/utils/parameter");
-
     app.disable("x-powered-by");
     // app.disable('etag'); // seems to be eating CPU, and we're not using etags yet. https://www.dropbox.com/s/hgfd5dm0e29728w/Screenshot%202015-06-01%2023.42.47.png?dl=0
 
@@ -220,25 +227,22 @@ helpersInitialized.then(
     ////////////////////////////////////////////
 
     app.use(middleware_responseTime_start);
-
-    app.use(redirectIfNotHttps);
-    app.use(express.cookieParser());
-    app.use(express.bodyParser());
-    app.use(writeDefaultHead);
-
-    if (devMode) {
-      app.use(express.compress());
-    } else {
-      // Cloudflare would apply gzip if we didn't
-      // but it's about 2x faster if we do the gzip (for the inbox query on mike's account)
-      app.use(express.compress());
-    }
-    app.use(middleware_log_request_body);
-    app.use(middleware_log_middleware_errors);
+    app.use(express.json());
+    app.use(express.urlencoded({ extended: true }));
+    app.use(logRequest);
+    app.use(cookieParser());
+    // app.use(logCookies);
 
     app.all("/api/v3/*", addCorsHeader);
     app.all("/font/*", addCorsHeader);
+    // Ensure CORS headers are set for all relevant routes
     app.all("/api/v3/*", middleware_check_if_options);
+
+    app.use(redirectIfNotHttps);
+    app.use(writeDefaultHead);
+    app.use(compression());
+    app.use(middleware_log_request_body);
+    app.use(middleware_log_middleware_errors);
 
     ////////////////////////////////////////////
     ////////////////////////////////////////////
@@ -571,8 +575,7 @@ helpersInitialized.then(
       need(
         "domain_whitelist",
         getOptionalStringLimitLength(999),
-        assignToP,
-        ""
+        assignToP
       ),
       handle_POST_domainWhitelist
     );
@@ -1275,7 +1278,7 @@ helpersInitialized.then(
         getConversationIdFetchZid,
         assignToPCustom("zid")
       ),
-      need("pmaids", getArrayOfInt, assignToP, []),
+      need("pmaids", getArrayOfInt, assignToP),
       handle_POST_query_participants_by_metadata
     );
 
@@ -1506,8 +1509,8 @@ helpersInitialized.then(
     );
 
     function makeFetchIndexWithoutPreloadData() {
-      let port = staticFilesParticipationPort;
-      return function (req, res) {
+      const port = staticFilesParticipationPort;
+      return function (req: Request, res: Response) {
         return fetchIndexWithoutPreloadData(req, res, port);
       };
     }
@@ -1540,18 +1543,6 @@ helpersInitialized.then(
     app.get(/^\/conversations(\/.*)?/, fetchIndexForAdminPage);
     app.get(/^\/signout(\/.*)?/, fetchIndexForAdminPage);
     app.get(/^\/signin(\/.*)?/, fetchIndexForAdminPage);
-    app.get(
-      /^\/dist\/admin_bundle.js$/,
-      makeFileFetcher(hostname, staticFilesAdminPort, "/dist/admin_bundle.js", {
-        "Content-Type": "application/javascript",
-      })
-    );
-    app.get(
-      /^\/__webpack_hmr$/,
-      makeFileFetcher(hostname, staticFilesAdminPort, "/__webpack_hmr", {
-        "Content-Type": "eventsource",
-      })
-    );
     app.get(/^\/privacy$/, fetchIndexForAdminPage);
     app.get(/^\/tos$/, fetchIndexForAdminPage);
 
@@ -1605,21 +1596,9 @@ helpersInitialized.then(
         "Content-Type": "text/html",
       })
     );
-    app.get(
-      /^\/styleguide$/,
-      makeFileFetcher(hostname, staticFilesParticipationPort, "/styleguide.html", {
-        "Content-Type": "text/html",
-      })
-    );
     // Duplicate url for content at root. Needed so we have something for "About" to link to.
     app.get(/^\/about$/, makeRedirectorTo("/home"));
     app.get(/^\/home(\/.*)?/, fetchIndexForAdminPage);
-    app.get(
-      /^\/s\/CTE\/?$/,
-      makeFileFetcher(hostname, staticFilesParticipationPort, "/football.html", {
-        "Content-Type": "text/html",
-      })
-    );
     app.get(
       /^\/twitterAuthReturn(\/.*)?$/,
       makeFileFetcher(
@@ -1653,7 +1632,7 @@ helpersInitialized.then(
         pathAndQuery = pathAndQuery.replace("/?", "?");
       }
 
-      let fullUrl = req.protocol + "://" + req.get("host") + pathAndQuery;
+      const fullUrl = req.protocol + "://" + req.get("host") + pathAndQuery;
 
       if (pathAndQuery !== req.originalUrl) {
         res.redirect(fullUrl);
@@ -1662,7 +1641,7 @@ helpersInitialized.then(
       }
     });
 
-    var missingFilesGet404 = false;
+    const missingFilesGet404 = false;
     if (missingFilesGet404) {
       // 404 everything else
       app.get(

@@ -54,14 +54,12 @@ import { getZinvite, getZinvites, getZidForRid } from "./utils/zinvite";
 
 import { handle_GET_reportExport } from "./routes/export";
 
-import {
+import type {
   Body,
   DetectLanguageResult,
   Headers,
   Query,
   AuthRequest,
-  AuthBody,
-  AuthQuery,
   ParticipantInfo,
   PidReadyResult,
   CommentOptions,
@@ -896,8 +894,8 @@ function initializePolisHelpers() {
       res: { status: (arg0: number) => void }
     ) {
       //var token = req.body.token;
-      let token = req.cookies[COOKIES.TOKEN];
-      let xPolisToken = req?.headers?.["x-polis"];
+      const token = req.cookies?.[COOKIES.TOKEN];
+      const xPolisToken = req?.headers?.["x-polis"];
 
       return new Promise(function (
         resolve: (arg0: any) => void,
@@ -1123,12 +1121,12 @@ function initializePolisHelpers() {
   // failed logins
   // forgot password
 
-  let whitelistedCrossDomainRoutes = [
+  const whitelistedCrossDomainRoutes = [
     /^\/api\/v[0-9]+\/launchPrep/,
     /^\/api\/v[0-9]+\/setFirstCookie/,
   ];
-
-  let whitelistedDomains = [
+  
+  const whitelistedDomains = [
     Config.getServerHostname(),
     ...Config.whitelistItems,
     "localhost:5000",
@@ -1138,94 +1136,48 @@ function initializePolisHelpers() {
     "api.twitter.com",
     "", // for API
   ];
-
-  function hasWhitelistMatches(host: string) {
-    let hostWithoutProtocol = host;
-    if (host.startsWith("http://")) {
-      hostWithoutProtocol = host.slice(7);
-    } else if (host.startsWith("https://")) {
-      hostWithoutProtocol = host.slice(8);
-    }
-
-    for (let i = 0; i < whitelistedDomains.length; i++) {
-      let w = whitelistedDomains[i];
-      if (hostWithoutProtocol.endsWith(w || "")) {
-        // ok, the ending matches, now we need to make sure it's the same, or a subdomain.
-        if (hostWithoutProtocol === w) {
-          return true;
-        }
-        if (
-          hostWithoutProtocol[
-            hostWithoutProtocol.length - ((w || "").length + 1)
-          ] === "."
-        ) {
-          // separated by a dot, so it's a subdomain.
-          return true;
-        }
+  
+  function hasWhitelistMatches(host: string): boolean {
+    const hostWithoutProtocol = host.replace(/^https?:\/\//, "");
+  
+    return whitelistedDomains.some((domain) => {
+      // Check if the host ends with the current domain
+      if (hostWithoutProtocol.endsWith(domain)) {
+        // If the host is exactly the same as the domain,
+        // or if the host ends with the domain and the character before the domain is a dot, it's a match
+        return hostWithoutProtocol === domain || hostWithoutProtocol[hostWithoutProtocol.length - domain.length - 1] === ".";
       }
-    }
-    return false;
+      // If none of the conditions are met, it's not a match
+      return false;
+    });
   }
+  
   function addCorsHeader(
-    req: {
-      protocol: string;
-      get: (arg0: string) => any;
-      path: any;
-      headers: Headers;
-    },
+    req: { protocol: string; get: (arg0: string) => any; path: any; headers: Headers },
     res: { header: (arg0: string, arg1: string | boolean) => void },
     next: (arg0?: string) => any
   ) {
-    let host = "";
-    if (domainOverride) {
-      host = req.protocol + "://" + domainOverride;
-    } else {
-      // TODO does it make sense for this middleware to look
-      // at origin || referer? is Origin for CORS preflight?
-      // or for everything?
-      // Origin was missing from FF, so added Referer.
-      host = req.get("Origin") || req.get("Referer") || "";
-    }
-
-    // Somehow the fragment identifier is being sent by IE10????
-    // Remove unexpected fragment identifier
-    host = host.replace(/#.*$/, "");
-
-    // Remove characters starting with the first slash following the double slash at the beginning.
-    let result = /^[^\/]*\/\/[^\/]*/.exec(host);
-    if (result && result[0]) {
-      host = result[0];
-    }
-    // check if the route is on a special list that allows it to be called cross domain (by polisHost.js for example)
-    let routeIsWhitelistedForAnyDomain = _.some(
-      whitelistedCrossDomainRoutes,
-      function (regex: { test: (arg0: any) => any }) {
-        return regex.test(req.path);
-      }
-    );
-
-    if (
-      !domainOverride &&
-      !hasWhitelistMatches(host) &&
-      !routeIsWhitelistedForAnyDomain
-    ) {
-      logger.info("not whitelisted", { headers: req.headers, path: req.path });
-      return next("unauthorized domain: " + host);
-    }
-    if (host === "") {
-      // API
-    } else {
+    // logger.info(`addCorsHeader ${JSON.stringify({ headers: req.headers, path: req.path })}`);
+    let host = req.get("Origin") || req.get("Referer") || "";
+    host = host.replace(/#.*$/, "").match(/^[^/]*\/\/[^/]*/)?.[0] || "";
+    // logger.info(`host ${host}`);
+  
+    const routeIsWhitelistedForAnyDomain = whitelistedCrossDomainRoutes.some((regex) => regex.test(req.path));
+  
+    if (devMode && host.includes("localhost")) {
+      // logger.info(`dev mode, allowing all ${JSON.stringify({ headers: req.headers, path: req.path })}`);
       res.header("Access-Control-Allow-Origin", host);
-      res.header(
-        "Access-Control-Allow-Headers",
-        "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With"
-      );
-      res.header(
-        "Access-Control-Allow-Methods",
-        "GET, PUT, POST, DELETE, OPTIONS"
-      );
-      res.header("Access-Control-Allow-Credentials", true);
+    } else if (!hasWhitelistMatches(host) && !routeIsWhitelistedForAnyDomain) {
+      // logger.info(`not whitelisted ${JSON.stringify({ headers: req.headers, path: req.path })}`);
+      return next("unauthorized domain: " + host);
+    } else if (host !== "") {
+      res.header("Access-Control-Allow-Origin", host);
     }
+  
+    res.header("Access-Control-Allow-Headers", "Cache-Control, Pragma, Origin, Authorization, Content-Type, X-Requested-With");
+    res.header("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, OPTIONS");
+    res.header("Access-Control-Allow-Credentials", true);
+  
     return next();
   }
 
@@ -3709,7 +3661,7 @@ Email verified! You can close this tab or hit the back button.
 
   function subscribeToNotifications(zid: any, uid?: any, email?: any) {
     let type = 1; // 1 for email
-    logger.info("subscribeToNotifications", { zid, uid });
+    logger.info(`subscribeToNotifications ${JSON.stringify({ zid, uid })}`);
     return pgQueryP(
       "update participants_extended set subscribe_email = ($3) where zid = ($1) and uid = ($2);",
       [zid, uid, email]
@@ -4356,7 +4308,7 @@ Email verified! You can close this tab or hit the back button.
         //     Type 'unknown' is not assignable to type '{ permanentCookieToken: any; zid: any; }'.ts(2769)
         // @ts-ignore
         .then(function (o: { permanentCookieToken: any; zid: any }) {
-          logger.info("permanentCookieToken", o.permanentCookieToken);
+          logger.info(`permanentCookieToken ${o.permanentCookieToken}`);
           if (o.permanentCookieToken) {
             return recordPermanentCookieZidJoin(
               o.permanentCookieToken,
@@ -5837,6 +5789,7 @@ Email verified! You can close this tab or hit the back button.
     });
   } // end do_handle_POST_auth_facebook
   function handle_POST_auth_new(req: any, res: any) {
+    logger.info(`handle_POST_auth_new ${JSON.stringify(req.p)}`);
     CreateUser.createUser(req, res);
   } // end /api/v3/auth/new
 
@@ -7523,10 +7476,6 @@ Email verified! You can close this tab or hit the back button.
     let pid = req.p.pid;
 
     let uid = req.p.uid;
-
-    // need('as_important', getBool, assignToP, false),
-    // need('as_spam', getBool, assignToP, false),
-    // need('as_offtopic', getBool, assignToP, false),
 
     return pgQueryP(
       "insert into crowd_mod (" +
@@ -13287,7 +13236,6 @@ Thanks for using Polis!
     authOptional,
     COOKIES,
     denyIfNotFromWhitelistedDomain,
-    devMode,
     emailTeam,
     enableAgid,
     fail,
@@ -13424,13 +13372,5 @@ Thanks for using Polis!
   };
   return returnObject;
 } // End of initializePolisHelpers
-// debugging
-//let ph = initializePolisHelpers()
-
-//if (false) {
-//let nextP = ph.getNextPrioritizedComment(17794, 100, [], true);
-//};
-
-export { initializePolisHelpers };
 
 export default { initializePolisHelpers };

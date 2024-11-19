@@ -4,6 +4,7 @@ import url from "url";
 import Config from "../config";
 import User from "../user";
 import Session from "../session";
+import logger from "./logger";
 
 type Options = {
   maxAge?: number;
@@ -40,7 +41,7 @@ const COOKIES_TO_CLEAR = {
   parent_url: true,
 };
 
-let oneYear = 1000 * 60 * 60 * 24 * 365;
+const oneYear = 1000 * 60 * 60 * 24 * 365;
 
 function cookieDomain(req: any) {
   const origin = req?.headers?.origin || "";
@@ -137,8 +138,10 @@ function addCookies(
     email: any;
     created: any;
   }) {
-    let email = opts.email;
-    let created = opts.created;
+    const email = opts.email;
+    const created = opts.created;
+
+    logger.info(`addCookies email: ${email} created: ${created} req.cookies: ${JSON.stringify(req.cookies)}`);
 
     setTokenCookie(req, res, token);
     setUidCookie(req, res, uid);
@@ -157,7 +160,7 @@ function getPermanentCookieAndEnsureItIsSet(
   res: any
 ) {
   if (!req.cookies[COOKIES.PERMANENT_COOKIE]) {
-    let token = Session.makeSessionToken();
+    const token = Session.makeSessionToken();
     setPermanentCookie(req, res, token);
     return token;
   } else {

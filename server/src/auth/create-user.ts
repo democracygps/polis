@@ -9,25 +9,28 @@ import Session from "../session";
 import Utils from "../utils/common";
 import Password from "./password";
 import emailSenders from "../email/senders";
+import logger from "../utils/logger";
 
-const COOKIES = cookies.COOKIES;
+// const COOKIES = cookies.COOKIES;
 
 const sendTextEmail = emailSenders.sendTextEmail;
 function createUser(req: any, res: any) {
-  let hname = req.p.hname;
-  let password = req.p.password;
-  let password2 = req.p.password2; // for verification
-  let email = req.p.email;
-  let oinvite = req.p.oinvite;
-  let zinvite = req.p.zinvite;
-  let organization = req.p.organization;
-  let gatekeeperTosPrivacy = req.p.gatekeeperTosPrivacy;
+  logger.info(`createUser ${JSON.stringify(req.p)}`);
+
+  const hname = req.p.hname;
+  const password = req.p.password;
+  const password2 = req.p.password2; // for verification
+  const email = req.p.email;
+  const oinvite = req.p.oinvite;
+  const zinvite = req.p.zinvite;
+  const gatekeeperTosPrivacy = req.p.gatekeeperTosPrivacy;
 
   let site_id = void 0;
   if (req.p.encodedParams) {
-    let decodedParams = decodeParams(req.p.encodedParams);
+    const decodedParams = decodeParams(req.p.encodedParams);
     if (decodedParams.site_id) {
-      // NOTE: we could have just allowed site_id to be passed as a normal param, but then we'd need to think about securing that with some other token sooner.
+      // NOTE: we could have just allowed site_id to be passed as a normal param,
+      // but then we'd need to think about securing that with some other token sooner.
       // I think we can get by with this obscure scheme for a bit.
       // TODO_SECURITY add the extra token associated with the site_id owner.
       site_id = decodedParams.site_id;
@@ -82,7 +85,7 @@ function createUser(req: any, res: any) {
             fail(res, 500, "polis_err_generating_hash", err);
             return;
           }
-          let query =
+          const query =
             "insert into users " +
             "(email, hname, zinvite, oinvite, is_owner" +
             (site_id ? ", site_id" : "") +
@@ -91,7 +94,7 @@ function createUser(req: any, res: any) {
             (site_id ? ", $6" : "") +
             ") " + // TODO use sql query builder
             "returning uid;";
-          let vals = [email, hname, zinvite || null, oinvite || null, true];
+          const vals = [email, hname, zinvite || null, oinvite || null, true];
           if (site_id) {
             vals.push(site_id); // TODO use sql query builder
           }
@@ -104,7 +107,7 @@ function createUser(req: any, res: any) {
                 fail(res, 500, "polis_err_reg_failed_to_add_user_record", err);
                 return;
               }
-              let uid =
+              const uid =
                 result && result.rows && result.rows[0] && result.rows[0].uid;
 
               pg.query(
@@ -170,8 +173,8 @@ function doSendVerification(req: any, email: any) {
 }
 
 function sendVerificationEmail(req: any, email: any, einvite: any) {
-  let serverName = Config.getServerNameWithProtocol(req);
-  let body = `Welcome to pol.is!
+  const serverName = Config.getServerNameWithProtocol(req);
+  const body = `Welcome to pol.is!
 
 Click this link to verify your email address:
 
@@ -197,8 +200,8 @@ function decodeParams(encodedStringifiedJson: string | string[]) {
   } else {
     encodedStringifiedJson = encodedStringifiedJson.slice(4);
   }
-  let stringifiedJson = Utils.hexToStr(encodedStringifiedJson as string);
-  let o = JSON.parse(stringifiedJson);
+  const stringifiedJson = Utils.hexToStr(encodedStringifiedJson as string);
+  const o = JSON.parse(stringifiedJson);
   return o;
 }
 

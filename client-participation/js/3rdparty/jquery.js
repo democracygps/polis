@@ -8955,7 +8955,6 @@ jQuery.Animation = jQuery.extend( Animation, {
 });
 
 function defaultPrefilter( elem, props, opts ) {
-	/*jshint validthis:true */
 	var prop, index, length,
 		value, dataShow, toggle,
 		tween, hooks, oldfire,

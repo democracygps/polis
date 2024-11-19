@@ -26,9 +26,9 @@
 
 services:
   server:
+    image: docker.io/compdem/polis-server:${TAG:-dev}
     env_file:
       - ${SERVER_ENV_FILE:-.env}
-    image: docker.io/compdem/polis-server:${TAG:-dev}
     build:
       context: ./server
       dockerfile: Dockerfile
@@ -37,8 +37,6 @@ services:
         NODE_ENV: production
       labels:
         polis_tag: ${TAG:-dev}
-    depends_on:
-      - "file-server"
     networks:
       - "polis-net"
     # Scale the server container to a given number of instances.
@@ -75,11 +73,11 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:?error}
     networks:
       - "polis-net"
+    profiles:
+      - postgres
     volumes:
       - "backups:/backups"
       - "postgres:/var/lib/postgresql/data"
-    profiles:
-      - postgres
 
   nginx-proxy:
     image: docker.io/compdem/polis-nginx-proxy:${TAG:-dev}
@@ -88,13 +86,13 @@ services:
       dockerfile: nginx.Dockerfile
       labels:
         polis_tag: ${TAG:-dev}
-    depends_on:
-      - "server"
     networks:
       - "polis-net"
     ports:
       - ${HTTP_PORT:-80}:80
       - ${HTTPS_PORT:-443}:443
+    profiles:
+      - frontend
 
   file-server:
     image: docker.io/compdem/polis-file-server:${TAG:-dev}
@@ -115,6 +113,8 @@ services:
       - PORT=${STATIC_FILES_PORT:-8080}
     networks:
       - "polis-net"
+    profiles:
+      - frontend
 
 networks:
   polis-net:

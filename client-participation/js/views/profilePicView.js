@@ -3,7 +3,7 @@
 var Handlebones = require("handlebones");
 var template = require("../templates/profilePicView.handlebars");
 var Utils = require("../util/utils");
-
+var _ = require("lodash");
 
 module.exports =  Handlebones.ModelView.extend({
   name: "profile-pic-view",

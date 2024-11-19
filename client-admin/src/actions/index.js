@@ -42,8 +42,7 @@ export const COMMENTS_FETCH_ERROR = 'COMMENTS_FETCH_ERROR'
 
 export const REQUEST_UNMODERATED_COMMENTS = 'REQUEST_UNMODERATED_COMMENTS'
 export const RECEIVE_UNMODERATED_COMMENTS = 'RECEIVE_UNMODERATED_COMMENTS'
-export const UNMODERATED_COMMENTS_FETCH_ERROR =
-  'UNMODERATED_COMMENTS_FETCH_ERROR'
+export const UNMODERATED_COMMENTS_FETCH_ERROR = 'UNMODERATED_COMMENTS_FETCH_ERROR'
 
 export const REQUEST_ACCEPTED_COMMENTS = 'REQUEST_ACCEPTED_COMMENTS'
 export const RECEIVE_ACCEPTED_COMMENTS = 'RECEIVE_ACCEPTED_COMMENTS'
@@ -71,13 +70,11 @@ export const PARTICIPANTS_FETCH_ERROR = 'PARTICIPANTS_FETCH_ERROR'
 
 export const REQUEST_DEFAULT_PARTICIPANTS = 'REQUEST_DEFAULT_PARTICIPANTS'
 export const RECEIVE_DEFAULT_PARTICIPANTS = 'RECEIVE_DEFAULT_PARTICIPANTS'
-export const DEFAULT_PARTICIPANTS_FETCH_ERROR =
-  'DEFAULT_PARTICIPANTS_FETCH_ERROR'
+export const DEFAULT_PARTICIPANTS_FETCH_ERROR = 'DEFAULT_PARTICIPANTS_FETCH_ERROR'
 
 export const REQUEST_FEATURED_PARTICIPANTS = 'REQUEST_FEATURED_PARTICIPANTS'
 export const RECEIVE_FEATURED_PARTICIPANTS = 'RECEIVE_FEATURED_PARTICIPANTS'
-export const FEATURED_PARTICIPANTS_FETCH_ERROR =
-  'FEATURED_PARTICIPANTS_FETCH_ERROR'
+export const FEATURED_PARTICIPANTS_FETCH_ERROR = 'FEATURED_PARTICIPANTS_FETCH_ERROR'
 
 export const REQUEST_HIDDEN_PARTICIPANTS = 'REQUEST_HIDDEN_PARTICIPANTS'
 export const RECEIVE_HIDDEN_PARTICIPANTS = 'RECEIVE_HIDDEN_PARTICIPANTS'
@@ -101,8 +98,7 @@ export const SUBMIT_SEED_COMMENT_ERROR = 'SUBMIT_SEED_COMMENT_ERROR'
 /* submit tweet seed comment */
 export const SEED_COMMENT_TWEET_LOCAL_UPDATE = 'SEED_COMMENT_TWEET_LOCAL_UPDATE'
 export const SUBMIT_SEED_COMMENT_TWEET = 'SUBMIT_SEED_COMMENT_TWEET'
-export const SUBMIT_SEED_COMMENT_TWEET_SUCCESS =
-  'SUBMIT_SEED_COMMENT_TWEET_SUCCESS'
+export const SUBMIT_SEED_COMMENT_TWEET_SUCCESS = 'SUBMIT_SEED_COMMENT_TWEET_SUCCESS'
 export const SUBMIT_SEED_COMMENT_TWEET_ERROR = 'SUBMIT_SEED_COMMENT_TWEET_ERROR'
 
 export const REQUEST_SEED_COMMENTS = 'REQUEST_SEED_COMMENTS'
@@ -174,7 +170,7 @@ const requestUser = () => {
 const receiveUser = (data) => {
   return {
     type: RECEIVE_USER,
-    data: data
+    data
   }
 }
 
@@ -369,18 +365,10 @@ const facebookSigninInitiated = () => {
   }
 }
 
-// FIXME
-// eslint-disable-next-line no-unused-vars
-const facebookSigninSuccessful = () => {
-  return {
-    type: FACEBOOK_SIGNIN_SUCCESSFUL
-  }
-}
-
 const facebookSigninFailed = (errorCode) => {
   return {
     type: FACEBOOK_SIGNIN_FAILED,
-    errorCode: errorCode
+    errorCode
   }
 }
 
@@ -388,7 +376,7 @@ const getFriends = () => {
   const dfd = $.Deferred()
 
   const getMoreFriends = (friendsSoFar, urlForNextCall) => {
-    return $.get(urlForNextCall).then((response) => {
+    return PolisNet.polisGet(urlForNextCall).then((response) => {
       if (response.data.length) {
         for (let i = 0; i < response.data.length; i++) {
           friendsSoFar.push(response.data[i])
@@ -407,10 +395,7 @@ const getFriends = () => {
     if (response && !response.error) {
       const friendsSoFar = response.data
       if (response.data.length && response.paging.next) {
-        getMoreFriends(friendsSoFar, response.paging.next).then(
-          dfd.resolve,
-          dfd.reject
-        )
+        getMoreFriends(friendsSoFar, response.paging.next).then(dfd.resolve, dfd.reject)
       } else {
         dfd.resolve(friendsSoFar || [])
       }
@@ -462,18 +447,13 @@ const getInfo = () => {
 }
 
 const saveFacebookFriendsData = (data, dest, dispatch) => {
-  $.ajax({
-    url: '/api/v3/auth/facebook',
-    contentType: 'application/json; charset=utf-8',
+  PolisNet.polisPost('/api/v3/auth/facebook', data, {
     headers: {
       'Cache-Control': 'max-age=0'
     },
     xhrFields: {
       withCredentials: true
-    },
-    dataType: 'json',
-    data: JSON.stringify(data),
-    type: 'POST'
+    }
   }).then(
     () => {
       setTimeout(() => {
@@ -485,10 +465,7 @@ const saveFacebookFriendsData = (data, dest, dispatch) => {
     (err) => {
       console.dir(err)
 
-      if (
-        err.responseText &&
-        /polis_err_user_with_this_email_exists/.test(err.responseText)
-      ) {
+      if (err.responseText && /polis_err_user_with_this_email_exists/.test(err.responseText)) {
         // Todo handle
 
         // var password = prompt("A pol.is user "+data.fb_email+", the same email address as associted with your facebook account, already exists. Enter your pol.is password to enable facebook login for your pol.is account.");
@@ -508,12 +485,7 @@ const saveFacebookFriendsData = (data, dest, dispatch) => {
   )
 }
 
-const processFacebookFriendsData = (
-  response,
-  dest,
-  dispatch,
-  optionalPassword
-) => {
+const processFacebookFriendsData = (response, dest, dispatch, optionalPassword) => {
   return (fb_public_profile, friendsData) => {
     // alert(JSON.stringify(friendsData));
 
@@ -531,20 +503,13 @@ const processFacebookFriendsData = (
       data.provided_email = prompt('Please enter your email address.')
     }
 
-    const hname = [
-      fb_public_profile.first_name,
-      fb_public_profile.last_name
-    ].join(' ')
+    const hname = [fb_public_profile.first_name, fb_public_profile.last_name].join(' ')
 
     if (hname.length) {
       data.hname = hname
     }
 
-    if (
-      response &&
-      response.authResponse &&
-      response.authResponse.grantedScopes
-    ) {
+    if (response && response.authResponse && response.authResponse.grantedScopes) {
       data.fb_granted_scopes = response.authResponse.grantedScopes
     }
 
@@ -609,21 +574,22 @@ const signoutError = (err) => {
   }
 }
 
-const signoutPost = (dest) => {
+const signoutPost = () => {
   // relying on server to clear cookies
-  return $.ajax({
-    type: 'POST',
-    url: '/api/v3/auth/deregister',
-    data: {},
-    dataType: 'text' // server returns an empty response, so can"t parse as JSON
-  })
+  return PolisNet.polisPost(
+    '/api/v3/auth/deregister',
+    {},
+    {
+      dataType: 'text' // server returns an empty response, so can"t parse as JSON
+    }
+  )
 }
 
 export const doSignout = (dest) => {
   return (dispatch) => {
     dispatch(signoutInitiated())
     return signoutPost().then(
-      (res) => {
+      () => {
         setTimeout(() => {
           // Force page to load so we can be sure the old user"s state is cleared from memory
           // delay a bit so the cookies have time to clear too.
@@ -646,7 +612,7 @@ const requestConversations = () => {
 const receiveConversations = (data) => {
   return {
     type: RECEIVE_CONVERSATIONS,
-    data: data
+    data
   }
 }
 
@@ -658,7 +624,7 @@ const conversationsError = (err) => {
 }
 
 const fetchConversations = () => {
-  return $.get('/api/v3/conversations?include_all_conversations_i_am_in=true')
+  return PolisNet.polisGet('/api/v3/conversations?include_all_conversations_i_am_in=true')
 }
 
 export const populateConversationsStore = () => {
@@ -677,7 +643,7 @@ const requestZidMetadata = (conversation_id) => {
   return {
     type: REQUEST_ZID_METADATA,
     data: {
-      conversation_id: conversation_id
+      conversation_id
     }
   }
 }
@@ -685,7 +651,7 @@ const requestZidMetadata = (conversation_id) => {
 const receiveZidMetadata = (data) => {
   return {
     type: RECEIVE_ZID_METADATA,
-    data: data
+    data
   }
 }
 
@@ -703,7 +669,7 @@ export const resetMetadataStore = () => {
 }
 
 const fetchZidMetadata = (conversation_id) => {
-  return $.get('/api/v3/conversations?conversation_id=' + conversation_id)
+  return PolisNet.polisGet('/api/v3/conversations?conversation_id=' + conversation_id)
 }
 
 export const populateZidMetadataStore = (conversation_id) => {
@@ -724,10 +690,7 @@ export const populateZidMetadataStore = (conversation_id) => {
     }
 
     // don"t fetch again if we already have data loaded for that conversation.
-    if (
-      hasConversationId &&
-      state.zid_metadata.zid_metadata.conversation_id === conversation_id
-    ) {
+    if (hasConversationId && state.zid_metadata.zid_metadata.conversation_id === conversation_id) {
       return
     }
 
@@ -750,7 +713,7 @@ const updateZidMetadataStarted = () => {
 const updateZidMetadataSuccess = (data) => {
   return {
     type: UPDATE_ZID_METADATA_SUCCESS,
-    data: data
+    data
   }
 }
 
@@ -764,14 +727,10 @@ const updateZidMetadataError = (err) => {
 const updateZidMetadata = (zm, field, value) => {
   const data = {}
   data[field] = value
-  return $.ajax({
-    url: '/api/v3/conversations',
-    method: 'PUT',
+  return PolisNet.polisPut('/api/v3/conversations', Object.assign({}, zm, data), {
     contentType: 'application/json; charset=utf-8',
     headers: { 'Cache-Control': 'max-age=0' },
-    xhrFields: { withCredentials: true },
-    dataType: 'json',
-    data: JSON.stringify(Object.assign({}, zm, data))
+    xhrFields: { withCredentials: true }
   })
 }
 
@@ -797,7 +756,7 @@ export const optimisticZidMetadataUpdateOnTyping = (zm, field, value) => {
 export const seedCommentChanged = (text) => {
   return {
     type: SEED_COMMENT_LOCAL_UPDATE,
-    text: text
+    text
   }
 }
 
@@ -837,38 +796,12 @@ export const handleSeedCommentSubmit = (comment) => {
   }
 }
 
-// FIXME
-// eslint-disable-next-line no-unused-vars
-const makeStandardStart = (type) => {
-  return {
-    type: type
-  }
-}
-
-// FIXME
-// eslint-disable-next-line no-unused-vars
-const makeStandardError = (type, err) => {
-  return {
-    type: type,
-    data: err
-  }
-}
-
-// FIXME
-// eslint-disable-next-line no-unused-vars
-const makeStandardSuccess = (type, data) => {
-  return {
-    type: type,
-    data: data
-  }
-}
-
 /* seed tweets submit */
 
 export const seedCommentTweetChanged = (text) => {
   return {
     type: SEED_COMMENT_TWEET_LOCAL_UPDATE,
-    text: text
+    text
   }
 }
 const submitSeedCommentTweetStart = () => {
@@ -929,7 +862,7 @@ export const handleSeedCommentTweetSubmit = (o) => {
 // }
 
 // const fetchSeedComments = (conversation_id) => {
-//   return $.get("/api/v3/comments?moderation=true&mod=0&conversation_id=" + conversation_id);
+//   return PolisNet.polisGet("/api/v3/comments?moderation=true&mod=0&conversation_id=" + conversation_id);
 // }
 
 // export const populateSeedCommentStore = (conversation_id) => {
@@ -971,7 +904,7 @@ const postCreateConversation = () => {
   })
 }
 
-export const handleCreateConversationSubmit = (routeTo) => {
+export const handleCreateConversationSubmit = () => {
   return (dispatch) => {
     dispatch(createConversationStart())
     return postCreateConversation()
@@ -999,7 +932,7 @@ const requestComments = () => {
 const receiveComments = (data) => {
   return {
     type: RECEIVE_COMMENTS,
-    data: data
+    data
   }
 }
 
@@ -1013,7 +946,7 @@ const commentsFetchError = (err) => {
 const fetchAllComments = (conversation_id) => {
   // let includeSocial = "include_social=true&";
   const includeSocial = ''
-  return $.get(
+  return PolisNet.polisGet(
     '/api/v3/comments?moderation=true&include_voting_patterns=false&' +
       includeSocial +
       'conversation_id=' +
@@ -1042,7 +975,7 @@ const requestMath = () => {
 const receiveMath = (data) => {
   return {
     type: RECEIVE_MATH,
-    data: data
+    data
   }
 }
 
@@ -1054,11 +987,8 @@ const mathFetchError = (err) => {
 }
 
 const fetchMath = (conversation_id, math_tick) => {
-  return $.get(
-    '/api/v3/math/pca2?&math_tick=' +
-      math_tick +
-      '&conversation_id=' +
-      conversation_id
+  return PolisNet.polisGet(
+    '/api/v3/math/pca2?&math_tick=' + math_tick + '&conversation_id=' + conversation_id
   )
 }
 
@@ -1084,7 +1014,7 @@ const requestUnmoderatedComments = () => {
 const receiveUnmoderatedComments = (data) => {
   return {
     type: RECEIVE_UNMODERATED_COMMENTS,
-    data: data
+    data
   }
 }
 
@@ -1098,7 +1028,7 @@ const unmoderatedCommentsFetchError = (err) => {
 const fetchUnmoderatedComments = (conversation_id) => {
   // let includeSocial = "include_social=true&";
   const includeSocial = ''
-  return $.get(
+  return PolisNet.polisGet(
     '/api/v3/comments?moderation=true&include_voting_patterns=false&' +
       includeSocial +
       'mod=0&conversation_id=' +
@@ -1127,7 +1057,7 @@ const requestAcceptedComments = () => {
 const receiveAcceptedComments = (data) => {
   return {
     type: RECEIVE_ACCEPTED_COMMENTS,
-    data: data
+    data
   }
 }
 
@@ -1141,7 +1071,7 @@ const acceptedCommentsFetchError = (err) => {
 const fetchAcceptedComments = (conversation_id) => {
   // let includeSocial = "include_social=true&";
   const includeSocial = ''
-  return $.get(
+  return PolisNet.polisGet(
     '/api/v3/comments?moderation=true&include_voting_patterns=false&mod=1&' +
       includeSocial +
       'conversation_id=' +
@@ -1170,7 +1100,7 @@ const requestRejectedComments = () => {
 const receiveRejectedComments = (data) => {
   return {
     type: RECEIVE_REJECTED_COMMENTS,
-    data: data
+    data
   }
 }
 
@@ -1184,7 +1114,7 @@ const rejectedCommentsFetchError = (err) => {
 const fetchRejectedComments = (conversation_id) => {
   // let includeSocial = "include_social=true&";
   const includeSocial = ''
-  return $.get(
+  return PolisNet.polisGet(
     '/api/v3/comments?moderation=true&include_voting_patterns=false&' +
       includeSocial +
       'mod=-1&conversation_id=' +
@@ -1222,14 +1152,14 @@ export const populateAllCommentStores = (conversation_id) => {
 const optimisticCommentAccepted = (comment) => {
   return {
     type: ACCEPT_COMMENT,
-    comment: comment
+    comment
   }
 }
 
 const acceptCommentSuccess = (data) => {
   return {
     type: ACCEPT_COMMENT_SUCCESS,
-    data: data
+    data
   }
 }
 
@@ -1241,11 +1171,7 @@ const acceptCommentError = (err) => {
 }
 
 const putCommentAccepted = (comment) => {
-  return $.ajax({
-    method: 'PUT',
-    url: '/api/v3/comments',
-    data: Object.assign(comment, { mod: 1 })
-  })
+  return PolisNet.polisPut('/api/v3/comments', Object.assign(comment, { mod: 1 }))
 }
 
 export const changeCommentStatusToAccepted = (comment) => {
@@ -1267,14 +1193,14 @@ export const changeCommentStatusToAccepted = (comment) => {
 const optimisticCommentRejected = (comment) => {
   return {
     type: REJECT_COMMENT,
-    comment: comment
+    comment
   }
 }
 
 const rejectCommentSuccess = (data) => {
   return {
     type: REJECT_COMMENT_SUCCESS,
-    data: data
+    data
   }
 }
 
@@ -1286,11 +1212,7 @@ const rejectCommentError = (err) => {
 }
 
 const putCommentRejected = (comment) => {
-  return $.ajax({
-    method: 'PUT',
-    url: '/api/v3/comments',
-    data: Object.assign(comment, { mod: -1 })
-  })
+  return PolisNet.polisPut('/api/v3/comments', Object.assign(comment, { mod: -1 }))
 }
 
 export const changeCommentStatusToRejected = (comment) => {
@@ -1311,14 +1233,14 @@ export const changeCommentStatusToRejected = (comment) => {
 const optimisticCommentIsMetaChanged = (comment) => {
   return {
     type: COMMENT_IS_META,
-    comment: comment
+    comment
   }
 }
 
 const commentIsMetaChangeSuccess = (data) => {
   return {
     type: COMMENT_IS_META_SUCCESS,
-    data: data
+    data
   }
 }
 
@@ -1330,11 +1252,7 @@ const commentIsMetaChangeError = (err) => {
 }
 
 const putCommentCommentIsMetaChange = (comment, is_meta) => {
-  return $.ajax({
-    method: 'PUT',
-    url: '/api/v3/comments',
-    data: Object.assign(comment, { is_meta: is_meta })
-  })
+  return PolisNet.polisPut('/api/v3/comments', Object.assign(comment, { is_meta }))
 }
 
 export const changeCommentCommentIsMeta = (comment, is_meta) => {
@@ -1361,7 +1279,7 @@ const requestParticipants = () => {
 const receiveParticipants = (data) => {
   return {
     type: RECEIVE_PARTICIPANTS,
-    data: data
+    data
   }
 }
 
@@ -1373,7 +1291,7 @@ const participantsFetchError = (err) => {
 }
 
 const fetchParticipants = (conversation_id) => {
-  return $.get('/api/v3/ptptois?conversation_id=' + conversation_id)
+  return PolisNet.polisGet('/api/v3/ptptois?conversation_id=' + conversation_id)
 }
 
 export const populateParticipantsStore = (conversation_id) => {
@@ -1397,7 +1315,7 @@ const requestDefaultParticipants = () => {
 const receiveDefaultParticipants = (data) => {
   return {
     type: RECEIVE_DEFAULT_PARTICIPANTS,
-    data: data
+    data
   }
 }
 
@@ -1409,7 +1327,7 @@ const defaultParticipantFetchError = (err) => {
 }
 
 const fetchDefaultParticipants = (conversation_id) => {
-  return $.get('/api/v3/ptptois?mod=0&conversation_id=' + conversation_id)
+  return PolisNet.polisGet('/api/v3/ptptois?mod=0&conversation_id=' + conversation_id)
 }
 
 export const populateDefaultParticipantStore = (conversation_id) => {
@@ -1433,7 +1351,7 @@ const requestFeaturedParticipants = () => {
 const receiveFeaturedParticipants = (data) => {
   return {
     type: RECEIVE_FEATURED_PARTICIPANTS,
-    data: data
+    data
   }
 }
 
@@ -1445,7 +1363,7 @@ const featuredParticipantFetchError = (err) => {
 }
 
 const fetchFeaturedParticipants = (conversation_id) => {
-  return $.get('/api/v3/ptptois?mod=1&conversation_id=' + conversation_id)
+  return PolisNet.polisGet('/api/v3/ptptois?mod=1&conversation_id=' + conversation_id)
 }
 
 export const populateFeaturedParticipantStore = (conversation_id) => {
@@ -1469,7 +1387,7 @@ const requestHiddenParticipants = () => {
 const receiveHiddenParticipants = (data) => {
   return {
     type: RECEIVE_HIDDEN_PARTICIPANTS,
-    data: data
+    data
   }
 }
 
@@ -1481,7 +1399,7 @@ const hiddenParticipantFetchError = (err) => {
 }
 
 const fetchHiddenParticipants = (conversation_id) => {
-  return $.get('/api/v3/ptptois?mod=-1&conversation_id=' + conversation_id)
+  return PolisNet.polisGet('/api/v3/ptptois?mod=-1&conversation_id=' + conversation_id)
 }
 
 export const populateHiddenParticipantStore = (conversation_id) => {
@@ -1511,14 +1429,14 @@ export const populateAllParticipantStores = (conversation_id) => {
 const optimisticFeatureParticipant = (participant) => {
   return {
     type: FEATURE_PARTICIPANT,
-    participant: participant
+    participant
   }
 }
 
 const featureParticipantSuccess = (data) => {
   return {
     type: FEATURE_PARTICIPANT_SUCCESS,
-    data: data
+    data
   }
 }
 
@@ -1530,11 +1448,7 @@ const featureParticipantError = (err) => {
 }
 
 const putFeatureParticipant = (participant) => {
-  return $.ajax({
-    method: 'PUT',
-    url: '/api/v3/ptptois',
-    data: Object.assign(participant, { mod: 1 })
-  })
+  return PolisNet.polisPut('/api/v3/ptptois', Object.assign(participant, { mod: 1 }))
 }
 
 export const changeParticipantStatusToFeatured = (participant) => {
@@ -1551,14 +1465,14 @@ export const changeParticipantStatusToFeatured = (participant) => {
 const optimisticHideParticipant = (participant) => {
   return {
     type: FEATURE_PARTICIPANT,
-    participant: participant
+    participant
   }
 }
 
 const hideParticipantSuccess = (data) => {
   return {
     type: FEATURE_PARTICIPANT_SUCCESS,
-    data: data
+    data
   }
 }
 
@@ -1570,11 +1484,7 @@ const hideParticipantError = (err) => {
 }
 
 const putHideParticipant = (participant) => {
-  return $.ajax({
-    method: 'PUT',
-    url: '/api/v3/ptptois',
-    data: Object.assign(participant, { mod: -1 })
-  })
+  return PolisNet.polisPut('/api/v3/ptptois', Object.assign(participant, { mod: -1 }))
 }
 
 export const changeParticipantStatusToHidden = (participant) => {
@@ -1591,34 +1501,12 @@ export const changeParticipantStatusToHidden = (participant) => {
 const optimisticUnmoderateParticipant = (participant) => {
   return {
     type: FEATURE_PARTICIPANT,
-    participant: participant
-  }
-}
-
-// FIXME
-// eslint-disable-next-line no-unused-vars
-const unmoderateParticipantSuccess = (data) => {
-  return {
-    type: FEATURE_PARTICIPANT_SUCCESS,
-    data: data
-  }
-}
-
-// FIXME
-// eslint-disable-next-line no-unused-vars
-const unmoderateParticipantError = (err) => {
-  return {
-    type: FEATURE_PARTICIPANT_ERROR,
-    data: err
+    participant
   }
 }
 
 const putUnmoderateParticipant = (participant) => {
-  return $.ajax({
-    method: 'PUT',
-    url: '/api/v3/ptptois',
-    data: Object.assign(participant, { mod: 0 })
-  })
+  return PolisNet.polisPut('/api/v3/ptptois', Object.assign(participant, { mod: 0 }))
 }
 
 export const changeParticipantStatusToUnmoderated = (participant) => {
@@ -1642,7 +1530,7 @@ const requestConversationStats = () => {
 const receiveConversationStats = (data) => {
   return {
     type: RECEIVE_CONVERSATION_STATS,
-    data: data
+    data
   }
 }
 
@@ -1654,7 +1542,7 @@ const conversationStatsFetchError = (err) => {
 }
 
 const fetchConversationStats = (conversation_id, until) => {
-  return $.get(
+  return PolisNet.polisGet(
     '/api/v3/conversationStats?conversation_id=' +
       conversation_id +
       (until ? '&until=' + until : '')
@@ -1691,12 +1579,7 @@ const dataExportError = () => {
   }
 }
 
-const dataExportGet = (
-  conversation_id,
-  format,
-  unixTimestamp,
-  untilEnabled
-) => {
+const dataExportGet = (conversation_id, format, unixTimestamp, untilEnabled) => {
   //       url += ("&unixTimestamp=" + ((ctx.date/1000) << 0));
 
   /* https://pol.is/api/v3/dataExport?conversation_id=2arcefpshi&format=csv&unixTimestamp=1447362000 */
@@ -1704,23 +1587,13 @@ const dataExportGet = (
   if (untilEnabled) {
     url += `&unixTimestamp=${unixTimestamp}`
   }
-  return $.get(url)
+  return PolisNet.polisGet(url)
 }
 
-export const startDataExport = (
-  conversation_id,
-  format,
-  unixTimestamp,
-  untilEnabled
-) => {
+export const startDataExport = (conversation_id, format, unixTimestamp, untilEnabled) => {
   return (dispatch) => {
     dispatch(dataExportStarted())
-    return dataExportGet(
-      conversation_id,
-      format,
-      unixTimestamp,
-      untilEnabled
-    ).then(
+    return dataExportGet(conversation_id, format, unixTimestamp, untilEnabled).then(
       (res) => dispatch(dataExportSuccess(res)),
       (err) => dispatch(dataExportError(err))
     )

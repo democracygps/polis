@@ -17,7 +17,6 @@ var Handlebars = require("handlebars");
 var MainPolisRouter = require("./routers/main-polis-router");
 var PolisStorage = require("./util/polisStorage");
 var PostMessageUtils = require("./util/postMessageUtils");
-var preloadHelper = require("./util/preloadHelper");
 var RootView = require("./views/root");
 var Utils = require("./util/utils");
 
@@ -191,11 +190,7 @@ Handlebars.registerHelper("ifNotDefined", ifNotDefined);
 
 
 function isEmbedded() {
-  /*eslint-disable */
-  /* jshint ignore:start */
   return (window.top != window) || forceEmbedded;
-  /* jshint ignore:end */
-  /*eslint-enable */
 }
 window.isEmbedded = isEmbedded;
 

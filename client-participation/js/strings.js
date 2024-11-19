@@ -2,6 +2,7 @@
 
 var preloadHelper = require("./util/preloadHelper");
 var Utils = require("./util/utils");
+var _ = require("lodash");
 
 var translations = {
   // Arabic
@@ -136,20 +137,5 @@ preloadHelper.acceptLanguagePromise.then(function() {
     }
   });
 });
-
-window.missingTranslations = function() {
-  $(document.body).empty();
-  var pre = $(document.body).append("<pre></pre>");
-
-  _.each(translations, function(keyToTranslatedStringMapping, code) {
-    pre.append("<h2>" + code + "</h2>");
-    _.each(translations.en_us, function(originalString, key) {
-      if (!keyToTranslatedStringMapping[key]) {
-        pre.append("<div>" + 's.' + key + ' = "' + originalString + '";' + "</div>");
-      }
-    });
-  });
-  return missingKeys;
-};
 
 module.exports = strings;

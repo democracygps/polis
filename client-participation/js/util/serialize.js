@@ -6,6 +6,7 @@
   //can pass options, callback or event in any order
 
 var $ = require("jquery");
+var _ = require("lodash");
 
 function eachNamedInput(view, options, iterator) {
   var i = 0;

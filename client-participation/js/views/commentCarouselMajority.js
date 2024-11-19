@@ -9,6 +9,7 @@ var display = require("../util/display");
 var template = require("../templates/commentCarouselMajority.handlebars");
 var Strings = require("../strings");
 var Utils = require("../util/utils");
+var _ = require("lodash");
 
 module.exports = CommentCarousel.extend({
   name: "comment-carousel-majority-view",

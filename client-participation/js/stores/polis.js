@@ -1,7 +1,5 @@
 // Copyright (C) 2012-present, The Authors. This program is free software: you can redistribute it and/or  modify it under the terms of the GNU Affero General Public License, version 3, as published by the Free Software Foundation. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-/*jshint -W069 */
-
 var eb = require("../eventBus");
 var deepcopy = require("deepcopy");
 var PostMessageUtils = require("../util/postMessageUtils");
@@ -10,6 +8,7 @@ var Utils = require("../util/utils");
 var Net = require("../util/net");
 var $ = require("jquery");
 var d3 = require("../3rdparty/d3.v4.min");
+var _ = require("lodash");
 
 var PTPOI_BID_OFFSET = 1e10;
 
@@ -868,7 +867,7 @@ module.exports = function(params) {
   function findRepresentativeMetadata(bidsFromGroup, choicesForPmaidBid) {
     return $.when(
       // getMetadataAnswers(),
-      getMetadataChoices(),
+      // getMetadataChoices(),
       getPidToBidMappingFromCache(),
       getXids(),
       clustersCachePromise).then(function(
@@ -1496,7 +1495,6 @@ module.exports = function(params) {
   }
 
   function arraysToObjects(objWithArraysAsProperties) {
-    /* jshint -W089 */
     var objects = [];
     var len = -1;
     for (var k in objWithArraysAsProperties) {
@@ -1513,7 +1511,6 @@ module.exports = function(params) {
       }
       objects.push(o);
     }
-    /* jshint +W089 */
     return objects;
   }
 
@@ -1922,7 +1919,7 @@ module.exports = function(params) {
     this.f = f;
   }
   DD.prototype.g = DA.prototype.g = function(k) {
-    if (this.m.hasOwnProperty(k)) {
+    if (Object.prototype.hasOwnProperty.call(this.m, k)) {
       return this.m[k];
     }
     var v = this.f(k);
@@ -2716,5 +2713,3 @@ module.exports = function(params) {
     submitComment: submitComment
   };
 };
-
-/*jshint +W069 */

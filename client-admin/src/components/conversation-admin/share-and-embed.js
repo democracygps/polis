@@ -14,12 +14,9 @@ import NoPermission from './no-permission'
 class ShareAndEmbed extends React.Component {
   constructEmbeddedOnMarkup() {
     return (
-      <p data-test-id="embed-page">
+      <p data-test-id='embed-page'>
         {'Embedded on: '}
-        <a
-          style={{ color: 'black' }}
-          target="blank"
-          href={this.props.zid_metadata.parent_url}>
+        <a style={{ color: 'black' }} target='blank' href={this.props.zid_metadata.parent_url}>
           {this.props.zid_metadata.parent_url}
         </a>
       </p>
@@ -35,12 +32,13 @@ class ShareAndEmbed extends React.Component {
     return (
       <div>
         <Heading
-          as="h3"
+          as='h3'
           sx={{
             fontSize: [3, null, 4],
             lineHeight: 'body',
             mb: [3, null, 4]
-          }}>
+          }}
+        >
           Distribute
         </Heading>
         <ConversationHasCommentsCheck
@@ -50,9 +48,7 @@ class ShareAndEmbed extends React.Component {
         <div>
           <p> Share </p>
           <p>
-            <a
-              target="blank"
-              href={Url.urlPrefix + match.params.conversation_id}>
+            <a target='blank' href={Url.urlPrefix + match.params.conversation_id}>
               {Url.urlPrefix + match.params.conversation_id}
             </a>
           </p>
@@ -70,15 +66,9 @@ class ShareAndEmbed extends React.Component {
           </div>
           <p>
             This embed code can only be used to embed a single conversation.{' '}
-            <Link to="/integrate">
-              I want to integrate pol.is on my entire site.
-            </Link>
+            <Link to='/integrate'>I want to integrate pol.is on my entire site.</Link>
           </p>
-          <div>
-            {this.props.zid_metadata.parent_url
-              ? this.constructEmbeddedOnMarkup()
-              : ''}
-          </div>
+          <div>{this.props.zid_metadata.parent_url ? this.constructEmbeddedOnMarkup() : ''}</div>
         </div>
       </div>
     )

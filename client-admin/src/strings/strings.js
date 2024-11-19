@@ -2,18 +2,24 @@
 
 import en_us from './en_us'
 
-let s = {}
+let languageStrings = {}
 
 // TODO port language choosing code
-s = en_us
+languageStrings = en_us
 
-function f(key) {
-  // strip whitespace from key
-  key = key.replace(/\s+$/, '').replace(/^\s+/, '')
-  if (typeof s[key] === 'undefined') {
+function getTranslation(key) {
+  // Check if key is a string
+  if (typeof key !== 'string') {
     return key
   }
-  return s[key]
+
+  // Strip whitespace from key
+  const trimmedKey = key.trim()
+
+  if (typeof languageStrings[trimmedKey] === 'undefined') {
+    return trimmedKey
+  }
+  return languageStrings[trimmedKey]
 }
 
-export default f
+export default getTranslation

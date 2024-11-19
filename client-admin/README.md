@@ -79,7 +79,7 @@ _In the future this should become more customizable._
 To build static assets into `build/` for a production deployment, run
 
 ```sh
-npm run build:prod
+npm run build
 ```
 
 _The polis file-server process builds and serves these assets when docker compose is used._

@@ -3,7 +3,7 @@
 var template = require("../templates/analyzeGroupParticipantsView.handlebars");
 var Handlebones = require("handlebones");
 var eb = require("../eventBus");
-
+var _ = require("lodash");
 
 module.exports = Handlebones.View.extend({
   name: "analyzeGroupParticipants",

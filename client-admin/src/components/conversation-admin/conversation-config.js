@@ -4,10 +4,7 @@
 
 import React from 'react'
 import { connect } from 'react-redux'
-import {
-  handleZidMetadataUpdate,
-  optimisticZidMetadataUpdateOnTyping
-} from '../../actions'
+import { handleZidMetadataUpdate, optimisticZidMetadataUpdateOnTyping } from '../../actions'
 import ComponentHelpers from '../../util/component-helpers'
 import NoPermission from './no-permission'
 import { Heading, Box, Text, jsx } from 'theme-ui'
@@ -28,20 +25,14 @@ class ConversationConfig extends React.Component {
           val = 'default'
         }
       }
-      this.props.dispatch(
-        handleZidMetadataUpdate(this.props.zid_metadata, field, val)
-      )
+      this.props.dispatch(handleZidMetadataUpdate(this.props.zid_metadata, field, val))
     }
   }
 
   handleConfigInputTyping(field) {
     return (e) => {
       this.props.dispatch(
-        optimisticZidMetadataUpdateOnTyping(
-          this.props.zid_metadata,
-          field,
-          e.target.value
-        )
+        optimisticZidMetadataUpdateOnTyping(this.props.zid_metadata, field, e.target.value)
       )
     }
   }
@@ -54,12 +45,13 @@ class ConversationConfig extends React.Component {
     return (
       <Box>
         <Heading
-          as="h3"
+          as='h3'
           sx={{
             fontSize: [3, null, 4],
             lineHeight: 'body',
             mb: [3, null, 4]
-          }}>
+          }}
+        >
           Configure
         </Heading>
         <Box sx={{ mb: [4] }}>
@@ -71,7 +63,7 @@ class ConversationConfig extends React.Component {
           {this.props.error ? <Text>Error Saving</Text> : null}
         </Box>
 
-        <CheckboxField field="is_active" label="Conversation Is Open">
+        <CheckboxField field='is_active' label='Conversation Is Open'>
           Conversation is open. Unchecking disables both voting and commenting.
         </CheckboxField>
 
@@ -88,7 +80,7 @@ class ConversationConfig extends React.Component {
               border: '1px solid',
               borderColor: 'mediumGray'
             }}
-            data-test-id="topic"
+            data-test-id='topic'
             onBlur={this.handleStringValueChange('topic').bind(this)}
             onChange={this.handleConfigInputTyping('topic').bind(this)}
             defaultValue={this.props.zid_metadata.topic}
@@ -110,7 +102,7 @@ class ConversationConfig extends React.Component {
               border: '1px solid',
               borderColor: 'mediumGray'
             }}
-            data-test-id="description"
+            data-test-id='description'
             onBlur={this.handleStringValueChange('description').bind(this)}
             onChange={this.handleConfigInputTyping('description').bind(this)}
             defaultValue={this.props.zid_metadata.description}
@@ -118,12 +110,13 @@ class ConversationConfig extends React.Component {
         </Box>
 
         <Heading
-          as="h6"
+          as='h6'
           sx={{
             fontSize: [1, null, 2],
             lineHeight: 'body',
             my: [3, null, 4]
-          }}>
+          }}
+        >
           Seed Comments
         </Heading>
         <ModerateCommentsSeed
@@ -135,48 +128,50 @@ class ConversationConfig extends React.Component {
         /> */}
 
         <Heading
-          as="h6"
+          as='h6'
           sx={{
             fontSize: [1, null, 2],
             lineHeight: 'body',
             my: [3, null, 4]
-          }}>
+          }}
+        >
           Customize the user interface
         </Heading>
 
-        <CheckboxField field="vis_type" label="Visualization" isIntegerBool>
+        <CheckboxField field='vis_type' label='Visualization' isIntegerBool>
           Participants can see the visualization
         </CheckboxField>
 
-        <CheckboxField field="write_type" label="Comment form" isIntegerBool>
+        <CheckboxField field='write_type' label='Comment form' isIntegerBool>
           Participants can submit comments
         </CheckboxField>
 
-        <CheckboxField field="help_type" label="Help text" isIntegerBool>
+        <CheckboxField field='help_type' label='Help text' isIntegerBool>
           Show explanation text above voting and visualization
         </CheckboxField>
 
         <CheckboxField
-          field="subscribe_type"
-          label="Prompt participants to subscribe to updates"
-          isIntegerBool>
-          Prompt participants to subscribe to updates. A prompt is shown to
-          users once they finish voting on all available comments. If enabled,
-          participants may optionally provide their email address to receive
-          notifications when there are new comments to vote on.
+          field='subscribe_type'
+          label='Prompt participants to subscribe to updates'
+          isIntegerBool
+        >
+          Prompt participants to subscribe to updates. A prompt is shown to users once they finish
+          voting on all available comments. If enabled, participants may optionally provide their
+          email address to receive notifications when there are new comments to vote on.
         </CheckboxField>
 
         <Heading
-          as="h6"
+          as='h6'
           sx={{
             fontSize: [1, null, 2],
             lineHeight: 'body',
             my: [3, null, 4]
-          }}>
+          }}
+        >
           Schemes
         </Heading>
 
-        <CheckboxField field="strict_moderation">
+        <CheckboxField field='strict_moderation'>
           No comments shown without moderator approval
         </CheckboxField>
       </Box>

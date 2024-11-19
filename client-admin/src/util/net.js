@@ -1,15 +1,13 @@
 // Copyright (C) 2012-present, The Authors. This program is free software: you can redistribute it and/or  modify it under the terms of the GNU Affero General Public License, version 3, as published by the Free Software Foundation. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero General Public License for more details. You should have received a copy of the GNU Affero General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import URLs from './url'
-import _ from 'lodash'
+import isString from 'lodash/isString'
 
 const urlPrefix = URLs.urlPrefix
 const basePath = ''
 
-// var pid = "unknownpid";
-
-function polisAjax(api, data, type) {
-  if (!_.isString(api)) {
+function polisAjax(api, data, type, additionalConfig = {}) {
+  if (!isString(api)) {
     throw new Error('api param should be a string')
   }
 
@@ -19,36 +17,27 @@ function polisAjax(api, data, type) {
 
   const url = urlPrefix + basePath + api
 
-  // Add the auth token if needed.
-  // if (_.contains(authenticatedCalls, api)) {
-  //     var token = tokenStore.get();
-  //     if (!token) {
-  //         needAuthCallbacks.fire();
-  //         console.error("auth needed");
-  //         return $.Deferred().reject("auth needed");
-  //     }
-  //     //data = $.extend({ token: token}, data); // moving to cookies
-  // }
-
-  let promise
   const config = {
-    url: url,
+    url,
     contentType: 'application/json; charset=utf-8',
     headers: {
-      // "Cache-Control": "no-cache"  // no-cache
       'Cache-Control': 'max-age=0'
     },
     xhrFields: {
       withCredentials: true
     },
-    // crossDomain: true,
-    dataType: 'json'
+    dataType: 'json',
+    ...additionalConfig
   }
+
+  console.log('polisAjax', config)
+
+  let promise
   if (type === 'GET') {
     promise = $.ajax(
       $.extend(config, {
         type: 'GET',
-        data: data
+        data
       })
     )
   } else if (type === 'POST') {
@@ -58,34 +47,40 @@ function polisAjax(api, data, type) {
         data: JSON.stringify(data)
       })
     )
+  } else if (type === 'PUT') {
+    promise = $.ajax(
+      $.extend(config, {
+        type: 'PUT',
+        data: JSON.stringify(data)
+      })
+    )
   }
 
-  promise.fail(function (jqXHR, message, errorType) {
-    // sendEvent("Error", api, jqXHR.status);
-
-    // logger.error("SEND ERROR");
+  promise.fail(function (jqXHR /*, message, errorType*/) {
     console.dir('polisAjax promise failed: ', arguments)
     if (jqXHR.status === 403) {
       // eb.trigger(eb.authNeeded);
     }
-    // logger.dir(data);
-    // logger.dir(message);
-    // logger.dir(errorType);
   })
   return promise
 }
 
-function polisPost(api, data) {
-  return polisAjax(api, data, 'POST')
+function polisPost(api, data, additionalConfig) {
+  return polisAjax(api, data, 'POST', additionalConfig)
 }
 
-function polisGet(api, data) {
-  return polisAjax(api, data, 'GET')
+function polisGet(api, data, additionalConfig) {
+  return polisAjax(api, data, 'GET', additionalConfig)
+}
+
+function polisPut(api, data, additionalConfig) {
+  return polisAjax(api, data, 'PUT', additionalConfig)
 }
 
 const PolisNet = {
-  polisAjax: polisAjax,
-  polisPost: polisPost,
-  polisGet: polisGet
+  polisAjax,
+  polisPost,
+  polisGet,
+  polisPut
 }
 export default PolisNet

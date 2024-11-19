@@ -2,10 +2,7 @@
 
 import React from 'react'
 import PropTypes from 'prop-types'
-import {
-  changeCommentStatusToAccepted,
-  changeCommentCommentIsMeta
-} from '../../../actions'
+import { changeCommentStatusToAccepted, changeCommentCommentIsMeta } from '../../../actions'
 import { connect } from 'react-redux'
 import Comment from './comment'
 
@@ -25,7 +22,7 @@ class ModerateCommentsRejected extends React.Component {
         <Comment
           key={i}
           acceptButton
-          acceptButtonText="accept"
+          acceptButtonText='accept'
           acceptClickHandler={this.onCommentAccepted.bind(this)}
           isMetaCheckbox
           toggleIsMetaHandler={this.toggleIsMetaHandler.bind(this)}

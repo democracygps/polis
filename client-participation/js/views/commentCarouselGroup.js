@@ -9,6 +9,7 @@ var eb = require("../eventBus");
 var template = require("../templates/commentCarouselGroup.handlebars");
 var Strings = require("../strings");
 var Utils = require("../util/utils");
+var _ = require("lodash");
 
 module.exports = CommentCarousel.extend({
   name: "comment-carousel-group-view",
@@ -170,7 +171,7 @@ module.exports = CommentCarousel.extend({
 
     // doing this since we don't want to trigger a render of the whole view.
     eb.on(eb.clusterSelectionChanged, function(gid) {
-      selectedGroupName = _.isUndefined(that.selectedGid) ?
+      var selectedGroupName = _.isUndefined(that.selectedGid) ?
       "" :
       Utils.getGroupNameForGid(that.selectedGid);
 

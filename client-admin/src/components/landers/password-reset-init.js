@@ -7,7 +7,7 @@ import { doPasswordResetInit } from '../../actions'
 
 import StaticLayout from './lander-layout'
 
-@connect()
+@connect(null, null)
 class PasswordResetInit extends React.Component {
   handleClick(e) {
     e.preventDefault()
@@ -24,14 +24,8 @@ class PasswordResetInit extends React.Component {
       <StaticLayout>
         <h1> Password Reset</h1>
         <form>
-          <input
-            ref={(c) => (this.email = c)}
-            placeholder="email"
-            type="text"
-          />
-          <button onClick={this.handleClick.bind(this)}>
-            Send password reset email
-          </button>
+          <input ref={(c) => (this.email = c)} placeholder='email' type='text' />
+          <button onClick={this.handleClick.bind(this)}>Send password reset email</button>
         </form>
       </StaticLayout>
     )

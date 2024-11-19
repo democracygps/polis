@@ -5,12 +5,7 @@ import PropTypes from 'prop-types'
 
 import { handleZidMetadataUpdate } from '../../actions'
 
-export const CheckboxField = ({
-  field,
-  label = '',
-  children,
-  isIntegerBool = false
-}) => {
+export const CheckboxField = ({ field, label = '', children, isIntegerBool = false }) => {
   const { zid_metadata } = useSelector((state) => state.zid_metadata)
   const [state, setState] = useState(zid_metadata[field])
   const dispatch = useDispatch()
@@ -35,12 +30,10 @@ export const CheckboxField = ({
     <Flex sx={{ alignItems: 'flex-start', mb: [3] }}>
       <Box sx={{ flexShrink: 0, position: 'relative', top: -0.5 }}>
         <input
-          type="checkbox"
+          type='checkbox'
           label={label}
           data-test-id={field}
-          checked={
-            isIntegerBool ? zid_metadata[field] === 1 : zid_metadata[field]
-          }
+          checked={isIntegerBool ? zid_metadata[field] === 1 : zid_metadata[field]}
           onChange={
             isIntegerBool
               ? () => handleIntegerBoolValueChange(field)

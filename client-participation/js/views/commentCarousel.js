@@ -4,6 +4,7 @@ var display = require("../util/display");
 var eb = require("../eventBus");
 var Handlebones = require("handlebones");
 var Utils = require("../util/utils");
+var _ = require("lodash");
 
 var isMobile = Utils.isMobile();
 

@@ -8,7 +8,7 @@ var template = require("../templates/conversationTabs.handlebars");
 var display = require("../util/display");
 var Utils = require("../util/utils");
 var $ = require("jquery");
-
+var _ = require("lodash");
 
 module.exports = Handlebones.ModelView.extend({
   name: "conversation-tabs-view",

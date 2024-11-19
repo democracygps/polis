@@ -20,9 +20,7 @@ import Reports from './report/reports'
 @connect((state) => state.zid_metadata)
 class ConversationAdminContainer extends React.Component {
   loadZidMetadata() {
-    this.props.dispatch(
-      populateZidMetadataStore(this.props.match.params.conversation_id)
-    )
+    this.props.dispatch(populateZidMetadataStore(this.props.match.params.conversation_id))
   }
 
   resetMetadata() {
@@ -55,9 +53,7 @@ class ConversationAdminContainer extends React.Component {
             </Link>
           </Box>
           <Box sx={{ mb: [3] }}>
-            <Link
-              sx={{ variant: url ? 'links.nav' : 'links.activeNav' }}
-              to={`${match.url}`}>
+            <Link sx={{ variant: url ? 'links.nav' : 'links.activeNav' }} to={`${match.url}`}>
               Configure
             </Link>
           </Box>
@@ -66,7 +62,8 @@ class ConversationAdminContainer extends React.Component {
               sx={{
                 variant: url === 'share' ? 'links.activeNav' : 'links.nav'
               }}
-              to={`${match.url}/share`}>
+              to={`${match.url}/share`}
+            >
               Distribute
             </Link>
           </Box>
@@ -85,7 +82,8 @@ class ConversationAdminContainer extends React.Component {
               sx={{
                 variant: url === 'stats' ? 'links.activeNav' : 'links.nav'
               }}
-              to={`${match.url}/stats`}>
+              to={`${match.url}/stats`}
+            >
               Monitor
             </Link>
           </Box>
@@ -94,33 +92,19 @@ class ConversationAdminContainer extends React.Component {
               sx={{
                 variant: url === 'reports' ? 'links.activeNav' : 'links.nav'
               }}
-              to={`${match.url}/reports`}>
+              to={`${match.url}/reports`}
+            >
               Report
             </Link>
           </Box>
         </Box>
         <Box sx={{ p: [4], flex: '0 0 auto', maxWidth: '35em', mx: [4] }}>
           <Switch>
-            <Route
-              exact
-              path={`${match.path}/`}
-              component={ConversationConfig}
-            />
-            <Route
-              exact
-              path={`${match.path}/share`}
-              component={ShareAndEmbed}
-            />
+            <Route exact path={`${match.path}/`} component={ConversationConfig} />
+            <Route exact path={`${match.path}/share`} component={ShareAndEmbed} />
             <Route exact path={`${match.path}/reports`} component={Reports} />
-            <Route
-              path={`${match.path}/comments`}
-              component={ModerateComments}
-            />
-            <Route
-              exact
-              path={`${match.path}/stats`}
-              component={ConversationStats}
-            />
+            <Route path={`${match.path}/comments`} component={ModerateComments} />
+            <Route exact path={`${match.path}/stats`} component={ConversationStats} />
             {/* <Route exact path={`${match.path}/export`} component={DataExport} /> */}
           </Switch>
         </Box>

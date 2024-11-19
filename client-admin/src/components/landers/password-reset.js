@@ -6,7 +6,7 @@ import { connect } from 'react-redux'
 import { doPasswordReset } from '../../actions'
 import StaticLayout from './lander-layout'
 
-@connect()
+@connect(null, null)
 class PasswordReset extends React.Component {
   handleClick(e) {
     e.preventDefault()
@@ -28,19 +28,13 @@ class PasswordReset extends React.Component {
       <StaticLayout>
         <h1>Password Reset</h1>
         <form>
-          <input
-            ref={(c) => (this.password = c)}
-            placeholder="new password"
-            type="password"
-          />
+          <input ref={(c) => (this.password = c)} placeholder='new password' type='password' />
           <input
             ref={(c) => (this.passwordRepeat = c)}
-            placeholder="repeat new password"
-            type="password"
+            placeholder='repeat new password'
+            type='password'
           />
-          <button onClick={this.handleClick.bind(this)}>
-            Set new password
-          </button>
+          <button onClick={this.handleClick.bind(this)}>Set new password</button>
         </form>
       </StaticLayout>
     )

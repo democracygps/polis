@@ -9,8 +9,10 @@ FROM docker.io/node:18-alpine AS client-admin
 
 ARG ENABLE_TWITTER_WIDGETS
 ARG FB_APP_ID
+ARG SERVICE_URL
 ENV ENABLE_TWITTER_WIDGETS ${ENABLE_TWITTER_WIDGETS}
 ENV FB_APP_ID ${FB_APP_ID}
+ENV SERVICE_URL ${SERVICE_URL}p
 
 # Set default NODE_ENV to production unless overridden at build time with --build-arg NODE_ENV=development
 ARG NODE_ENV
@@ -99,10 +101,10 @@ COPY file-server/. .
 
 # use the multi-stage builds above to copy out the resources
 RUN mkdir /app/build
-COPY --from=client-admin          /app/build/       /app/build
+COPY --from=client-admin          /app/dist/        /app/build
 COPY --from=client-participation  /app/dist/        /app/build
 COPY --from=client-report         /app/dist/        /app/build
 
 EXPOSE 8080
 
-CMD npm run serve
+CMD npm start

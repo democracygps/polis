@@ -15,7 +15,7 @@ import ModerateCommentsRejected from './moderate-comments-rejected'
 
 import { Switch, Route, Link } from 'react-router-dom'
 
-const mapStateToProps = (state, ownProps) => {
+const mapStateToProps = (state) => {
   return {
     unmoderated: state.mod_comments_unmoderated,
     accepted: state.mod_comments_accepted,
@@ -59,12 +59,13 @@ class CommentModeration extends React.Component {
     return (
       <Box>
         <Heading
-          as="h3"
+          as='h3'
           sx={{
             fontSize: [3, null, 4],
             lineHeight: 'body',
             mb: [3, null, 4]
-          }}>
+          }}
+        >
           Moderate
         </Heading>
         <Flex sx={{ mb: [4] }}>
@@ -74,7 +75,8 @@ class CommentModeration extends React.Component {
               mr: [4],
               variant: url ? 'links.nav' : 'links.activeNav'
             }}
-            to={`${match.url}`}>
+            to={`${match.url}`}
+          >
             Unmoderated{' '}
             {this.props.unmoderated.unmoderated_comments
               ? this.props.unmoderated.unmoderated_comments.length
@@ -86,7 +88,8 @@ class CommentModeration extends React.Component {
               mr: [4],
               variant: url === 'accepted' ? 'links.activeNav' : 'links.nav'
             }}
-            to={`${match.url}/accepted`}>
+            to={`${match.url}/accepted`}
+          >
             Accepted{' '}
             {this.props.accepted.accepted_comments
               ? this.props.accepted.accepted_comments.length
@@ -98,7 +101,8 @@ class CommentModeration extends React.Component {
               mr: [4],
               variant: url === 'rejected' ? 'links.activeNav' : 'links.nav'
             }}
-            to={`${match.url}/rejected`}>
+            to={`${match.url}/rejected`}
+          >
             Rejected{' '}
             {this.props.rejected.rejected_comments
               ? this.props.rejected.rejected_comments.length
@@ -107,21 +111,9 @@ class CommentModeration extends React.Component {
         </Flex>
         <Box>
           <Switch>
-            <Route
-              exact
-              path={`${match.url}`}
-              component={ModerateCommentsTodo}
-            />
-            <Route
-              exact
-              path={`${match.url}/accepted`}
-              component={ModerateCommentsAccepted}
-            />
-            <Route
-              exact
-              path={`${match.url}/rejected`}
-              component={ModerateCommentsRejected}
-            />
+            <Route exact path={`${match.url}`} component={ModerateCommentsTodo} />
+            <Route exact path={`${match.url}/accepted`} component={ModerateCommentsAccepted} />
+            <Route exact path={`${match.url}/rejected`} component={ModerateCommentsRejected} />
           </Switch>
         </Box>
       </Box>

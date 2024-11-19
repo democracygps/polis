@@ -17,7 +17,7 @@ class Hull extends React.Component {
       </g>
     );
   }
-};
+}
 
 class Hulls extends React.Component {
   render () {

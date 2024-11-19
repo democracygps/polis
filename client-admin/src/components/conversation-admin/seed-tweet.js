@@ -3,11 +3,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
-import {
-  handleSeedCommentTweetSubmit,
-  seedCommentTweetChanged
-} from '../../actions'
-import Radium from 'radium'
+import { handleSeedCommentTweetSubmit, seedCommentTweetChanged } from '../../actions'
 import strings from '../../strings/strings'
 
 const styles = {
@@ -22,7 +18,6 @@ const styles = {
 }
 
 @connect((state) => state.seed_comments_tweet)
-@Radium
 class ModerateCommentsSeed extends React.Component {
   constructor(props) {
     super(props)
@@ -84,7 +79,8 @@ class ModerateCommentsSeed extends React.Component {
           style={{
             marginTop: 5,
             fontSize: 16
-          }}>
+          }}
+        >
           {' '}
           Paste in a Tweet URL. It will be imported for participants to vote on.{' '}
         </p>
@@ -92,8 +88,8 @@ class ModerateCommentsSeed extends React.Component {
           <textarea
             value={this.props.seedTweetText}
             onChange={this.handleTextareaChange.bind(this)}
-            rows="1"
-            maxLength="200"
+            rows='1'
+            maxLength='200'
             style={{
               width: '100%',
               maxWidth: 400,
@@ -113,7 +109,8 @@ class ModerateCommentsSeed extends React.Component {
               backgroundColor: '#03a9f4',
               color: 'white'
             }}
-            onClick={this.handleSubmitSeed.bind(this)}>
+            onClick={this.handleSubmitSeed.bind(this)}
+          >
             {this.getButtonText()}
           </button>
         </div>

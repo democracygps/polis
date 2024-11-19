@@ -26,7 +26,7 @@ var VisView = require("../lib/VisView");
 var VoteMoreView = require("../views/voteMoreView");
 var WritingTipsView = require("../views/writingTips");
 var $ = require("jquery");
-
+var _ = require("lodash");
 
 var VIS_SELECTOR = "#visualization_div";
 
@@ -374,14 +374,10 @@ module.exports = ConversationView.extend({
 
         var mathMain = that.serverClient.getMathMain();
         var tidsToShow = []; //that.serverClient.getVotedOnTids();
-        if (_.isNull(that.curationType)) {
-
-        } else if (that.curationType === "majority") {
+        if (that.curationType === "majority") {
           tidsToShow = [];
           Array.prototype.push.apply(tidsToShow, mathMain.consensus.agree.map(function(c) { return c.tid; }));
           Array.prototype.push.apply(tidsToShow, mathMain.consensus.disagree.map(function(c) { return c.tid; }));
-        } else if (that.curationType === "differences") {
-
         } else if (_.isNumber(that.curationType)) {
           tidsToShow = [];
           var gid = that.curationType;
@@ -446,8 +442,6 @@ module.exports = ConversationView.extend({
     }
     if (this.voteMoreModel.get("remaining") >= 1) {
       this.visModeModel.set("visMode", VIS_MODE_VOTEMORE);
-    } else if (false) { // TODO
-
     } else {
       this.visModeModel.set("visMode", VIS_MODE_VIS);
     }
@@ -1168,9 +1162,9 @@ module.exports = ConversationView.extend({
       this.listenTo(this, "render", function() {
         setTimeout(function() {
 
-          if (false) {
-            $("#voteMoreParent").show();
-          }
+          // if (false) {
+          //   $("#voteMoreParent").show();
+          // }
           // if (AB.isA()) {
           //   var cfp = $("#commentFormParent").detach();
           //   cfp.insertAfter($("#commentFormBSibling"));

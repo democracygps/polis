@@ -3,10 +3,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
-import {
-  populateConversationsStore,
-  handleCreateConversationSubmit
-} from '../../actions'
+import { populateConversationsStore, handleCreateConversationSubmit } from '../../actions'
 
 import Url from '../../util/url'
 import { Box, Heading, Button, Text } from 'theme-ui'
@@ -78,43 +75,37 @@ class Conversations extends React.Component {
     return (
       <Box>
         <Heading
-          as="h3"
+          as='h3'
           sx={{
             fontSize: [3, null, 4],
             lineHeight: 'body',
             mb: [3, null, 4]
-          }}>
+          }}
+        >
           All Conversations
         </Heading>
         <Box sx={{ mb: [3, null, 4] }}>
-          <Button onClick={this.onNewClicked.bind(this)}>
-            Create new conversation
-          </Button>
+          <Button onClick={this.onNewClicked.bind(this)}>Create new conversation</Button>
         </Box>
         <Box>
-          <Box sx={{ mb: [3] }}>
-            {this.props.loading ? 'Loading conversations...' : null}
-          </Box>
+          <Box sx={{ mb: [3] }}>{this.props.loading ? 'Loading conversations...' : null}</Box>
           {err ? (
-            <Text>
-              {'Error loading conversations: ' +
-                err.status +
-                ' ' +
-                err.statusText}
-            </Text>
+            <Text>{'Error loading conversations: ' + err.status + ' ' + err.statusText}</Text>
           ) : null}
-          {conversations
-            ? conversations.map((c, i) => {
-                return this.filterCheck(c) ? (
-                  <Conversation
-                    key={c.conversation_id}
-                    c={c}
-                    i={i}
-                    goToConversation={this.goToConversation(c.conversation_id)}
-                  />
-                ) : null
-              })
-            : null}
+          {Array.isArray(conversations) ? (
+            conversations.map((c, i) => {
+              return this.filterCheck(c) ? (
+                <Conversation
+                  key={c.conversation_id}
+                  c={c}
+                  i={i}
+                  goToConversation={this.goToConversation(c.conversation_id)}
+                />
+              ) : null
+            })
+          ) : (
+            <Text>No conversations available.</Text>
+          )}
         </Box>
       </Box>
     )

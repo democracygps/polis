@@ -59,9 +59,9 @@ var store = (function() {
           // This is here for now so existing user sessions will keep working.
           // previously, localStorage keys were prefixed with "p_", removing now to minimize extra cookie traffic.
           var lsVal = localStorage.getItem("p_" + key);
-          if (lsVal !== null) {
-            setCookie(key, lsVal);
-          }
+          // if (lsVal !== null) {
+          //   setCookie(key, lsVal);
+          // }
           return lsVal;
         } catch (e) {
           // probably IE with localStorage disabled, nothing to migrate here anyway.

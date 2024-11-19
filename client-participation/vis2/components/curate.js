@@ -46,7 +46,7 @@ class Curate extends React.Component {
         display: "flex",
         justifyContent: "center",
         alignItems: "baseline",
-        width: true ? "auto" : "100%",
+        width: "auto",
 
       }}>
         <div style={{marginRight: 20}}>

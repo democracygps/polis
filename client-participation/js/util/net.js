@@ -4,6 +4,7 @@ var eb = require("../eventBus");
 var URLs = require("../util/url");
 var Utils = require("../util/utils");
 var $ = require("jquery");
+var _ = require("lodash");
 
 var urlPrefix = URLs.urlPrefix;
 var basePath = "";

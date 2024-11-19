@@ -53,7 +53,7 @@ class ModerateCommentsSeed extends React.Component {
       <Box sx={{ mb: [4] }}>
         <Text sx={{ mb: [2] }}>
           Add{' '}
-          <Link target="_blank" href="https://compdemocracy.org/seed-comments">
+          <Link target='_blank' href='https://compdemocracy.org/seed-comments'>
             seed comments
           </Link>{' '}
           for participants to vote on:
@@ -72,16 +72,14 @@ class ModerateCommentsSeed extends React.Component {
               borderColor: 'mediumGray'
             }}
             onChange={this.handleTextareaChange.bind(this)}
-            maxLength="400"
-            data-test-id="seed_form"
+            maxLength='400'
+            data-test-id='seed_form'
             value={seedText}
             ref={(c) => (this.seed_form = c)}
           />
         </Box>
         <Box>
-          <Button onClick={this.handleSubmitSeed.bind(this)}>
-            {this.getButtonText()}
-          </Button>
+          <Button onClick={this.handleSubmitSeed.bind(this)}>{this.getButtonText()}</Button>
           {this.props.error ? <Text>{strings(this.props.error)}</Text> : null}
         </Box>
       </Box>

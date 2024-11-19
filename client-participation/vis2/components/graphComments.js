@@ -77,18 +77,10 @@ class GraphComments extends React.Component {
             antiRepfulForGid = Number(gid);
           }
         });
-        if (!_.isNull(repfulForGid) && repfulForGid === this.props.showOnlyGroup) {
-          color = globals.groupColor(repfulForGid);
-        } else if (!_.isNull(antiRepfulForGid)) {
-          color = globals.antiRepfulColor;
-        }
       }
       if (shouldShowOnlyOneGroup) {
         if (!(repfulForGid === this.props.showOnlyGroup || antiRepfulForGid === this.props.showOnlyGroup)) {
-          // console.log('skip',repfulForGid,antiRepfulForGid,this.props.showOnlyGroup);
           return "";
-        } else {
-          // console.log('ok');
         }
       }
       return (
@@ -109,16 +101,5 @@ class GraphComments extends React.Component {
     );
   }
 }
-
-  // transform={`translate(${globals.side / 2},${globals.side / 2})`}>
-
-  // <circle
-  //     r={4}
-  //     stroke={"blue"}
-  //     fill={"rgba(0,0,0,0)"}
-  //     key={9999999}
-  //     cx={xx(0*xScaleup)}
-  //     cy={yy(0*yScaleup)}/>
-
 
 export default GraphComments;

@@ -47,7 +47,7 @@ function want(
   name: any,
   parserWhichReturnsPromise: any,
   assigner: any,
-  defaultVal: any
+  defaultVal?: any
 ) {
   return buildCallback({
     name: name,
@@ -59,21 +59,11 @@ function want(
   });
 }
 
-function needCookie(name: any, parserWhichReturnsPromise: any, assigner: any) {
-  return buildCallback({
-    name: name,
-    extractor: extractFromCookie,
-    parserWhichReturnsPromise: parserWhichReturnsPromise,
-    assigner: assigner,
-    required: true,
-  });
-}
-
 function wantCookie(
   name: any,
   parserWhichReturnsPromise: any,
   assigner: any,
-  defaultVal: any
+  defaultVal?: any
 ) {
   return buildCallback({
     name: name,
@@ -85,27 +75,11 @@ function wantCookie(
   });
 }
 
-function needHeader(
-  name: any,
-  parserWhichReturnsPromise: any,
-  assigner: any,
-  defaultVal: any
-) {
-  return buildCallback({
-    name: name,
-    extractor: extractFromHeader,
-    parserWhichReturnsPromise: parserWhichReturnsPromise,
-    assigner: assigner,
-    required: true,
-    defaultVal: defaultVal,
-  });
-}
-
 function wantHeader(
   name: any,
   parserWhichReturnsPromise: any,
   assigner: any,
-  defaultVal: any
+  defaultVal?: any
 ) {
   return buildCallback({
     name: name,
@@ -118,10 +92,11 @@ function wantHeader(
 }
 
 function extractFromBody(req: Req, name: string | number) {
-  if (!req.body) {
-    return void 0;
+  let value = void 0;
+  if (req.body) {
+    value = req.body[name];
   }
-  return req.body[name];
+  return value;
 }
 
 function extractFromCookie(
@@ -152,12 +127,7 @@ function buildCallback(config: {
   required: any;
   defaultVal?: any;
 }) {
-  let name = config.name;
-  let parserWhichReturnsPromise = config.parserWhichReturnsPromise;
-  let assigner = config.assigner;
-  let required = config.required;
-  let defaultVal = config.defaultVal;
-  let extractor = config.extractor;
+  const { name, extractor, parserWhichReturnsPromise, assigner, required, defaultVal } = config;
 
   if (typeof assigner !== "function") {
     throw new Error("bad arg for assigner");
@@ -171,7 +141,7 @@ function buildCallback(config: {
     res: { status: (arg0: number) => void },
     next: (arg0?: string) => void
   ) {
-    let val = extractor(req, name);
+    const val = extractor(req, name);
     if (!_.isUndefined(val) && !_.isNull(val)) {
       parserWhichReturnsPromise(val)
         .then(
@@ -180,7 +150,7 @@ function buildCallback(config: {
             next();
           },
           function (err: any) {
-            let s = `polis_err_param_parse_failed_${name} (val='${val}', error=${err})`;
+            const s = `polis_err_param_parse_failed_${name} (val='${val}', error=${err})`;
             logger.error(s, err);
             res.status(400);
             next(s);
@@ -197,7 +167,7 @@ function buildCallback(config: {
       }
       next();
     } else {
-      let s = "polis_err_param_missing_" + name;
+      const s = "polis_err_param_missing_" + name;
       logger.error(s);
       res.status(400);
       next(s);
@@ -291,7 +261,7 @@ function getInt(s: string): Promise<number> {
     if (_.isNumber(s) && s >> 0 === s) {
       return resolve(s);
     }
-    let x: number = parseInt(s);
+    const x: number = parseInt(s);
     if (isNaN(x)) {
       return reject("polis_fail_parse_int " + s);
     }
@@ -301,7 +271,7 @@ function getInt(s: string): Promise<number> {
 
 function getBool(s: string | number) {
   return new Promise(function (resolve, reject) {
-    let type = typeof s;
+    const type = typeof s;
     if ("boolean" === type) {
       return resolve(s);
     }
@@ -353,7 +323,7 @@ function getRidFromReportId(report_id: string) {
   return new MPromise(
     "getRidFromReportId",
     function (resolve: any, reject: any) {
-      let cachedRid = reportIdToRidCache.get(report_id);
+      const cachedRid = reportIdToRidCache.get(report_id);
       if (cachedRid) {
         resolve(cachedRid);
         return;
@@ -371,7 +341,7 @@ function getRidFromReportId(report_id: string) {
           } else if (!results || !results.rows || !results.rows.length) {
             return reject("polis_err_fetching_rid_for_report_id");
           } else {
-            let rid = results.rows[0].rid;
+            const rid = results.rows[0].rid;
             reportIdToRidCache.set(report_id, rid);
             return resolve(rid);
           }
@@ -407,7 +377,7 @@ function getNumber(s: string): Promise<number> {
     if (_.isNumber(s)) {
       return resolve(s);
     }
-    let x: number = parseFloat(s);
+    const x: number = parseFloat(s);
     if (isNaN(x)) {
       return reject("polis_fail_parse_number");
     }
@@ -450,12 +420,6 @@ function getArrayOfStringNonEmpty(a: string, maxStrings: any, maxLength: any) {
   return getArrayOfString(a);
 }
 
-function getArrayOfStringLimitLength(maxStrings: any, maxLength: any) {
-  return function (a: any) {
-    return getArrayOfString(a, maxStrings || 999999999, maxLength);
-  };
-}
-
 function getArrayOfStringNonEmptyLimitLength(maxStrings: any, maxLength: any) {
   return function (a: any) {
     return getArrayOfStringNonEmpty(a, maxStrings || 999999999, maxLength);
@@ -493,7 +457,7 @@ function assignToPCustom(name: any) {
 function resolve_pidThing(
   pidThingStringName: any,
   assigner: (arg0: any, arg1: any, arg2: number) => void,
-  loggingString: string
+  loggingString?: string
 ) {
   if (_.isUndefined(loggingString)) {
     loggingString = "";
@@ -505,7 +469,7 @@ function resolve_pidThing(
       next("polis_err_this_middleware_should_be_after_auth_and_zid");
     }
 
-    let existingValue =
+    const existingValue =
       extractFromBody(req, pidThingStringName) ||
       extractFromCookie(req, pidThingStringName);
 
@@ -560,36 +524,6 @@ export {
   getUrlLimitLength,
   moveToBody,
   need,
-  needCookie,
-  needHeader,
-  resolve_pidThing,
-  want,
-  wantCookie,
-  wantHeader,
-};
-
-export default {
-  assignToP,
-  assignToPCustom,
-  getArrayOfInt,
-  getArrayOfStringNonEmpty,
-  getArrayOfStringNonEmptyLimitLength,
-  getBool,
-  getConversationIdFetchZid,
-  getEmail,
-  getInt,
-  getIntInRange,
-  getNumberInRange,
-  getOptionalStringLimitLength,
-  getPassword,
-  getPasswordWithCreatePasswordRules,
-  getReportIdFetchRid,
-  getStringLimitLength,
-  getUrlLimitLength,
-  moveToBody,
-  need,
-  needCookie,
-  needHeader,
   resolve_pidThing,
   want,
   wantCookie,

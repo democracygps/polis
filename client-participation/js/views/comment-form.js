@@ -14,6 +14,7 @@ var serialize = require("../util/serialize");
 var Strings = require("../strings");
 var Utils = require("../util/utils");
 var $ = require("jquery");
+var _ = require("lodash");
 
 var CHARACTER_LIMIT = Constants.CHARACTER_LIMIT;
 
@@ -76,7 +77,7 @@ module.exports = Handlebones.ModelView.extend({
   updateOneIdeaPerCommentMessage: function (formText) {
     // TODO I18N
     // Tests to see if there is non-punctuation that follows the end of a sentence.
-    if ((formText || "").match(/[\?\.\!].*[a-zA-Z0-9]+/)) {
+    if ((formText || "").match(/[?.!].*[a-zA-Z0-9]+/)) {
       this.showMessage("#one_idea_per_comment_message");
     } else {
       this.hideMessage("#one_idea_per_comment_message");

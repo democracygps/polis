@@ -103,7 +103,7 @@ class TidCarousel extends React.Component {
     return (
       <div style={{
         display: "flex",
-        width: true ? "auto" : "100%",
+        width: "auto",
         justifyContent: this.props.commentsToShow < this.state.page ? "center" : "space-between",
         alignItems: "baseline",
         marginTop: 10,
