@@ -6,22 +6,26 @@ This script fetches conversation data from PostgreSQL, processes it using
 EVōC for clustering, and generates interactive visualizations with topic labeling.
 """
 
-import hashlib
-import json
-import logging
 import os
-import random
-import time
+import json
 import uuid  # For generating job_id
+import time
+import logging
+import random
+import hashlib
+import numpy as np
 from datetime import datetime
 
 # Import from installed packages
 import evoc
-import numpy as np
-from polismath_commentgraph.utils.converter import DataConverter
+import datamapplot
+from sentence_transformers import SentenceTransformer
+from umap import UMAP
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 
 # Import from local modules
-from polismath_commentgraph.utils.storage import DynamoDBStorage, PostgresClient
+from polismath_commentgraph.utils.storage import PostgresClient, DynamoDBStorage
+from polismath_commentgraph.utils.converter import DataConverter
 
 # Configure logging
 logging.basicConfig(
@@ -406,7 +410,7 @@ def generate_cluster_topic_labels(
                 # Deterministic pseudo-random sample of up to 5 indices per (conversation, layer, cluster)
                 if len(cluster_indices_list) > 5:
                     seed_material = (
-                        f"{conversation_name}|{layer_idx}|{cluster_id}".encode()
+                        f"{conversation_name}|{layer_idx}|{cluster_id}".encode("utf-8")
                     )
                     seed_int = int(hashlib.sha1(seed_material).hexdigest(), 16) % (
                         2**32
@@ -494,9 +498,7 @@ def create_comment_hover_info(cluster_layer, cluster_characteristics, comment_te
         hover_info: List of hover text strings for each comment
     """
     hover_info = []
-    for i, (text, cluster_id) in enumerate(
-        zip(comment_texts, cluster_layer, strict=False)
-    ):
+    for i, (text, cluster_id) in enumerate(zip(comment_texts, cluster_layer)):
         if cluster_id >= 0 and cluster_id in cluster_characteristics:
             characteristics = cluster_characteristics[cluster_id]
 
@@ -1234,9 +1236,7 @@ def create_enhanced_multilayer_index(
         )
 
         # Add links to each layer
-        for (layer_idx, num_clusters), file_path in zip(
-            layer_info, layer_files, strict=False
-        ):
+        for (layer_idx, num_clusters), file_path in zip(layer_info, layer_files):
             file_name = os.path.basename(file_path)
             basic_view_file = file_name.replace("_named.html", "_enhanced.html")
             named_view_file = file_name
@@ -1304,7 +1304,7 @@ def create_enhanced_multilayer_index(
 
 def process_conversation(
     zid, export_dynamo=True, use_ollama=False, include_moderation=False
-) -> bool:
+):
     """
     Main function to process a conversation and generate visualizations.
 
@@ -1435,7 +1435,7 @@ def process_conversation(
     return True
 
 
-def main() -> None:
+def main():
     """Main entry point."""
     # Parse arguments
     import argparse
