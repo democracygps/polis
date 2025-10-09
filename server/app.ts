@@ -111,8 +111,6 @@ import {
   handle_POST_math_update,
   handle_GET_math_correlationMatrix,
   handle_GET_bidToPid,
-  handle_GET_xids,
-  handle_POST_xidWhitelist,
   handle_GET_bid,
 } from "./src/routes/math";
 import {
@@ -161,6 +159,7 @@ import {
   handle_POST_stars,
   handle_POST_trashes,
 } from "./src/routes/commentMod";
+import { handle_GET_xids, handle_POST_xidWhitelist } from "./src/routes/xids";
 import {
   handle_GET_einvites,
   handle_POST_einvites,

@@ -4,7 +4,7 @@
 
 import pg from "../db/pg-query";
 import { getZinvite, getZidForRid, getZidForUuid } from "../utils/zinvite";
-import { getXids } from "./math";
+import { getXids } from "./xids";
 import { getPca } from "../utils/pca";
 import { failJson } from "../utils/fail";
 import logger from "../utils/logger";
