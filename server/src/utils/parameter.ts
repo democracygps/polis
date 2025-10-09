@@ -416,7 +416,7 @@ function getArrayOfInt(a: string[]) {
 function assignToP(req: { p: { [x: string]: any } }, name: string, x: any) {
   req.p = req.p || {};
   if (!_.isUndefined(req.p[name])) {
-    logger.error("polis_err_clobbering " + name);
+    logger.warn("polis_err_clobbering " + name);
   }
   req.p[name] = x;
 }

@@ -74,11 +74,6 @@ interface EnsureParticipantOptions {
    * Default: uses existing properties (uid, pid, etc.)
    */
   resultProperty?: string;
-
-  /**
-   * Custom assigner function for setting values on the request
-   */
-  assigner?: (req: RequestWithP, key: string, value: unknown) => void;
 }
 
 /**
@@ -341,7 +336,7 @@ async function _ensureParticipantInternal(
   req: RequestWithP,
   options: EnsureParticipantOptions = {}
 ): Promise<ParticipantCreationResult> {
-  const { createIfMissing = true, issueJWT = true, assigner } = options;
+  const { createIfMissing = true, issueJWT = true } = options;
 
   // Try to get zid from conversation_id if not already present
   let zid = req.p.zid;
@@ -496,15 +491,10 @@ async function _ensureParticipantInternal(
   }
 
   // Update request with final values (may be undefined for optional middleware)
+  // Set directly - don't use assigner to avoid clobbering values already set by earlier middleware
   req.p.uid = uid;
   req.p.pid = pid;
   req.p.zid = zid;
-
-  if (assigner) {
-    assigner(req, "uid", uid);
-    assigner(req, "pid", pid);
-    assigner(req, "zid", zid);
-  }
 
   return {
     uid,

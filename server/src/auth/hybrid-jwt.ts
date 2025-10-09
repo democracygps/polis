@@ -65,7 +65,7 @@ function _isOidcJWT(token: string): boolean {
  * This allows the same endpoints to work with all authentication methods
  */
 function _createHybridJwtMiddleware(
-  assigner?: (req: any, key: string, value: any) => void,
+  assigner: (req: any, key: string, value: any) => void,
   isOptional = false
 ) {
   return async function hybridJwtMiddleware(
@@ -245,14 +245,14 @@ function _createHybridJwtMiddleware(
 /**
  * Required hybrid JWT authentication
  */
-const hybridAuth = (assigner?: (req: any, key: string, value: any) => void) =>
+const hybridAuth = (assigner: (req: any, key: string, value: any) => void) =>
   _createHybridJwtMiddleware(assigner, false);
 
 /**
  * Optional hybrid JWT authentication
  */
 const hybridAuthOptional = (
-  assigner?: (req: any, key: string, value: any) => void
+  assigner: (req: any, key: string, value: any) => void
 ) => _createHybridJwtMiddleware(assigner, true);
 
 export { hybridAuth, hybridAuthOptional };

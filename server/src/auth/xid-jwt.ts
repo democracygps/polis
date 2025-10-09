@@ -52,7 +52,7 @@ export const xidJwtValidationOptional = createJwtValidation(
 
 // Extract XID user info from JWT and assign to request
 export const extractUserFromXidJWT = (
-  assigner?: (req: any, key: string, value: any) => void
+  assigner: (req: any, key: string, value: any) => void
 ) => createExtractUserMiddleware("xid", "xidJwtPayload", assigner);
 
 // Verify an XID JWT manually (for custom validation scenarios)

@@ -62,7 +62,7 @@ const jwtValidationOptional = expressjwt({
 
 // Middleware to extract user info from JWT and assign to request
 const extractUserFromJWT = (
-  assigner?: (req: any, key: string, value: any) => void
+  assigner: (req: any, key: string, value: any) => void
 ) => {
   return async (req: any, res: any, next: any) => {
     try {
@@ -90,6 +90,8 @@ const extractUserFromJWT = (
           // Use the assigner function for uid (canonical parameter middleware pattern)
           if (assigner) {
             assigner(req, "uid", localUid);
+          } else {
+            throw new Error("assigner is required");
           }
         } catch (userCreationError: any) {
           logger.error("Error creating/mapping user from JWT:", {

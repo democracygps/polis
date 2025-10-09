@@ -56,7 +56,7 @@ export const standardUserJwtValidationOptional = createJwtValidation(
 
 // Extract user info from standard user JWT
 export const extractUserFromStandardUserJWT = (
-  assigner?: (req: any, key: string, value: any) => void
+  assigner: (req: any, key: string, value: any) => void
 ) =>
   createExtractUserMiddleware(
     "standard_user",

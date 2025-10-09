@@ -246,7 +246,7 @@ export function createJwtValidation(
 export function createExtractUserMiddleware(
   participantType: "anonymous" | "xid" | "standard_user",
   payloadProperty: string,
-  assigner?: (req: any, key: string, value: any) => void
+  assigner: (req: any, key: string, value: any) => void
 ) {
   return async (req: any, res: any, next: any) => {
     try {
@@ -294,18 +294,29 @@ export function createExtractUserMiddleware(
 
       // Set up request parameters
       req.p = req.p || {};
-      req.p.pid = payload.pid;
-      req.p.conversation_id = payload.conversation_id;
-      req.p[`${participantType}_participant`] = true;
 
-      // Add type-specific data
+      // Use assigner for uid/pid (JWT-only values)
+      // Set conversation_id/xid directly to avoid clobbering with query params
+      assigner(req, "uid", payload.uid);
+      assigner(req, "pid", payload.pid);
+
+      // Set conversation_id directly - query params will be the authoritative source
+      // We use this for mismatch detection, but the query param value takes precedence
+      req.p.conversation_id = payload.conversation_id;
+
+      // Set type-specific data
       if (participantType === "xid" && payload.xid) {
+        // Set xid directly - query param will be the authoritative source
         req.p.xid = payload.xid;
       } else if (participantType === "standard_user" && payload.oidc_sub) {
+        // For standard users, oidc_sub is metadata, not a query param
         req.p.oidc_sub = payload.oidc_sub;
       }
 
-      // Set conversation mismatch flag
+      // Set participant type flag (not a query param)
+      req.p[`${participantType}_participant`] = true;
+
+      // Set conversation mismatch flag (always direct, not a query param)
       if (
         requestedConversationId &&
         payload.conversation_id !== requestedConversationId
@@ -318,14 +329,6 @@ export function createExtractUserMiddleware(
         );
       } else {
         req.p.jwt_conversation_mismatch = false;
-      }
-
-      // Use assigner for standard parameters
-      if (assigner) {
-        assigner(req, "uid", payload.uid);
-        if (participantType === "xid" && payload.xid) {
-          assigner(req, "xid", payload.xid);
-        }
       }
 
       logger.debug(

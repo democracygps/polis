@@ -53,7 +53,7 @@ export const anonymousJwtValidationOptional = createJwtValidation(
 
 // Extract user info from anonymous JWT
 export const extractUserFromAnonymousJWT = (
-  assigner?: (req: any, key: string, value: any) => void
+  assigner: (req: any, key: string, value: any) => void
 ) => createExtractUserMiddleware("anonymous", "anonymousJwtPayload", assigner);
 
 // Re-export type for backward compatibility
