@@ -51,18 +51,6 @@
       (ls -lhR /usr/local/lib/python3.12/site-packages/nvidia || echo "NVIDIA directory not found.") && \
       (ls -lhR /usr/local/lib/python3.12/site-packages/torch/lib/*cuda* || echo "No CUDA libs in torch/lib.")
   
-  
-  RUN git clone https://github.com/TutteInstitute/evoc && \
-      cd evoc && \
-      pip install --no-cache-dir .
-  
-  RUN echo "--- PyTorch Check (after evoc install) ---" && \
-      pip show torch torchvision torchaudio && \
-      python -c "import torch; print(f'Torch version: {torch.__version__}'); print(f'CUDA available: {torch.cuda.is_available()}')" && \
-      echo "--- Looking for NVIDIA/CUDA libs (after evoc) ---" && \
-      (ls -lhR /usr/local/lib/python3.12/site-packages/nvidia || echo "NVIDIA directory not found.") && \
-      (ls -lhR /usr/local/lib/python3.12/site-packages/torch/lib/*cuda* || echo "No CUDA libs in torch/lib.")
-  
   # ---- Stage 2: Final ----
   FROM python:3.12-slim AS final
   
