@@ -290,17 +290,25 @@ describe("Data Export API with Importance Enabled", () => {
     testAgent.set("Authorization", `Bearer ${token}`);
     testAgent.set("x-forwarded-proto", "http");
 
-    // Create a conversation
-    conversationId = await createConversation(agent, {
+    // Create a conversation (returns zinvite string, not zid)
+    const zinvite = await createConversation(agent, {
       topic: testTopic,
       description: testDescription,
     });
+    conversationId = zinvite; // Keep for API calls
+
+    // Get the actual zid from the zinvite
+    const { pool } = await import("../setup/db-test-helpers");
+    const zidResult = await pool.query(
+      "SELECT zid FROM zinvites WHERE zinvite = $1",
+      [zinvite]
+    );
+    const zid = zidResult.rows[0].zid;
 
     // Enable importance for this conversation using direct database access
-    const { pool } = await import("../setup/db-test-helpers");
     await pool.query(
       "UPDATE conversations SET importance_enabled = true WHERE zid = $1",
-      [conversationId]
+      [zid]
     );
 
     // Create comments
