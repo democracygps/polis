@@ -54,19 +54,6 @@ else
     echo -e "${GREEN}✓ .env file already exists${NC}"
 fi
 
-# Check if Docker is available for local development
-if command -v docker &> /dev/null; then
-    echo -e "${GREEN}✓ Docker detected${NC}"
-    if command -v docker-compose &> /dev/null; then
-        echo -e "${GREEN}✓ Docker Compose detected${NC}"
-        echo -e "${YELLOW}You can now run 'docker-compose up -d' to start local services${NC}"
-    else
-        echo -e "${YELLOW}Warning: Docker Compose not found. You may need to install it for full local development.${NC}"
-    fi
-else
-    echo -e "${YELLOW}Warning: Docker not found. Some features may require Docker for local development.${NC}"
-fi
-
 # Run initial quality checks
 echo -e "${YELLOW}Running initial code quality checks...${NC}"
 echo -e "${GREEN}Running ruff...${NC}"
@@ -99,10 +86,9 @@ echo -e "${NC}"
 
 echo "Next steps:"
 echo "1. Review and update your .env file with proper configuration"
-echo "2. Start local services: docker-compose up -d"
-echo "3. Create DynamoDB tables: make setup-dynamodb"
-echo "4. Run tests: make test"
-echo "5. Check available commands: make help"
+echo "2. Create DynamoDB tables: make setup-dynamodb"
+echo "3. Run tests: make test"
+echo "4. Check available commands: make help"
 echo ""
 echo "For more information, see:"
 echo "- README.md for project overview"
