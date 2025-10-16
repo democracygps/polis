@@ -23,30 +23,39 @@
 
   WORKDIR /app
 
-  # Copy files needed for package build (based on pyproject.toml includes)
-  COPY pyproject.toml .
-  COPY polismath/ ./polismath/
-  COPY umap_narrative/ ./umap_narrative/
-  COPY scripts/ ./scripts/
-  # Copy top-level Python files referenced in pyproject.toml
-  COPY *.py ./
+  # ===== OPTIMIZATION: Install dependencies FIRST (cached layer) =====
+  # Copy only dependency files first - this layer is cached unless dependencies change
+  COPY pyproject.toml requirements.lock ./
 
   # Conditionally install PyTorch CPU versions if IS_GITHUB_ACTION is true
   RUN if [ "$IS_GITHUB_ACTION" = "true" ]; then \
           echo "IS_GITHUB_ACTION is true. Installing PyTorch CPU versions..."; \
-          pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu \
+          pip install --mount=type=cache,target=/root/.cache/pip \
+              --index-url https://download.pytorch.org/whl/cpu \
               torch==2.8.0+cpu \
               torchvision==0.23.0+cpu \
               torchaudio==2.8.0+cpu; \
       else \
           echo "IS_GITHUB_ACTION is false or not set. Skipping explicit PyTorch CPU-specific installation."; \
-          echo "PyTorch (if required) will be installed from pyproject.toml."; \
+          echo "PyTorch (if required) will be installed from requirements.lock."; \
       fi
 
-  # Install packages from pyproject.toml
-  # If PyTorch was installed in the step above, pip should recognize it.
-  # If IS_GITHUB_ACTION was false, PyTorch will be installed from pyproject.toml here.
-  RUN pip install --no-cache-dir .
+  # Install dependencies from lock file (cached layer - reused unless requirements.lock changes)
+  # BuildKit cache mount keeps pip cache between builds for faster rebuilds
+  RUN --mount=type=cache,target=/root/.cache/pip \
+      pip install -r requirements.lock
+
+  # ===== OPTIMIZATION: Copy source code LAST (busts cache on code changes) =====
+  # Copy source code - this layer rebuilds when code changes but reuses dependency layers above
+  COPY polismath/ ./polismath/
+  COPY umap_narrative/ ./umap_narrative/
+  COPY scripts/ ./scripts/
+  COPY *.py ./
+
+  # Install the project package (without dependencies - they're already installed)
+  # This registers entry points and installs the package in development mode
+  RUN --mount=type=cache,target=/root/.cache/pip \
+      pip install --no-deps .
 
   RUN echo "--- PyTorch Check (after pyproject.toml installation) ---" && \
       pip show torch torchvision torchaudio && \

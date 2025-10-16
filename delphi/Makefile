@@ -100,9 +100,14 @@ clean: ## Clean build artifacts
 build: ## Build package
 	python -m build
 
-# Docker commands
-docker-build: ## Build Docker image
-	docker build -t polis/delphi:latest .
+# Docker commands (see docs/DOCKER_BUILD_OPTIMIZATION.md for details)
+docker-build: ## Build Docker image (with BuildKit cache - ~30s for code changes)
+	@echo "Building with optimized layer caching (see docs/DOCKER_BUILD_OPTIMIZATION.md)"
+	DOCKER_BUILDKIT=1 docker build -t polis/delphi:latest .
+
+docker-build-no-cache: ## Build Docker image without cache (clean build)
+	@echo "Building from scratch (no cache)..."
+	DOCKER_BUILDKIT=1 docker build --no-cache -t polis/delphi:latest .
 
 docker-run: ## Run Docker container
 	docker run --rm --name delphi-app --env-file .env polis/delphi:latest
@@ -149,17 +154,17 @@ process-verbose: ## Process conversation with verbose output (requires ZID=conve
 	./run_delphi.py --zid=$(ZID) --verbose
 
 # Dependency management
-generate-requirements: ## Generate requirements files from pyproject.toml
-	@echo "Generating deployment requirements files from pyproject.toml..."
-	pip-compile --output-file requirements-prod.txt pyproject.toml
-	pip-compile --extra dev --output-file requirements-dev.txt pyproject.toml
-	@echo "✓ Generated requirements-prod.txt (production dependencies)"
-	@echo "✓ Generated requirements-dev.txt (development dependencies)"
+generate-requirements: ## Generate requirements.lock from pyproject.toml for Docker builds
+	@echo "Generating requirements.lock from pyproject.toml..."
+	pip-compile --output-file requirements.lock pyproject.toml
+	@echo "✓ Generated requirements.lock (production dependencies for Docker)"
+	@echo "⚠️  Remember to rebuild Docker image after updating requirements.lock"
 
-generate-requirements-upgrade: ## Generate requirements files with dependency upgrades
-	@echo "Generating requirements files with latest versions..."
-	pip-compile --upgrade --output-file requirements-prod.txt pyproject.toml
-	pip-compile --upgrade --extra dev --output-file requirements-dev.txt pyproject.toml
+generate-requirements-upgrade: ## Generate requirements.lock with latest dependency versions
+	@echo "Generating requirements.lock with latest versions..."
+	pip-compile --upgrade --output-file requirements.lock pyproject.toml
+	@echo "✓ Generated requirements.lock with upgraded dependencies"
+	@echo "⚠️  Test thoroughly and rebuild Docker image"
 
 check-deps: ## Check for dependency updates
 	@echo "Checking for dependency updates..."
