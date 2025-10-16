@@ -4,41 +4,42 @@ Script to directly compare Python PCA output with Clojure output.
 This script analyzes the results from our recent improvements.
 """
 
+import json
 import os
 import sys
-import json
+from typing import Any
+
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Any, Optional
 
 # Add the parent directory to the path to import the module
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
+from polismath.pca_kmeans_rep.clusters import cluster_named_matrix, determine_k
 from polismath.pca_kmeans_rep.named_matrix import NamedMatrix
 from polismath.pca_kmeans_rep.pca import pca_project_named_matrix
-from polismath.pca_kmeans_rep.clusters import cluster_named_matrix, determine_k
 
 
 def load_votes_from_csv(votes_path: str) -> NamedMatrix:
     """Load votes from a CSV file and create a NamedMatrix."""
     # Read CSV
     df = pd.read_csv(votes_path)
-    
+
     # Get unique participant and comment IDs
     ptpt_ids = sorted(df['voter-id'].unique())
     cmt_ids = sorted(df['comment-id'].unique())
-    
+
     # Create a matrix of NaNs
     vote_matrix = np.full((len(ptpt_ids), len(cmt_ids)), np.nan)
-    
+
     # Fill the matrix with votes
     ptpt_map = {pid: i for i, pid in enumerate(ptpt_ids)}
     cmt_map = {cid: i for i, cid in enumerate(cmt_ids)}
-    
+
     for _, row in df.iterrows():
         pid = row['voter-id']
         cid = row['comment-id']
-        
+
         # Convert vote to numeric value
         try:
             vote_val = float(row['vote'])
@@ -58,10 +59,10 @@ def load_votes_from_csv(votes_path: str) -> NamedMatrix:
                 vote_val = -1.0
             else:
                 vote_val = 0.0  # Pass or unknown
-        
+
         # Add vote to matrix
         vote_matrix[ptpt_map[pid], cmt_map[cid]] = vote_val
-    
+
     # Create and return a NamedMatrix
     return NamedMatrix(
         matrix=vote_matrix,
@@ -71,13 +72,13 @@ def load_votes_from_csv(votes_path: str) -> NamedMatrix:
     )
 
 
-def load_clojure_output(output_path: str) -> Dict[str, Any]:
+def load_clojure_output(output_path: str) -> dict[str, Any]:
     """Load Clojure output from a JSON file."""
-    with open(output_path, 'r') as f:
+    with open(output_path) as f:
         return json.load(f)
 
 
-def compare_clusters(python_clusters, clojure_clusters) -> Dict[str, Any]:
+def compare_clusters(python_clusters, clojure_clusters) -> dict[str, Any]:
     """
     Compare cluster distributions between Python and Clojure.
     For this comparison, we care about the number and size of clusters.
@@ -85,17 +86,17 @@ def compare_clusters(python_clusters, clojure_clusters) -> Dict[str, Any]:
     # Get Python cluster sizes
     python_sizes = [len(c.get('members', [])) for c in python_clusters]
     python_sizes.sort(reverse=True)  # Sort by size for easier comparison
-    
+
     # Get Clojure cluster sizes
     clojure_sizes = []
     for c in clojure_clusters:
         if isinstance(c, dict) and 'members' in c:
             clojure_sizes.append(len(c.get('members', [])))
     clojure_sizes.sort(reverse=True)  # Sort by size for easier comparison
-    
+
     # Compare number of clusters
     clusters_match = len(python_clusters) == len(clojure_clusters)
-    
+
     # Calculate similarity of size distributions using Wasserstein distance (EMD)
     # We'll normalize the sizes to make them comparable
     if python_sizes and clojure_sizes:
@@ -103,23 +104,23 @@ def compare_clusters(python_clusters, clojure_clusters) -> Dict[str, Any]:
         max_len = max(len(python_sizes), len(clojure_sizes))
         python_padded = python_sizes + [0] * (max_len - len(python_sizes))
         clojure_padded = clojure_sizes + [0] * (max_len - len(clojure_sizes))
-        
+
         # Normalize
         python_total = sum(python_padded)
         clojure_total = sum(clojure_padded)
         python_norm = [p / python_total for p in python_padded]
         clojure_norm = [c / clojure_total for c in clojure_padded]
-        
+
         # Calculate earth mover's distance
         try:
             from scipy.stats import wasserstein_distance
             size_similarity = 1.0 - min(wasserstein_distance(python_norm, clojure_norm), 1.0)
         except ImportError:
             # Fallback to simple difference if scipy not available
-            size_similarity = 1.0 - sum(abs(p - c) for p, c in zip(python_norm, clojure_norm)) / 2
+            size_similarity = 1.0 - sum(abs(p - c) for p, c in zip(python_norm, clojure_norm, strict=False)) / 2
     else:
         size_similarity = 0.0
-    
+
     return {
         'python_sizes': python_sizes,
         'clojure_sizes': clojure_sizes,
@@ -128,7 +129,7 @@ def compare_clusters(python_clusters, clojure_clusters) -> Dict[str, Any]:
     }
 
 
-def compare_projections(python_projections, clojure_projections) -> Dict[str, Any]:
+def compare_projections(python_projections, clojure_projections) -> dict[str, Any]:
     """
     Compare participant projections between Python and Clojure.
     We'll compute both per-participant similarity and overall distribution similarity.
@@ -136,7 +137,7 @@ def compare_projections(python_projections, clojure_projections) -> Dict[str, An
     """
     # Convert projections to numpy arrays for easier analysis
     common_ids = set(python_projections.keys()) & set(clojure_projections.keys())
-    
+
     if not common_ids:
         return {
             'common_participants': 0,
@@ -145,11 +146,11 @@ def compare_projections(python_projections, clojure_projections) -> Dict[str, An
             'same_quadrant_percentage': 0.0,
             'best_transformation': 'none'
         }
-    
+
     # Convert all projections to numpy arrays
     py_projs = {}
     cl_projs = {}
-    
+
     for pid in common_ids:
         # Python projections
         if isinstance(python_projections[pid], (list, np.ndarray)):
@@ -161,7 +162,7 @@ def compare_projections(python_projections, clojure_projections) -> Dict[str, An
             ])
         else:
             continue
-            
+
         # Clojure projections
         if isinstance(clojure_projections[pid], (list, np.ndarray)):
             cl_projs[pid] = np.array(clojure_projections[pid])
@@ -172,7 +173,7 @@ def compare_projections(python_projections, clojure_projections) -> Dict[str, An
             ])
         else:
             continue
-    
+
     # Define possible transformations to try
     transformations = [
         ('none', lambda p: p),
@@ -184,39 +185,39 @@ def compare_projections(python_projections, clojure_projections) -> Dict[str, An
         ('transpose_flip_y', lambda p: np.array([p[1], -p[0]])),
         ('transpose_flip_both', lambda p: np.array([-p[1], -p[0]]))
     ]
-    
+
     # Try each transformation and find the best match
     best_same_quadrant = 0
     best_avg_dist = float('inf')
     best_transformation = 'none'
     best_results = None
-    
+
     for name, transform_fn in transformations:
         # Apply transformation to Python projections
         transformed_py_projs = {pid: transform_fn(proj) for pid, proj in py_projs.items()}
-        
+
         # Compute metrics for this transformation
         distances = []
         same_quadrant = 0
-        
+
         for pid in transformed_py_projs:
             py_proj = transformed_py_projs[pid]
             cl_proj = cl_projs[pid]
-            
+
             # Calculate Euclidean distance
             dist = np.linalg.norm(py_proj - cl_proj)
             distances.append(dist)
-            
+
             # Check if in same quadrant (sign of both coordinates matches)
             if (py_proj[0] * cl_proj[0] >= 0) and (py_proj[1] * cl_proj[1] >= 0):
                 same_quadrant += 1
-        
+
         # Calculate average distance
         avg_dist = np.mean(distances) if distances else float('inf')
-        
+
         # Calculate percentage in same quadrant
         sq_pct = same_quadrant / len(transformed_py_projs) if transformed_py_projs else 0.0
-        
+
         # Update best if this transformation is better
         if same_quadrant > best_same_quadrant or (same_quadrant == best_same_quadrant and avg_dist < best_avg_dist):
             best_same_quadrant = same_quadrant
@@ -227,11 +228,11 @@ def compare_projections(python_projections, clojure_projections) -> Dict[str, An
                 'average_distance': avg_dist,
                 'same_quadrant_percentage': sq_pct
             }
-    
+
     # Overall distribution similarity using best transformation
     python_dists = [np.linalg.norm(proj) for proj in transformed_py_projs.values()]
     clojure_dists = [np.linalg.norm(proj) for proj in cl_projs.values()]
-    
+
     # Create histograms and compare overlap
     try:
         from scipy.stats import wasserstein_distance
@@ -239,11 +240,11 @@ def compare_projections(python_projections, clojure_projections) -> Dict[str, An
             # Normalize distributions for comparison
             p_min, p_max = min(python_dists), max(python_dists)
             c_min, c_max = min(clojure_dists), max(clojure_dists)
-            
+
             # Normalize to [0, 1]
             py_norm = [(d - p_min) / (p_max - p_min) if p_max > p_min else 0.5 for d in python_dists]
             cl_norm = [(d - c_min) / (c_max - c_min) if c_max > c_min else 0.5 for d in clojure_dists]
-            
+
             # Calculate distance between distributions
             dist_sim = 1.0 - min(wasserstein_distance(py_norm, cl_norm), 1.0)
         else:
@@ -251,15 +252,15 @@ def compare_projections(python_projections, clojure_projections) -> Dict[str, An
     except ImportError:
         # Fallback to simple comparison if scipy not available
         dist_sim = 0.5  # Neutral value
-    
+
     # Add distribution similarity and transformation to results
     best_results['distribution_similarity'] = dist_sim
     best_results['best_transformation'] = best_transformation
-    
+
     return best_results
 
 
-def run_direct_comparison(dataset_name: str) -> Dict[str, Any]:
+def run_direct_comparison(dataset_name: str) -> dict[str, Any]:
     """Run direct comparison between Python and Clojure results."""
     # Set paths based on dataset name
     if dataset_name == 'biodiversity':
@@ -272,46 +273,46 @@ def run_direct_comparison(dataset_name: str) -> Dict[str, Any]:
         clojure_output_path = os.path.join(data_dir, 'vw_clojure_output.json')
     else:
         raise ValueError(f"Unknown dataset: {dataset_name}")
-    
+
     print(f"Running direct comparison for {dataset_name} dataset")
-    
+
     # Load votes into a NamedMatrix
     votes_matrix = load_votes_from_csv(votes_path)
     print(f"Loaded vote matrix: {votes_matrix.values.shape}")
-    
+
     # Load Clojure output
     clojure_output = load_clojure_output(clojure_output_path)
-    print(f"Loaded Clojure output")
-    
+    print("Loaded Clojure output")
+
     # Perform PCA with our fixed implementation
     try:
         print("Running Python PCA...")
         pca_results, projections = pca_project_named_matrix(votes_matrix)
         print(f"PCA successful: {pca_results['comps'].shape} components generated")
-        
+
         # Get the optimal k for clustering
         auto_k = determine_k(votes_matrix)
         print(f"Auto-determined k={auto_k} for clustering")
-        
+
         # Perform clustering
         print("Running Python clustering...")
         clusters = cluster_named_matrix(votes_matrix, k=auto_k)
         print(f"Clustering successful: {len(clusters)} clusters generated")
-        
+
         # Get Clojure projections
         clojure_projections = clojure_output.get('proj', {})
-        
+
         # Compare projections
         print("Comparing projections...")
         proj_comparison = compare_projections(projections, clojure_projections)
         print(f"Projection comparison completed: {proj_comparison['same_quadrant_percentage']:.1%} same quadrant")
         print(f"Best transformation: {proj_comparison['best_transformation']}")
-        
+
         # Compare clusters
         print("Comparing clusters...")
         clusters_comparison = compare_clusters(clusters, clojure_output.get('group-clusters', []))
         print(f"Cluster comparison completed: similarity: {clusters_comparison['size_similarity']:.2f}")
-        
+
         # Compile results
         results = {
             'dataset': dataset_name,
@@ -326,21 +327,21 @@ def run_direct_comparison(dataset_name: str) -> Dict[str, Any]:
                 'cluster_size_similarity': clusters_comparison['size_similarity']
             }
         }
-        
+
         # Save results
         output_dir = os.path.join(data_dir, 'python_output')
         os.makedirs(output_dir, exist_ok=True)
         with open(os.path.join(output_dir, 'direct_comparison.json'), 'w') as f:
             json.dump(results, f, indent=2, default=str)
-            
+
         print(f"Results saved to {output_dir}/direct_comparison.json")
-        
+
         return results
     except Exception as e:
         print(f"Error during comparison: {e}")
         import traceback
         traceback.print_exc()
-        
+
         return {
             'dataset': dataset_name,
             'success': False,
@@ -352,12 +353,12 @@ if __name__ == "__main__":
     print("=== DIRECT COMPARISON WITH CLOJURE ===")
     print("\nRunning biodiversity dataset comparison...")
     biodiversity_results = run_direct_comparison('biodiversity')
-    
+
     print("\n" + "="*50 + "\n")
-    
+
     print("Running vw dataset comparison...")
     vw_results = run_direct_comparison('vw')
-    
+
     print("\n=== SUMMARY ===")
     print("Biodiversity dataset:")
     if biodiversity_results['success']:
@@ -367,7 +368,7 @@ if __name__ == "__main__":
         print(f"- Python clusters: {biodiversity_results['python_clusters']}, Clojure clusters: {biodiversity_results['clojure_clusters']}")
     else:
         print(f"- Error: {biodiversity_results.get('error', 'Unknown error')}")
-        
+
     print("\nVW dataset:")
     if vw_results['success']:
         print(f"- Same quadrant percentage: {vw_results['match_summary']['same_quadrant_percentage']:.1%}")
@@ -376,7 +377,7 @@ if __name__ == "__main__":
         print(f"- Python clusters: {vw_results['python_clusters']}, Clojure clusters: {vw_results['clojure_clusters']}")
     else:
         print(f"- Error: {vw_results.get('error', 'Unknown error')}")
-        
+
     # Add recommendations based on the findings
     print("\nRecommendations:")
     print("1. The PCA implementation now provides numerically stable results for real-world data.")

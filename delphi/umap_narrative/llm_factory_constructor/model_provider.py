@@ -6,11 +6,12 @@ Provides a consistent interface for different LLM backends (Ollama and Anthropic
 allowing for easy configuration and switching between model providers.
 """
 
-import os
 import json
 import logging
+import os
+from typing import Any
+
 import requests
-from typing import Dict, List, Optional, Union, Any
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 class ModelProvider:
     """Base class for model providers."""
-    
+
     def get_response(self, system_message: str, user_message: str) -> str:
         """
         Get a response from the model.
@@ -31,8 +32,8 @@ class ModelProvider:
             Model response as string
         """
         raise NotImplementedError("Subclasses must implement get_response")
-    
-    def list_available_models(self) -> List[str]:
+
+    def list_available_models(self) -> list[str]:
         """
         List available models from this provider.
         
@@ -43,7 +44,7 @@ class ModelProvider:
 
 class OllamaProvider(ModelProvider):
     """Provider for Ollama models."""
-    
+
     def __init__(self, model_name: str = "llama3", endpoint: str = "http://localhost:11434"):
         """
         Initialize the Ollama provider.
@@ -54,7 +55,7 @@ class OllamaProvider(ModelProvider):
         """
         self.model_name = model_name
         self.endpoint = endpoint
-        
+
         # Import ollama here to allow for optional dependency
         try:
             import ollama
@@ -65,7 +66,7 @@ class OllamaProvider(ModelProvider):
         except ImportError:
             logger.warning("Ollama package not installed. Using direct HTTP requests instead.")
             self.ollama = None
-    
+
     def get_response(self, system_message: str, user_message: str) -> str:
         """
         Get a response from an Ollama model.
@@ -79,7 +80,7 @@ class OllamaProvider(ModelProvider):
         """
         try:
             logger.info(f"Using Ollama model: {self.model_name}")
-            
+
             if self.ollama:
                 # Use the Ollama package if available
                 response = self.ollama.chat(
@@ -105,9 +106,9 @@ class OllamaProvider(ModelProvider):
                 )
                 response.raise_for_status()
                 result = response.json()["message"]["content"].strip()
-            
+
             return result
-        
+
         except Exception as e:
             logger.error(f"Error using Ollama: {str(e)}")
             # Return a JSON error response
@@ -131,8 +132,8 @@ class OllamaProvider(ModelProvider):
                     }
                 ]
             })
-    
-    def list_available_models(self) -> List[str]:
+
+    def list_available_models(self) -> list[str]:
         """
         List available Ollama models.
         
@@ -154,10 +155,10 @@ class OllamaProvider(ModelProvider):
                 response = requests.get(f"{self.endpoint}/api/tags")
                 response.raise_for_status()
                 available_models = [model.get('name') for model in response.json().get('models', [])]
-            
+
             logger.info(f"Available Ollama models: {available_models}")
             return available_models
-        
+
         except Exception as e:
             logger.error(f"Error listing Ollama models: {str(e)}")
             return []
@@ -165,7 +166,7 @@ class OllamaProvider(ModelProvider):
 class AnthropicProvider(ModelProvider):
     """Provider for Anthropic Claude models."""
 
-    def __init__(self, model_name: str = None, api_key: Optional[str] = None):
+    def __init__(self, model_name: str = None, api_key: str | None = None):
         """
         Initialize the Anthropic provider.
 
@@ -190,7 +191,7 @@ class AnthropicProvider(ModelProvider):
             logger.info(f"Anthropic API key is set (starts with: {self.api_key[:8]}...)")
         else:
             logger.warning("No Anthropic API key found in environment")
-    
+
     def get_response(self, system_message: str, user_message: str) -> str:
         """
         Get a response from a Claude model.
@@ -223,10 +224,10 @@ class AnthropicProvider(ModelProvider):
                     }
                 ]
             })
-        
+
         try:
             logger.info(f"Using Anthropic model: {self.model_name}")
-            
+
             if self.client:
                 # Use the Anthropic package if available
                 message = self.client.messages.create(
@@ -245,11 +246,11 @@ class AnthropicProvider(ModelProvider):
                     "anthropic-version": "2023-06-01",
                     "content-type": "application/json"
                 }
-                
+
                 # Add more debugging
                 logger.info(f"Using Anthropic model '{self.model_name}' via direct HTTP request")
                 logger.info(f"API key starts with: {self.api_key[:8]}...")
-                
+
                 data = {
                     "model": self.model_name,
                     "system": system_message,
@@ -258,7 +259,7 @@ class AnthropicProvider(ModelProvider):
                     ],
                     "max_tokens": 4000
                 }
-                
+
                 response = requests.post(
                     "https://api.anthropic.com/v1/messages",
                     headers=headers,
@@ -266,9 +267,9 @@ class AnthropicProvider(ModelProvider):
                 )
                 response.raise_for_status()
                 result = response.json()["content"][0]["text"]
-            
+
             return result
-        
+
         except Exception as e:
             logger.error(f"Error using Anthropic API: {str(e)}")
             # Return a JSON error response
@@ -292,8 +293,8 @@ class AnthropicProvider(ModelProvider):
                     }
                 ]
             })
-    
-    def get_batch_responses(self, batch_requests: List[Dict[str, Any]]) -> Dict[str, Any]:
+
+    def get_batch_responses(self, batch_requests: list[dict[str, Any]]) -> dict[str, Any]:
         """
         Submit a batch of requests to the Anthropic Batch API.
         
@@ -310,17 +311,17 @@ class AnthropicProvider(ModelProvider):
         if not self.api_key:
             logger.error("No Anthropic API key provided for batch requests")
             return {"error": "API key missing"}
-        
+
         try:
             logger.info(f"Submitting batch of {len(batch_requests)} requests to Anthropic API")
-            
+
             # Use Anthropic Batch API endpoint
             headers = {
                 "x-api-key": self.api_key,
                 "anthropic-version": "2023-06-01",
                 "content-type": "application/json"
             }
-            
+
             # Format requests for Batch API
             formatted_requests = []
             for i, request in enumerate(batch_requests):
@@ -330,42 +331,42 @@ class AnthropicProvider(ModelProvider):
                     "messages": request.get("messages", []),
                     "max_tokens": request.get("max_tokens", 4000)
                 }
-                
+
                 # Add request ID (for correlation on response)
                 req["request_id"] = f"req_{i}"
-                
+
                 formatted_requests.append(req)
-            
+
             # Check if Batch API is available
             try:
                 # Make a request to the Batch API endpoint
                 batch_request_data = {
                     "requests": formatted_requests
                 }
-                
+
                 response = requests.post(
                     "https://api.anthropic.com/v1/messages/batch",
                     headers=headers,
                     json=batch_request_data
                 )
-                
+
                 # Check if the response indicates Batch API is not available
                 if response.status_code == 404:
                     logger.warning("Anthropic Batch API endpoint not found (404). Falling back to sequential processing.")
                     return {"error": "Batch API not available", "fallback": "sequential"}
-                
+
                 # Raise for other errors
                 response.raise_for_status()
-                
+
                 # Get response data
                 response_data = response.json()
                 logger.info(f"Batch submitted successfully. Batch ID: {response_data.get('batch_id')}")
-                
+
                 # Add metadata mapping
                 response_data["request_metadata"] = {f"req_{i}": request.get("metadata", {}) for i, request in enumerate(batch_requests)}
-                
+
                 return response_data
-                
+
             except requests.exceptions.HTTPError as e:
                 if e.response.status_code == 404:
                     logger.warning("Anthropic Batch API endpoint not found (404). Falling back to sequential processing.")
@@ -373,16 +374,16 @@ class AnthropicProvider(ModelProvider):
                 else:
                     logger.error(f"HTTP error using Anthropic Batch API: {str(e)}")
                     return {"error": f"HTTP error: {str(e)}"}
-                    
+
             except Exception as e:
                 logger.error(f"Error using Anthropic Batch API: {str(e)}")
                 return {"error": str(e)}
-                
+
         except Exception as e:
             logger.error(f"Error preparing batch request: {str(e)}")
             return {"error": str(e)}
-    
-    def list_available_models(self) -> List[str]:
+
+    def list_available_models(self) -> list[str]:
         """
         List available Claude models.
 
@@ -398,7 +399,7 @@ class AnthropicProvider(ModelProvider):
         logger.info(f"Available Anthropic models: {available_models}")
         return available_models
 
-    async def get_completion(self, system: str, prompt: str, max_tokens: int = 4000) -> Dict[str, Any]:
+    async def get_completion(self, system: str, prompt: str, max_tokens: int = 4000) -> dict[str, Any]:
         """
         Get a completion from the Anthropic API with the new completion format.
         This method is specifically for the batch report generator.
@@ -504,7 +505,7 @@ def get_model_provider(provider_type: str = None, model_name: str = None) -> Mod
     """
     # Check for environment variable configuration
     provider_type = provider_type or os.environ.get("LLM_PROVIDER")
-    
+
     if provider_type.lower() == "anthropic":
         model_name = model_name or os.environ.get("ANTHROPIC_MODEL")
         if not model_name:
@@ -524,7 +525,7 @@ if __name__ == "__main__":
     provider = get_model_provider()
     models = provider.list_available_models()
     print(f"Available models: {models}")
-    
+
     response = provider.get_response(
         system_message="You are a helpful assistant.",
         user_message="What is the meaning of life?"

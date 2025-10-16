@@ -2,11 +2,11 @@
 PyTest configuration for the Polis comment graph microservice tests.
 """
 
-import pytest
-import os
-import boto3
-import uuid
 import logging
+import os
+import uuid
+
+import pytest
 
 # Disable boto3 logging
 logging.getLogger('boto3').setLevel(logging.CRITICAL)

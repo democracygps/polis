@@ -2,8 +2,8 @@
 Core algorithms for the Polis comment graph microservice.
 """
 
-from .embedding import EmbeddingEngine
 from .clustering import ClusteringEngine
+from .embedding import EmbeddingEngine
 
 __all__ = [
     'EmbeddingEngine',

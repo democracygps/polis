@@ -6,11 +6,12 @@ This script:
 2. Verifies it can be retrieved
 """
 
-import boto3
-import uuid
 import json
 import time
+import uuid
 from datetime import datetime
+
+import boto3
 
 # Set up DynamoDB
 dynamodb = boto3.resource(
@@ -61,9 +62,9 @@ if 'Item' in get_response:
     if 'batch_id' in job:
         print(f"VERIFICATION SUCCESS: batch_id is present: {job['batch_id']}")
     else:
-        print(f"VERIFICATION FAILED: batch_id not found in job!")
+        print("VERIFICATION FAILED: batch_id not found in job!")
 else:
-    print(f"ERROR: Could not retrieve job!")
+    print("ERROR: Could not retrieve job!")
 
 # Test the query that the poller uses to find jobs with batch_id
 print("\nTesting poller's scan for finding batch jobs...")
@@ -77,20 +78,20 @@ found = False
 for item in items:
     if item.get('job_id') == job_id:
         found = True
-        print(f"SCAN SUCCESS: Job found by scan with batch_id!")
+        print("SCAN SUCCESS: Job found by scan with batch_id!")
         print(f"Fields present: {list(item.keys())}")
         break
 
 if not found:
-    print(f"SCAN FAILED: Job not found by scan looking for batch_id attribute!")
-    
+    print("SCAN FAILED: Job not found by scan looking for batch_id attribute!")
+
     # Try a simpler scan to see if the job exists
     simple_scan = job_table.scan(
         FilterExpression='job_id = :job_id',
         ExpressionAttributeValues={':job_id': job_id}
     )
-    
+
     if simple_scan.get('Items'):
-        print(f"Job exists but not matched by batch_id attribute scan")
+        print("Job exists but not matched by batch_id attribute scan")
     else:
-        print(f"Job not found at all in simple scan")
+        print("Job not found at all in simple scan")

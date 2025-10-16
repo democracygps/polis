@@ -5,9 +5,10 @@ This module provides Python implementations of the utility functions
 from the original Clojure codebase.
 """
 
-import itertools
+from collections.abc import Callable, Iterable
+from typing import TypeVar
+
 import numpy as np
-from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple, TypeVar, Union
 
 T = TypeVar('T')
 U = TypeVar('U')
@@ -41,7 +42,7 @@ def round_to(n: float, digits: int = 0) -> float:
     return round(n, digits)
 
 
-def agree(vote: Optional[float]) -> bool:
+def agree(vote: float | None) -> bool:
     """
     Check if a vote is an agreement.
     
@@ -54,7 +55,7 @@ def agree(vote: Optional[float]) -> bool:
     return vote == 1
 
 
-def disagree(vote: Optional[float]) -> bool:
+def disagree(vote: float | None) -> bool:
     """
     Check if a vote is a disagreement.
     
@@ -67,7 +68,7 @@ def disagree(vote: Optional[float]) -> bool:
     return vote == -1
 
 
-def pass_vote(vote: Optional[float]) -> bool:
+def pass_vote(vote: float | None) -> bool:
     """
     Check if a vote is a pass.
     
@@ -80,7 +81,7 @@ def pass_vote(vote: Optional[float]) -> bool:
     return vote is None
 
 
-def zip_collections(*colls: Iterable[T]) -> List[Tuple[T, ...]]:
+def zip_collections(*colls: Iterable[T]) -> list[tuple[T, ...]]:
     """
     Zip multiple collections together.
     Similar to Python's built-in zip, but returns a list.
@@ -91,10 +92,10 @@ def zip_collections(*colls: Iterable[T]) -> List[Tuple[T, ...]]:
     Returns:
         List of tuples containing corresponding elements
     """
-    return list(zip(*colls))
+    return list(zip(*colls, strict=False))
 
 
-def with_indices(coll: Iterable[T]) -> List[Tuple[int, T]]:
+def with_indices(coll: Iterable[T]) -> list[tuple[int, T]]:
     """
     Combine elements of a collection with their indices.
     
@@ -107,7 +108,7 @@ def with_indices(coll: Iterable[T]) -> List[Tuple[int, T]]:
     return list(enumerate(coll))
 
 
-def filter_by_index(coll: Iterable[T], indices: Iterable[int]) -> List[T]:
+def filter_by_index(coll: Iterable[T], indices: Iterable[int]) -> list[T]:
     """
     Filter a collection to only include items at specified indices.
     
@@ -123,7 +124,7 @@ def filter_by_index(coll: Iterable[T], indices: Iterable[int]) -> List[T]:
     return [item for i, item in enumerate(coll_list) if i in index_set]
 
 
-def map_rest(f: Callable[[T, T], U], coll: List[T]) -> List[U]:
+def map_rest(f: Callable[[T, T], U], coll: list[T]) -> list[U]:
     """
     Apply a function to each element and all remaining elements.
     
@@ -145,7 +146,7 @@ def map_rest(f: Callable[[T, T], U], coll: List[T]) -> List[U]:
     return result
 
 
-def mapv_rest(f: Callable[[T, T], U], coll: List[T]) -> List[U]:
+def mapv_rest(f: Callable[[T, T], U], coll: list[T]) -> list[U]:
     """
     Same as map_rest but guaranteed to return a list.
     
@@ -159,7 +160,7 @@ def mapv_rest(f: Callable[[T, T], U], coll: List[T]) -> List[U]:
     return map_rest(f, coll)
 
 
-def typed_indexof(coll: List[T], item: T) -> int:
+def typed_indexof(coll: list[T], item: T) -> int:
     """
     Find the index of an item in a collection.
     
@@ -176,7 +177,7 @@ def typed_indexof(coll: List[T], item: T) -> int:
         return -1
 
 
-def hash_map_subset(m: Dict[T, U], keys: Iterable[T]) -> Dict[T, U]:
+def hash_map_subset(m: dict[T, U], keys: Iterable[T]) -> dict[T, U]:
     """
     Create a subset of a dictionary containing only specified keys.
     
@@ -190,7 +191,7 @@ def hash_map_subset(m: Dict[T, U], keys: Iterable[T]) -> Dict[T, U]:
     return {k: m[k] for k in keys if k in m}
 
 
-def distinct(coll: Iterable[T]) -> List[T]:
+def distinct(coll: Iterable[T]) -> list[T]:
     """
     Return a list with duplicates removed, preserving order.
     
@@ -209,7 +210,7 @@ def distinct(coll: Iterable[T]) -> List[T]:
     return result
 
 
-def weighted_mean(values: List[float], weights: Optional[List[float]] = None) -> float:
+def weighted_mean(values: list[float], weights: list[float] | None = None) -> float:
     """
     Calculate the weighted mean of a list of values.
     
@@ -221,7 +222,7 @@ def weighted_mean(values: List[float], weights: Optional[List[float]] = None) ->
         Weighted mean
     """
     values_array = np.array(values)
-    
+
     if weights is None:
         return np.mean(values_array)
     else:
@@ -229,8 +230,8 @@ def weighted_mean(values: List[float], weights: Optional[List[float]] = None) ->
         return np.average(values_array, weights=weights_array)
 
 
-def weighted_means(values_matrix: List[List[float]], 
-                  weights: Optional[List[float]] = None) -> List[float]:
+def weighted_means(values_matrix: list[list[float]],
+                  weights: list[float] | None = None) -> list[float]:
     """
     Calculate the weighted means of each column in a matrix.
     
@@ -242,16 +243,16 @@ def weighted_means(values_matrix: List[List[float]],
         List of weighted means for each column
     """
     values_array = np.array(values_matrix)
-    
+
     if weights is None:
         return np.mean(values_array, axis=0).tolist()
     else:
         weights_array = np.array(weights)
         # Reshape weights for broadcasting
-        weights_array = weights_array.reshape(-1, 1) 
-        
+        weights_array = weights_array.reshape(-1, 1)
+
         # Calculate weighted sum and sum of weights for each column
         weighted_sum = np.sum(values_array * weights_array, axis=0)
         sum_weights = np.sum(weights_array)
-        
+
         return (weighted_sum / sum_weights).tolist()

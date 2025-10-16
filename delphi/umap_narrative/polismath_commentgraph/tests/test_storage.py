@@ -2,18 +2,18 @@
 Tests for the DynamoDB storage utility.
 """
 
-import pytest
-import json
-import numpy as np
-from unittest.mock import patch, MagicMock
 from contextlib import contextmanager
+from unittest.mock import patch
+
+import pytest
+
 
 class MockTable:
     """Mock DynamoDB table for testing."""
     def __init__(self, name):
         self.name = name
         self.items = {}
-    
+
     def put_item(self, Item):
         """Mock put_item method."""
         key_schema = {
@@ -24,7 +24,7 @@ class MockTable:
             'Delphi_UMAPGraph': ('conversation_id', 'edge_id'),
             'CommentTexts': ('conversation_id', 'comment_id')
         }
-        
+
         # Create a key based on the table's key schema
         if self.name in key_schema:
             key_attrs = key_schema[self.name]
@@ -33,7 +33,7 @@ class MockTable:
             return {'ResponseMetadata': {'HTTPStatusCode': 200}}
         else:
             raise Exception(f"Unknown table: {self.name}")
-    
+
     def get_item(self, Key):
         """Mock get_item method."""
         key_schema = {
@@ -44,7 +44,7 @@ class MockTable:
             'Delphi_UMAPGraph': ('conversation_id', 'edge_id'),
             'CommentTexts': ('conversation_id', 'comment_id')
         }
-        
+
         if self.name in key_schema:
             key_attrs = key_schema[self.name]
             key = tuple(Key[attr] for attr in key_attrs)
@@ -54,12 +54,12 @@ class MockTable:
                 return {}
         else:
             raise Exception(f"Unknown table: {self.name}")
-    
+
     def query(self, **kwargs):
         """Mock query method."""
         # Simple implementation that returns all items
         return {'Items': list(self.items.values())}
-    
+
     def scan(self, **kwargs):
         """Mock scan method."""
         # Simple implementation that returns all items
@@ -81,7 +81,7 @@ class MockDynamoDB:
             'Delphi_UMAPGraph': MockTable('Delphi_UMAPGraph'),
             'CommentTexts': MockTable('CommentTexts')
         }
-    
+
     def Table(self, name):
         """Mock Table method."""
         if name in self.tables:
@@ -107,9 +107,12 @@ def storage(mock_dynamodb):
 def test_create_conversation_meta(storage, test_conversation_id):
     """Test creating conversation metadata."""
     from polismath_commentgraph.schemas.dynamo_models import (
-        ConversationMeta, ClusterLayer, UMAPParameters, EVOCParameters
+        ClusterLayer,
+        ConversationMeta,
+        EVOCParameters,
+        UMAPParameters,
     )
-    
+
     # Create a sample ConversationMeta
     meta = ConversationMeta(
         conversation_id=test_conversation_id,
@@ -124,16 +127,16 @@ def test_create_conversation_meta(storage, test_conversation_id):
         ],
         metadata={"title": "Test Conversation"}
     )
-    
+
     # Store the metadata
     result = storage.create_conversation_meta(meta)
-    
+
     # Check result
     assert result is True
-    
+
     # Retrieve the metadata
     retrieved = storage.get_conversation_meta(test_conversation_id)
-    
+
     # Check retrieved data
     assert retrieved is not None
     assert retrieved["conversation_id"] == test_conversation_id
@@ -142,10 +145,8 @@ def test_create_conversation_meta(storage, test_conversation_id):
 
 def test_create_comment_embedding(storage, test_conversation_id):
     """Test creating a comment embedding."""
-    from polismath_commentgraph.schemas.dynamo_models import (
-        CommentEmbedding, Embedding, Coordinates
-    )
-    
+    from polismath_commentgraph.schemas.dynamo_models import CommentEmbedding, Coordinates, Embedding
+
     # Create a sample CommentEmbedding
     embedding = CommentEmbedding(
         conversation_id=test_conversation_id,
@@ -159,16 +160,16 @@ def test_create_comment_embedding(storage, test_conversation_id):
         nearest_neighbors=[43, 44, 45],
         nearest_distances=[0.1, 0.2, 0.3]
     )
-    
+
     # Store the embedding
     result = storage.create_comment_embedding(embedding)
-    
+
     # Check result
     assert result is True
-    
+
     # Retrieve the embedding
     retrieved = storage.get_comment_embedding(test_conversation_id, 42)
-    
+
     # Check retrieved data
     assert retrieved is not None
     assert retrieved["conversation_id"] == test_conversation_id
@@ -179,10 +180,8 @@ def test_create_comment_embedding(storage, test_conversation_id):
 
 def test_batch_create_comment_embeddings(storage, test_conversation_id):
     """Test batch creating comment embeddings."""
-    from polismath_commentgraph.schemas.dynamo_models import (
-        CommentEmbedding, Embedding, Coordinates
-    )
-    
+    from polismath_commentgraph.schemas.dynamo_models import CommentEmbedding, Coordinates, Embedding
+
     # Create sample CommentEmbeddings
     embeddings = []
     for i in range(3):
@@ -199,18 +198,18 @@ def test_batch_create_comment_embeddings(storage, test_conversation_id):
             nearest_distances=[0.1, 0.2, 0.3]
         )
         embeddings.append(embedding)
-    
+
     # Store the embeddings
     result = storage.batch_create_comment_embeddings(embeddings)
-    
+
     # Check result
     assert result["success"] == 3
     assert result["failure"] == 0
-    
+
     # Retrieve the embeddings
     for i in range(3):
         retrieved = storage.get_comment_embedding(test_conversation_id, i)
-        
+
         # Check retrieved data
         assert retrieved is not None
         assert retrieved["conversation_id"] == test_conversation_id
