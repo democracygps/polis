@@ -5,7 +5,7 @@ DynamoDB schema definitions for Polis comment graph microservice.
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field, root_validator
+from pydantic import BaseModel, Field, model_validator
 
 
 class UMAPParameters(BaseModel):
@@ -142,11 +142,13 @@ class ClusterCharacteristic(BaseModel):
     top_tfidf_scores: list[float]
     sample_comments: list[str]
 
-    @root_validator(pre=True)
-    def create_cluster_key(self, values: dict[str, Any]) -> dict[str, Any]:
+    @model_validator(mode="before")
+    @classmethod
+    def create_cluster_key(cls, values: Any) -> Any:
         """Create the cluster_key if not provided."""
-        if "cluster_key" not in values and "layer_id" in values and "cluster_id" in values:
-            values["cluster_key"] = f"layer{values['layer_id']}_{values['cluster_id']}"
+        if isinstance(values, dict):
+            if "cluster_key" not in values and "layer_id" in values and "cluster_id" in values:
+                values["cluster_key"] = f"layer{values['layer_id']}_{values['cluster_id']}"
         return values
 
 
@@ -159,11 +161,13 @@ class EnhancedTopicName(BaseModel):
     cluster_id: int
     topic_name: str  # Format: "Keywords: word1, word2, word3, ..."
 
-    @root_validator(pre=True)
-    def create_topic_key(self, values: dict[str, Any]) -> dict[str, Any]:
+    @model_validator(mode="before")
+    @classmethod
+    def create_topic_key(cls, values: Any) -> Any:
         """Create the topic_key if not provided."""
-        if "topic_key" not in values and "layer_id" in values and "cluster_id" in values:
-            values["topic_key"] = f"layer{values['layer_id']}_{values['cluster_id']}"
+        if isinstance(values, dict):
+            if "topic_key" not in values and "layer_id" in values and "cluster_id" in values:
+                values["topic_key"] = f"layer{values['layer_id']}_{values['cluster_id']}"
         return values
 
 
@@ -179,11 +183,13 @@ class LLMTopicName(BaseModel):
     job_id: str | None = None  # ID of the job that generated this topic name
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
 
-    @root_validator(pre=True)
-    def create_topic_key(self, values: dict[str, Any]) -> dict[str, Any]:
+    @model_validator(mode="before")
+    @classmethod
+    def create_topic_key(cls, values: Any) -> Any:
         """Create the topic_key if not provided."""
-        if "topic_key" not in values and "layer_id" in values and "cluster_id" in values:
-            values["topic_key"] = f"layer{values['layer_id']}_{values['cluster_id']}"
+        if isinstance(values, dict):
+            if "topic_key" not in values and "layer_id" in values and "cluster_id" in values:
+                values["topic_key"] = f"layer{values['layer_id']}_{values['cluster_id']}"
         return values
 
 
