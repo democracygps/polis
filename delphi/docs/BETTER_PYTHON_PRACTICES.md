@@ -141,7 +141,7 @@ jobs:
 
 #### Key Features
 
-- **Matrix testing** across Python 3.9, 3.10, 3.11, 3.12
+- **Matrix testing** across Python 3.12, 3.13, 3.14
 - **Service containers** for PostgreSQL and DynamoDB
 - **Coverage reporting** with Codecov integration
 - **Automated Docker builds** on successful tests
@@ -711,7 +711,7 @@ ignore = ["E501", "B008", "C901", "PLR0913", "PLR0912", "PLR0915"]
 ```toml
 [tool.black]
 line-length = 120
-target-version = ["py39", "py310", "py311", "py312"]
+target-version = ["py312", "py313", "py314"]
 ```
 
 ### MyPy Configuration

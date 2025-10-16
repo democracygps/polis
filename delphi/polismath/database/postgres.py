@@ -67,7 +67,7 @@ class PostgresConfig:
             self._parse_url(url)
         else:
             self.host = host or os.environ.get("DATABASE_HOST", "localhost")
-            self.port = port or int(os.environ.get("DATABASE_PORT", 5432))
+            self.port = port or int(os.environ.get("DATABASE_PORT", "5432"))
             self.database = database or os.environ.get("DATABASE_NAME", "polis")
             self.user = user or os.environ.get("DATABASE_USER", "postgres")
             self.password = password or os.environ.get("DATABASE_PASSWORD", "")
@@ -148,7 +148,7 @@ class PostgresConfig:
         # Use individual environment variables
         return cls(
             host=os.environ.get("DATABASE_HOST"),
-            port=int(os.environ.get("DATABASE_PORT", 5432)),
+            port=int(os.environ.get("DATABASE_PORT", "5432")),
             database=os.environ.get("DATABASE_NAME"),
             user=os.environ.get("DATABASE_USER"),
             password=os.environ.get("DATABASE_PASSWORD"),
@@ -497,9 +497,9 @@ class PostgresClient:
 
             # Check moderation status with support for string values
             mod_value = m["mod"]
-            if mod_value == 1 or mod_value == "1":
+            if mod_value in {1, "1"}:
                 mod_in_tids.append(tid)
-            elif mod_value == -1 or mod_value == "-1":
+            elif mod_value in {-1, "-1"}:
                 mod_out_tids.append(tid)
 
             # Check meta status

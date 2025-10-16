@@ -246,7 +246,7 @@ class TestSplitCluster:
         assert cluster2.id is None
 
         # The split should separate [0,1,2] from [3]
-        assert set(cluster1.members + cluster2.members) == set([0, 1, 2, 3])
+        assert set(cluster1.members + cluster2.members) == {0, 1, 2, 3}
         assert len(cluster1.members) > 0
         assert len(cluster2.members) > 0
 
@@ -317,8 +317,8 @@ class TestKMeans:
         clusters.sort(key=lambda c: c.center[0])
 
         # Check cluster assignments
-        assert set(clusters[0].members) == set([0, 1])
-        assert set(clusters[1].members) == set([2, 3])
+        assert set(clusters[0].members) == {0, 1}
+        assert set(clusters[1].members) == {2, 3}
 
         # Check cluster centers
         assert np.allclose(clusters[0].center, [1.25, 1.25])

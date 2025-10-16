@@ -8,7 +8,9 @@ including votes, clustering, and representativeness calculation.
 import logging
 import sys
 import time
+import traceback
 from copy import deepcopy
+from decimal import Decimal
 from typing import Any
 
 import numpy as np
@@ -130,7 +132,7 @@ class Conversation:
                 ptpt_id = str(vote.get("pid"))  # Ensure string
                 comment_id = str(vote.get("tid"))  # Ensure string
                 vote_value = vote.get("vote")
-                created = vote.get("created", last_vote_timestamp)
+                vote.get("created", last_vote_timestamp)  # Track timestamp but don't use
 
                 # Skip invalid votes
                 if ptpt_id is None or comment_id is None or vote_value is None:
@@ -246,9 +248,6 @@ class Conversation:
         """
         Compute statistics on votes.
         """
-        # Make sure pandas is imported
-        import numpy as np
-
         # Initialize stats
         self.vote_stats = {
             "n_votes": 0,
@@ -399,9 +398,6 @@ class Conversation:
         Args:
             n_components: Number of principal components
         """
-        # Make sure pandas and numpy are imported
-        import numpy as np
-
         # Check if we have enough data
         if self.rating_mat.values.shape[0] < 2 or self.rating_mat.values.shape[1] < 2:
             # Not enough data for PCA, create minimal results
@@ -423,9 +419,6 @@ class Conversation:
         except Exception as e:
             # If PCA fails, create minimal results
             print(f"Error in PCA computation: {e}")
-            # Make sure we have numpy and pandas
-            import numpy as np
-
             cols = self.rating_mat.values.shape[1]
             self.pca = {"center": np.zeros(cols), "comps": np.zeros((min(n_components, 2), cols))}
             self.proj = {pid: np.zeros(2) for pid in self.rating_mat.rownames()}
@@ -457,22 +450,15 @@ class Conversation:
             matrix_values = numeric_matrix
 
         # Create a DataFrame with proper indexing
-        import pandas as pd
-
         df = pd.DataFrame(matrix_values, index=self.rating_mat.rownames(), columns=self.rating_mat.colnames())
 
         # Create a new NamedMatrix
-        from polismath.pca_kmeans_rep.named_matrix import NamedMatrix
-
         return NamedMatrix(df)
 
     def _compute_clusters(self) -> None:
         """
         Compute participant clusters using auto-determination of optimal k.
         """
-        # Make sure numpy and pandas are imported
-        import numpy as np
-
         # Check if we have projections
         if not self.proj:
             self.base_clusters = []
@@ -534,8 +520,6 @@ class Conversation:
         Returns:
             Dictionary with participant information including group correlations
         """
-        import time
-
         start_time = time.time()
 
         if not group_clusters:
@@ -717,8 +701,6 @@ class Conversation:
         """
         Compute information about participants.
         """
-        import time
-
         start_time = time.time()
         logger.info("Starting participant info computation...")
 
@@ -789,8 +771,6 @@ class Conversation:
         Returns:
             Dictionary with all conversation data
         """
-        import time
-
         start_time = time.time()
         logger.info("Starting get_full_data conversion")
 
@@ -890,8 +870,6 @@ class Conversation:
         Returns:
             Dictionary mapping comment IDs to vote statistics
         """
-        import numpy as np
-
         # Get all comment IDs
         comment_ids = self.rating_mat.colnames()
 
@@ -974,13 +952,15 @@ class Conversation:
             votes = self.rating_mat.values[row_indices, col_idx]
 
             if vote_type == "A":  # Agree
-                return int(np.sum(np.abs(votes - 1.0) < 0.001))
+                count = int(np.sum(np.abs(votes - 1.0) < 0.001))
             elif vote_type == "D":  # Disagree
-                return int(np.sum(np.abs(votes + 1.0) < 0.001))
+                count = int(np.sum(np.abs(votes + 1.0) < 0.001))
             elif vote_type == "S":  # Total votes
-                return int(np.sum(~np.isnan(votes)))
+                count = int(np.sum(~np.isnan(votes)))
             else:
-                return 0
+                count = 0
+
+            return count
 
         # For each group, compute vote stats
         for group in self.group_clusters:
@@ -1014,8 +994,6 @@ class Conversation:
         Returns:
             Dictionary mapping participant IDs to vote counts
         """
-        import time
-
         start_time = time.time()
         logger.info(f"Starting _compute_user_vote_counts for {len(self.rating_mat.rownames())} participants")
 
@@ -1126,10 +1104,6 @@ class Conversation:
         Returns:
             Dictionary representation of the conversation
         """
-        import time
-
-        import numpy as np
-
         # Start timing
         overall_start_time = time.time()
         logger.info("Starting optimized to_dict conversion")
@@ -1189,7 +1163,7 @@ class Conversation:
                         }
                     )
 
-                    logger.info(f"Processed projection chunk {i//chunk_size + 1}: {time.time() - chunk_start:.4f}s")
+                    logger.info(f"Processed projection chunk {i // chunk_size + 1}: {time.time() - chunk_start:.4f}s")
             else:
                 # Process all at once for smaller datasets
                 result["proj"] = {
@@ -1366,7 +1340,7 @@ class Conversation:
                 has_data = False
 
                 # Multiply probabilities from all groups (same as reduce * in Clojure)
-                for gid, gid_data in result["group-votes"].items():
+                for _gid, gid_data in result["group-votes"].items():
                     votes_data = gid_data.get("votes", {})
 
                     if tid_key in votes_data:
@@ -1441,8 +1415,6 @@ class Conversation:
         Returns:
             Converted data structure
         """
-        import numpy as np
-
         # For primitive types, just return
         if data is None or isinstance(data, (int, float, bool, str)):
             return data
@@ -1484,8 +1456,6 @@ class Conversation:
         Returns:
             Converted data structure with hyphenated keys
         """
-        import time
-
         detail_start = time.time()
 
         # Count objects processed for debugging
@@ -1494,32 +1464,35 @@ class Conversation:
         def _convert_inner(data, depth=0):
             processed_count["total"] += 1
 
-            # For immutable types, use memoization to avoid re-processing
+            # Handle early return cases
+            result = None
+
             if isinstance(data, (str, int, float, bool, tuple)) or data is None:
                 # We can only cache immutable types as dict keys
                 cache_key = (id(data), str(type(data))) if isinstance(data, tuple) else data
 
                 if cache_key in Conversation._conversion_cache:
                     processed_count["cache_hit"] += 1
-                    return Conversation._conversion_cache[cache_key]
-
-            # Base cases: primitive types
-            if data is None or isinstance(data, (str, int, float, bool)):
-                processed_count["primitive"] += 1
-                Conversation._conversion_cache[data] = data
-                return data
+                    result = Conversation._conversion_cache[cache_key]
+                else:
+                    # Base cases: primitive types
+                    processed_count["primitive"] += 1
+                    Conversation._conversion_cache[data] = data
+                    result = data
 
             # Handle numpy arrays and convert to lists
-            if hasattr(data, "tolist") and callable(data.tolist):
+            elif hasattr(data, "tolist") and callable(data.tolist):
                 processed_count["numpy"] += 1
                 result = data.tolist()
-                return result
 
-            # Special case for empty dictionaries and lists to avoid recursion
-            if isinstance(data, dict) and not data:
-                return {}
-            if isinstance(data, (list, tuple)) and not data:
-                return []
+            # Special case for empty containers to avoid recursion
+            elif isinstance(data, dict) and not data:
+                result = {}
+            elif isinstance(data, (list, tuple)) and not data:
+                result = []
+
+            if result is not None:
+                return result
 
             # Recursive case: dictionaries
             if isinstance(data, dict):
@@ -1619,7 +1592,7 @@ class Conversation:
             logger.info(f"    - Cache hits: {processed_count['cache_hit']}")
 
             if processed_count["dict"] > 0:
-                logger.info(f"    - Average time per object: {(detail_time/processed_count['total'])*1000:.4f}ms")
+                logger.info(f"    - Average time per object: {(detail_time / processed_count['total']) * 1000:.4f}ms")
 
             cache_size = len(Conversation._conversion_cache)
             logger.info(f"    - Cache size: {cache_size} entries")
@@ -1695,11 +1668,6 @@ class Conversation:
         Returns:
             Dictionary representation optimized for DynamoDB
         """
-        import decimal
-        import time
-
-        import numpy as np
-
         # Start timing
         start_time = time.time()
         logger.info("Starting conversion to DynamoDB format...")
@@ -1732,7 +1700,7 @@ class Conversation:
         # Function to convert floats to Decimal for DynamoDB compatibility
         def float_to_decimal(obj):
             if isinstance(obj, float):
-                return decimal.Decimal(str(obj))
+                return Decimal(str(obj))
             elif isinstance(obj, dict):
                 return {k: float_to_decimal(v) for k, v in obj.items()}
             elif isinstance(obj, list):
@@ -1950,7 +1918,7 @@ class Conversation:
                         consensus_value *= prob
 
                     # Store result with decimal conversion for DynamoDB
-                    result["group_consensus"][tid_key] = decimal.Decimal(str(consensus_value))
+                    result["group_consensus"][tid_key] = Decimal(str(consensus_value))
 
         logger.info(
             f"[{time.time() - start_time:.2f}s] group_consensus computed in {time.time() - consensus_start:.2f}s"
@@ -2022,9 +1990,7 @@ class Conversation:
                         pass
 
                     # Add to results with Decimal conversion for DynamoDB
-                    repness_data.append(
-                        {"group_id": gid, "comment_id": tid, "repness": decimal.Decimal(str(rep_value))}
-                    )
+                    repness_data.append({"group_id": gid, "comment_id": tid, "repness": Decimal(str(rep_value))})
                 except Exception as e:
                     logger.warning(f"Error processing repness item: {e}")
 
@@ -2062,7 +2028,5 @@ class Conversation:
             return success
         except Exception as e:
             logger.error(f"Exception during export to DynamoDB: {e}")
-            import traceback
-
             logger.error(f"Traceback: {traceback.format_exc()}")
             return False

@@ -15,8 +15,24 @@ from datetime import datetime
 
 import pandas as pd
 
+from polismath.conversation.conversation import Conversation
+
 # Add the parent directory to the path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+# Try to import notebook functionality (optional)
+# Add notebook directory to sys.path temporarily for import
+notebook_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "eda_notebooks")
+sys.path.insert(0, notebook_dir)
+
+try:
+    from run_analysis import check_environment as notebook_check_environment  # type: ignore
+except ImportError:
+    notebook_check_environment = None
+finally:
+    # Remove notebook directory from sys.path after import attempt
+    if notebook_dir in sys.path:
+        sys.path.remove(notebook_dir)
 
 
 def green(text):
@@ -60,7 +76,7 @@ def print_attributes(obj, max_attrs=10):
                     print(f"  {attr}: Empty {type(value).__name__}")
             elif isinstance(value, dict):
                 print(f"  {attr}: {type(value).__name__} with keys: {list(value.keys())[:5]}")
-            elif attr == "rating_mat" or attr == "raw_rating_mat":
+            elif attr in {"rating_mat", "raw_rating_mat"}:
                 # Special handling for matrix objects
                 print(f"  {attr}: {type(value).__name__}")
                 # Check for common matrix properties
@@ -136,7 +152,6 @@ def load_data(dataset_name):
 
 def initialize_conversation(votes, comments):
     """Initialize a conversation with votes and comments"""
-    from polismath.conversation.conversation import Conversation
 
     try:
         print("Initializing conversation...")
@@ -149,7 +164,7 @@ def initialize_conversation(votes, comments):
         if hasattr(conv, "rating_mat"):
             try:
                 print(f"  Initial matrix shape: {conv.rating_mat.values.shape}")
-            except:
+            except Exception:
                 print("  Initial matrix shape: [Not available]")
 
         # Process votes but ensure recompute=True to force computation
@@ -242,7 +257,7 @@ def analyze_conversation(conv, votes=None, comments=None):
         if "n_ptpts" not in results or not results["n_ptpts"]:
             # Try getting a count of unique participant IDs from votes
             try:
-                unique_ptpts = set(v["pid"] for v in votes)
+                unique_ptpts = {v["pid"] for v in votes}
                 results["n_ptpts"] = len(unique_ptpts)
                 print(f"  Found {len(unique_ptpts)} unique participants in votes")
             except Exception:
@@ -251,7 +266,7 @@ def analyze_conversation(conv, votes=None, comments=None):
         if "n_cmts" not in results or not results["n_cmts"]:
             # Try getting a count of unique comment IDs from votes
             try:
-                unique_cmts = set(v["tid"] for v in votes)
+                unique_cmts = {v["tid"] for v in votes}
                 results["n_cmts"] = len(unique_cmts)
                 print(f"  Found {len(unique_cmts)} unique comments in votes")
             except Exception:
@@ -487,9 +502,9 @@ def display_results_summary(results):
                             text = comment["text"]
                             if len(text) > 80:
                                 text = text[:77] + "..."
-                            print(f'    {i+1}. Comment {comment_id}{score_info}: "{text}"')
+                            print(f'    {i + 1}. Comment {comment_id}{score_info}: "{text}"')
                         else:
-                            print(f"    {i+1}. Comment {comment_id}{score_info}")
+                            print(f"    {i + 1}. Comment {comment_id}{score_info}")
 
     print("\n" + "=" * 50)
 
@@ -538,17 +553,18 @@ def run_notebook_check():
             print(yellow("  run_analysis.py not found in notebooks directory. Skipping notebook check."))
             return True
 
-        # Try to import the notebook runner
-        sys.path.append(notebook_dir)
-        from run_analysis import check_environment
+        if notebook_check_environment is None:
+            print(red("  Notebook environment check not available (import failed)"))
+            return False
 
-        result = check_environment()
+        result = notebook_check_environment()
         if result:
             print(green("  Notebook environment check PASSED"))
             return True
         else:
             print(red("  Notebook environment check FAILED"))
             return False
+
     except Exception as e:
         print(red(f"  Error checking notebook functionality: {e}"))
         traceback.print_exc()

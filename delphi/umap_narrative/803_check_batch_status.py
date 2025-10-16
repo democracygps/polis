@@ -18,6 +18,7 @@ import sys
 from datetime import UTC, datetime, timedelta
 
 import boto3
+from anthropic import Anthropic
 from botocore.exceptions import ClientError
 
 # Configure logging
@@ -63,8 +64,6 @@ class BatchStatusChecker:
         self.report_table = self.dynamodb.Table("Delphi_NarrativeReports")
 
         try:
-            from anthropic import Anthropic
-
             api_key = os.environ.get("ANTHROPIC_API_KEY")
             if not api_key:
                 raise ValueError("ANTHROPIC_API_KEY is not set.")
@@ -73,7 +72,7 @@ class BatchStatusChecker:
             logger.error(f"Failed to initialize Anthropic client: {e}")
             self.anthropic = None
 
-    async def check_and_process_job(self, job_id: str) -> int:
+    async def check_and_process_job(self, job_id: str) -> int:  # noqa: PLR0911
         """
         Main logic: Fetches a job, checks its batch status, and processes if complete.
         Returns an exit code to the calling process.

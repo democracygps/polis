@@ -6,9 +6,11 @@ This script processes the real data files and runs the PCA implementation direct
 
 import os
 import sys
+import traceback
 
 import numpy as np
 import pandas as pd
+from sklearn.cluster import KMeans
 
 # Add the parent directory to the path to import the module
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
@@ -127,8 +129,6 @@ def test_pca_implementation(dataset_name: str) -> None:
         print(f"Y mean: {y_mean:.2f}, std: {y_std:.2f}")
 
         # Try clustering
-        from sklearn.cluster import KMeans
-
         n_clusters = 3
         kmeans = KMeans(n_clusters=n_clusters, random_state=42)
         labels = kmeans.fit_predict(proj_array)
@@ -142,8 +142,6 @@ def test_pca_implementation(dataset_name: str) -> None:
 
     except Exception as e:
         print(f"Error during PCA: {e}")
-        import traceback
-
         traceback.print_exc()
         print("PCA implementation FAILED with real data")
 

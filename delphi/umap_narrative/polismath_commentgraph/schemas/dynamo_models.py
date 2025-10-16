@@ -143,7 +143,7 @@ class ClusterCharacteristic(BaseModel):
     sample_comments: list[str]
 
     @root_validator(pre=True)
-    def create_cluster_key(cls, values: dict[str, Any]) -> dict[str, Any]:
+    def create_cluster_key(self, values: dict[str, Any]) -> dict[str, Any]:
         """Create the cluster_key if not provided."""
         if "cluster_key" not in values and "layer_id" in values and "cluster_id" in values:
             values["cluster_key"] = f"layer{values['layer_id']}_{values['cluster_id']}"
@@ -160,7 +160,7 @@ class EnhancedTopicName(BaseModel):
     topic_name: str  # Format: "Keywords: word1, word2, word3, ..."
 
     @root_validator(pre=True)
-    def create_topic_key(cls, values: dict[str, Any]) -> dict[str, Any]:
+    def create_topic_key(self, values: dict[str, Any]) -> dict[str, Any]:
         """Create the topic_key if not provided."""
         if "topic_key" not in values and "layer_id" in values and "cluster_id" in values:
             values["topic_key"] = f"layer{values['layer_id']}_{values['cluster_id']}"
@@ -180,7 +180,7 @@ class LLMTopicName(BaseModel):
     created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
 
     @root_validator(pre=True)
-    def create_topic_key(cls, values: dict[str, Any]) -> dict[str, Any]:
+    def create_topic_key(self, values: dict[str, Any]) -> dict[str, Any]:
         """Create the topic_key if not provided."""
         if "topic_key" not in values and "layer_id" in values and "cluster_id" in values:
             values["topic_key"] = f"layer{values['layer_id']}_{values['cluster_id']}"

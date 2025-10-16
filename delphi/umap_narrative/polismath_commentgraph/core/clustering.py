@@ -146,7 +146,7 @@ class ClusteringEngine:
             # Try to mark noise points if possible
             try:
                 probabilities[cluster_labels == -1] = 0
-            except:
+            except Exception:
                 pass
 
             logger.info("EVOC clustering successful")
@@ -182,7 +182,7 @@ class ClusteringEngine:
 
         try:
             # Try EVOC first
-            cluster_labels = self.evoc_clusterer.fit_predict(embeddings)
+            self.evoc_clusterer.fit_predict(embeddings)  # Fit the clusterer
             cluster_layers = self.evoc_clusterer.cluster_layers_
 
             logger.info(f"EVOC created {len(cluster_layers)} cluster layers")

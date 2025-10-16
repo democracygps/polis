@@ -444,7 +444,7 @@ def process_conversation(zid: int, export_dynamo: bool = True) -> bool:
         logger.info(f"Stored {result['success']} topics with {result['failure']} failures")
 
     # Process layers and store characteristics
-    layer_data = process_layers_and_store_characteristics(
+    process_layers_and_store_characteristics(
         conversation_id,
         cluster_layers,
         comment_texts,
@@ -539,7 +539,7 @@ def main() -> None:
             dynamo_storage.create_conversation_meta(conversation_meta)
 
             # Process and store cluster data
-            layer_data = process_layers_and_store_characteristics(
+            process_layers_and_store_characteristics(
                 str(args.zid),
                 cluster_layers,
                 comment_texts,

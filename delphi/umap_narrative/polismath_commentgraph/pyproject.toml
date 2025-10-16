@@ -9,14 +9,14 @@ build-backend = "hatchling.build"
 name = "polismath_commentgraph"
 version = "1.0.0"
 description = "Polis comment graph microservice for clustering and embeddings"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 
 # Install parent project in development mode
 # This gives us access to all dependencies including evoc
 dependencies = [
     # Core Lambda runtime dependencies (keep in sync with requirements.txt)
     "boto3>=1.26.0",
-    "numpy>=1.20.0", 
+    "numpy>=1.20.0",
     "scipy>=1.7.0",
     "pandas>=1.3.0",
     "scikit-learn>=1.3.0",
@@ -25,7 +25,7 @@ dependencies = [
     "umap-learn>=0.5.3",
     "hdbscan>=0.8.29",
     "fastapi>=0.88.0",
-    "uvicorn>=0.20.0", 
+    "uvicorn>=0.20.0",
     "pydantic>=1.10.0",
     "python-dotenv>=0.21.0",
     "requests>=2.25.0",
@@ -55,5 +55,5 @@ packages = ["."]
 
 # Tool configuration (inherits from parent project)
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.12"
 ignore_missing_imports = true

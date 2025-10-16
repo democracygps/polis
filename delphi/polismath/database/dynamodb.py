@@ -167,7 +167,7 @@ class DynamoDBClient:
             except Exception as e:
                 logger.error(f"Error creating table {table_name}: {e}")
 
-    def _numpy_to_list(self, obj):
+    def _numpy_to_list(self, obj):  # noqa: PLR0911
         """Convert numpy arrays to lists for JSON serialization."""
 
         if isinstance(obj, np.ndarray):
@@ -556,7 +556,7 @@ class DynamoDBClient:
             traceback.print_exc()
             return False
 
-    def write_projections_separately(self, conv) -> bool:
+    def write_projections_separately(self, conv) -> bool:  # noqa: PLR0911
         """
         Write participant projections separately for large conversations.
         This method optimizes for reliability with very large conversations (10,000+ participants)

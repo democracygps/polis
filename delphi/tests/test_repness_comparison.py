@@ -308,7 +308,7 @@ def test_comparison(dataset_name: str) -> None:
         print(f"\n  Consensus comments match rate: {stats['consensus_match_rate']:.2f}")
 
         print("\n  Top matching comments:")
-        for i, comment in enumerate(stats["top_matching_comments"][:5]):  # Show top 5
+        for _i, comment in enumerate(stats["top_matching_comments"][:5]):  # Show top 5
             cid = comment["comment_id"]
             gid = comment["group_id"]
             print(f"    - Comment {cid} (Group {gid}):")
@@ -331,7 +331,7 @@ def test_comparison(dataset_name: str) -> None:
             if comments:
                 print(f"    - Group {group_id}: {len(comments)} comments")
                 for i, cmt in enumerate(comments[:3]):  # Show top 3
-                    print(f"      Comment {i+1}: ID {cmt.get('comment_id')}, Type: {cmt.get('repful')}")
+                    print(f"      Comment {i + 1}: ID {cmt.get('comment_id')}, Type: {cmt.get('repful')}")
                     print(f"        Agree: {cmt.get('pa', 0):.2f}, Disagree: {cmt.get('pd', 0):.2f}")
                     print(f"        Metrics: A={cmt.get('agree_metric', 0):.2f}, D={cmt.get('disagree_metric', 0):.2f}")
 

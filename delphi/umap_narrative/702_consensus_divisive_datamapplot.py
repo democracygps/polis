@@ -9,14 +9,17 @@ This script:
 """
 
 import argparse
+import json
 import logging
 import os
 import sys
 import traceback
+from decimal import Decimal
 
 import boto3
 import matplotlib.pyplot as plt
 import numpy as np
+import psycopg2
 from polismath_commentgraph.utils.group_data import GroupDataProcessor
 from polismath_commentgraph.utils.storage import PostgresClient
 
@@ -161,7 +164,7 @@ def load_data_from_dynamodb(zid, layer_num=0):
                         float(pos.get("y", 0)),
                     ]
 
-        logger.info(f'Extracted {len(data["positions"])} comment positions')
+        logger.info(f"Extracted {len(data['positions'])} comment positions")
 
     except Exception as e:
         logger.error(f"Error retrieving positions from UMAPGraph: {e}")
@@ -184,7 +187,7 @@ def load_data_from_dynamodb(zid, layer_num=0):
             if cluster_column in item and item[cluster_column] is not None:
                 data["clusters"][comment_id] = int(item[cluster_column])
 
-        logger.info(f'Extracted {len(data["clusters"])} cluster assignments for layer {layer_num}')
+        logger.info(f"Extracted {len(data['clusters'])} cluster assignments for layer {layer_num}")
 
     except Exception as e:
         logger.error(f"Error retrieving cluster assignments: {e}")
@@ -220,8 +223,6 @@ def get_postgres_connection():
     Returns:
         psycopg2 connection object
     """
-    import psycopg2
-
     try:
         conn = psycopg2.connect(
             host=DB_CONFIG["host"],
@@ -303,7 +304,7 @@ def load_comment_texts_and_extremity(zid, layer_num=0):
         if not comment_texts:
             cursor.execute("SELECT tid, txt FROM comments WHERE zid = %s", (zid,))
             comments_data = cursor.fetchall()
-            comment_texts = {tid: txt for tid, txt in comments_data}
+            comment_texts = dict(comments_data)
             logger.info(f"Retrieved {len(comment_texts)} comment texts in fallback mode")
 
         # 2. Try to get extremity values from math_ptptstats
@@ -318,8 +319,6 @@ def load_comment_texts_and_extremity(zid, layer_num=0):
 
                 # Direct approach - looks like the data is a JSON object with comment IDs and values
                 # Extract directly from the data structure
-                import json
-                from decimal import Decimal
 
                 try:
                     # If data is a string, parse it as JSON
@@ -377,7 +376,7 @@ def load_comment_texts_and_extremity(zid, layer_num=0):
                                             # Extract maximum absolute value as extremity
                                             if isinstance(values, dict):
                                                 abs_values = []
-                                                for group, val in values.items():
+                                                for _group, val in values.items():
                                                     if isinstance(val, (int, float, Decimal)):
                                                         abs_values.append(abs(float(val)))
                                                 if abs_values:
@@ -425,7 +424,7 @@ def load_comment_texts_and_extremity(zid, layer_num=0):
                                     # Extract repness values for different groups
                                     group_repness = []
                                     if isinstance(group_values, dict):
-                                        for group, val in group_values.items():
+                                        for _group, val in group_values.items():
                                             if isinstance(val, (int, float, Decimal)):
                                                 group_repness.append(float(val))
 
@@ -458,9 +457,6 @@ def load_comment_texts_and_extremity(zid, layer_num=0):
     # Try extracting from math_main table - this is the primary source of extremity data
     logger.info("Extracting comment extremity values from math_main PCA data")
     try:
-        # Import again to be safe
-        import json
-
         # Create a new database connection for this query
         math_conn = get_postgres_connection()
         math_cursor = math_conn.cursor()
@@ -577,7 +573,7 @@ def load_comment_texts_and_extremity(zid, layer_num=0):
                         logger.warning("No valid extremity values found in the data")
                 else:
                     logger.warning(
-                        f'Unexpected data structure: comment-extremity length={len(comment_extremity) if isinstance(comment_extremity, list) else "not list"}, tids length={len(tids) if isinstance(tids, list) else "not list"}'
+                        f"Unexpected data structure: comment-extremity length={len(comment_extremity) if isinstance(comment_extremity, list) else 'not list'}, tids length={len(tids) if isinstance(tids, list) else 'not list'}"
                     )
             else:
                 logger.warning("Could not find PCA comment-extremity data")
@@ -634,8 +630,8 @@ def create_consensus_divisive_datamapplot(zid, layer_num=0, output_dir=None):
         position_array = np.array([positions[cid] for cid in comment_ids])
         cluster_array = np.array([clusters.get(cid, -1) for cid in comment_ids])
 
-        # Create label strings
-        label_strings = np.array(
+        # Create label strings (not used in current visualization)
+        _label_strings = np.array(
             [
                 (
                     topic_names.get(clusters.get(cid, -1), f"Topic {clusters.get(cid, -1)}")
@@ -731,12 +727,12 @@ def create_consensus_divisive_datamapplot(zid, layer_num=0, output_dir=None):
                     fontweight="bold",
                     ha="center",
                     va="center",
-                    bbox=dict(
-                        facecolor="white",
-                        alpha=0.7,
-                        edgecolor="gray",
-                        boxstyle="round,pad=0.5",
-                    ),
+                    bbox={
+                        "facecolor": "white",
+                        "alpha": 0.7,
+                        "edgecolor": "gray",
+                        "boxstyle": "round,pad=0.5",
+                    },
                 )
 
         # Add a title
@@ -861,7 +857,7 @@ def create_consensus_divisive_datamapplot(zid, layer_num=0, output_dir=None):
             transform=ax.transAxes,
             ha="center",
             fontsize=14,
-            bbox=dict(facecolor="white", alpha=0.7, edgecolor="gray", boxstyle="round,pad=0.5"),
+            bbox={"facecolor": "white", "alpha": 0.7, "edgecolor": "gray", "boxstyle": "round,pad=0.5"},
         )
 
         # Remove axes

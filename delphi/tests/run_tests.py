@@ -7,12 +7,12 @@ This script runs all unit tests and the real data test to verify the conversion.
 import argparse
 import os
 import sys
+import traceback
 from datetime import datetime
 
 import pytest
 
-# Add the current directory to the path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from tests.test_real_data import test_biodiversity_conversation, test_vw_conversation
 
 
 def run_unit_tests():
@@ -39,8 +39,6 @@ def run_real_data_test():
     print("==========================\n")
 
     # Import and run the real data tests
-    from tests.test_real_data import test_biodiversity_conversation, test_vw_conversation
-
     try:
         print("Testing Biodiversity conversation...")
         test_biodiversity_conversation()
@@ -52,40 +50,6 @@ def run_real_data_test():
         return True
     except Exception as e:
         print(f"Real data test failed with error: {e}")
-        return False
-
-
-def run_simple_demo():
-    """Run the simple demo script."""
-    print("\n======================")
-    print("Running simple demo...")
-    print("======================\n")
-
-    # Import and run the simple demo
-    from simple_demo import main as simple_demo_main
-
-    try:
-        simple_demo_main()
-        return True
-    except Exception as e:
-        print(f"Simple demo failed with error: {e}")
-        return False
-
-
-def run_final_demo():
-    """Run the final demo script."""
-    print("\n=====================")
-    print("Running final demo...")
-    print("=====================\n")
-
-    # Import and run the final demo
-    from final_demo import main as final_demo_main
-
-    try:
-        final_demo_main()
-        return True
-    except Exception as e:
-        print(f"Final demo failed with error: {e}")
         return False
 
 
@@ -119,8 +83,6 @@ def run_simplified_tests():
             return True
         except Exception as e:
             print(f"{script_name} failed with error: {e}")
-            import traceback
-
             traceback.print_exc()
             return False
 
@@ -137,7 +99,6 @@ def main():
     parser = argparse.ArgumentParser(description="Run tests for Polis math Python conversion")
     parser.add_argument("--unit", action="store_true", help="Run unit tests only")
     parser.add_argument("--real", action="store_true", help="Run real data test only")
-    parser.add_argument("--demo", action="store_true", help="Run demo scripts only")
     parser.add_argument("--simplified", action="store_true", help="Run simplified test scripts only")
     args = parser.parse_args()
 
@@ -149,17 +110,15 @@ def main():
     results = {}
 
     # Run selected tests or all tests if no specific test is selected
-    if args.unit or not (args.unit or args.real or args.demo or args.simplified):
+    no_specific_selection = not (args.unit or args.real or args.simplified)
+
+    if args.unit or no_specific_selection:
         results["unit_tests"] = run_unit_tests()
 
-    if args.real or not (args.unit or args.real or args.demo or args.simplified):
+    if args.real or no_specific_selection:
         results["real_data_test"] = run_real_data_test()
 
-    if args.demo or not (args.unit or args.real or args.demo or args.simplified):
-        results["simple_demo"] = run_simple_demo()
-        results["final_demo"] = run_final_demo()
-
-    if args.simplified or not (args.unit or args.real or args.demo or args.simplified):
+    if args.simplified or no_specific_selection:
         results["simplified_tests"] = run_simplified_tests()
 
     # End time

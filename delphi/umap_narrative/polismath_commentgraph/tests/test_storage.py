@@ -7,6 +7,17 @@ from unittest.mock import patch
 
 import pytest
 
+from polismath_commentgraph.schemas.dynamo_models import (
+    ClusterLayer,
+    CommentEmbedding,
+    ConversationMeta,
+    Coordinates,
+    Embedding,
+    EVOCParameters,
+    UMAPParameters,
+)
+from polismath_commentgraph.utils.storage import DynamoDBStorage
+
 
 class MockTable:
     """Mock DynamoDB table for testing."""
@@ -15,7 +26,7 @@ class MockTable:
         self.name = name
         self.items = {}
 
-    def put_item(self, Item):
+    def put_item(self, item):
         """Mock put_item method."""
         key_schema = {
             "Delphi_UMAPConversationConfig": ("conversation_id",),
@@ -29,13 +40,13 @@ class MockTable:
         # Create a key based on the table's key schema
         if self.name in key_schema:
             key_attrs = key_schema[self.name]
-            key = tuple(Item[attr] for attr in key_attrs)
-            self.items[key] = Item
+            key = tuple(item[attr] for attr in key_attrs)
+            self.items[key] = item
             return {"ResponseMetadata": {"HTTPStatusCode": 200}}
         else:
             raise Exception(f"Unknown table: {self.name}")
 
-    def get_item(self, Key):
+    def get_item(self, key):
         """Mock get_item method."""
         key_schema = {
             "Delphi_UMAPConversationConfig": ("conversation_id",),
@@ -48,7 +59,7 @@ class MockTable:
 
         if self.name in key_schema:
             key_attrs = key_schema[self.name]
-            key = tuple(Key[attr] for attr in key_attrs)
+            key = tuple(key[attr] for attr in key_attrs)
             if key in self.items:
                 return {"Item": self.items[key]}
             else:
@@ -85,7 +96,7 @@ class MockDynamoDB:
             "CommentTexts": MockTable("CommentTexts"),
         }
 
-    def Table(self, name):
+    def table(self, name):
         """Mock Table method."""
         if name in self.tables:
             return self.tables[name]
@@ -106,19 +117,11 @@ def mock_dynamodb():
 @pytest.fixture
 def storage(mock_dynamodb):
     """Create a DynamoDBStorage instance with mocked DynamoDB."""
-    from polismath_commentgraph.utils.storage import DynamoDBStorage
-
     return DynamoDBStorage(region_name="us-east-1")
 
 
 def test_create_conversation_meta(storage, test_conversation_id):
     """Test creating conversation metadata."""
-    from polismath_commentgraph.schemas.dynamo_models import (
-        ClusterLayer,
-        ConversationMeta,
-        EVOCParameters,
-        UMAPParameters,
-    )
 
     # Create a sample ConversationMeta
     meta = ConversationMeta(
@@ -151,7 +154,6 @@ def test_create_conversation_meta(storage, test_conversation_id):
 
 def test_create_comment_embedding(storage, test_conversation_id):
     """Test creating a comment embedding."""
-    from polismath_commentgraph.schemas.dynamo_models import CommentEmbedding, Coordinates, Embedding
 
     # Create a sample CommentEmbedding
     embedding = CommentEmbedding(
@@ -183,7 +185,6 @@ def test_create_comment_embedding(storage, test_conversation_id):
 
 def test_batch_create_comment_embeddings(storage, test_conversation_id):
     """Test batch creating comment embeddings."""
-    from polismath_commentgraph.schemas.dynamo_models import CommentEmbedding, Coordinates, Embedding
 
     # Create sample CommentEmbeddings
     embeddings = []

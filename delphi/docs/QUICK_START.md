@@ -4,7 +4,7 @@ This guide provides the essential steps to get started with the Python implement
 
 ## Environment Setup
 
-The Python implementation requires Python 3.8+ (ideally Python 3.12) and several dependencies.
+The Python implementation requires Python 3.12+ and several dependencies.
 
 ### Creating a New Virtual Environment
 
@@ -134,8 +134,7 @@ Here are the key files to understand the system:
 5. **End-to-End Examples:**
    - `eda_notebooks/biodiversity_analysis.ipynb` - Complete analysis of a real conversation
    - `eda_notebooks/run_analysis.py` - Script version of the notebook analysis
-   - `simple_demo.py` - Simple demonstration of core functionality
-   - `final_demo.py` - More comprehensive demonstration
+   - `tests/run_system_test.py` - Programmatic example of running the full pipeline
 
 ## Documentation
 

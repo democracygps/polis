@@ -8,6 +8,7 @@ It handles database setup, DynamoDB mocking, and other common test infrastructur
 import os
 import sys
 import tempfile
+import time
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -265,7 +266,6 @@ def integration_test_setup():
 @pytest.fixture
 def performance_timer():
     """Fixture for timing test performance."""
-    import time
 
     class Timer:
         def __init__(self):

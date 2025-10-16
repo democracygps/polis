@@ -13,6 +13,7 @@ import traceback
 from datetime import datetime
 from typing import Any
 
+import boto3
 import numpy as np
 
 from .core.clustering import ClusteringEngine
@@ -21,8 +22,9 @@ from .schemas.dynamo_models import (
     CommentCluster,
     CommentEmbedding,
     UMAPGraphEdge,
-    # CommentText - removed to avoid duplication with PostgreSQL
 )
+
+# CommentText - removed to avoid duplication with PostgreSQL
 from .utils.converter import DataConverter
 from .utils.storage import DynamoDBStorage, PostgresClient
 
@@ -236,7 +238,7 @@ def process_conversation(conversation_id: str) -> dict[str, Any]:
         nearest_indices = np.argsort(distances)[1:6]  # Skip self
         nearest_distances = distances[nearest_indices]
 
-        for j, (neighbor_idx, distance) in enumerate(zip(nearest_indices, nearest_distances, strict=False)):
+        for _j, (neighbor_idx, distance) in enumerate(zip(nearest_indices, nearest_distances, strict=False)):
             # Only create edge once (avoid duplicates)
             edge_key = tuple(sorted([i, neighbor_idx]))
             if edge_key in generated_edges:
@@ -270,7 +272,7 @@ def process_conversation(conversation_id: str) -> dict[str, Any]:
     # Create and store comment texts
     text_models = []
 
-    for i, comment_data_item in enumerate(comment_data):
+    for _i, comment_data_item in enumerate(comment_data):
         comment_id = comment_data_item["comment_id"]
         text = comment_data_item["text"]
         created = comment_data_item.get("created", "")
@@ -324,8 +326,7 @@ def process_new_comment(comment_data: dict[str, Any]) -> dict[str, Any]:
     conversation_id = comment_data.get("conversation_id")
     comment_id = comment_data.get("comment_id")
     text = comment_data.get("text")
-    author_id = comment_data.get("author_id")
-    created = comment_data.get("created")
+    # author_id and created are not used in this function
 
     if not all([conversation_id, comment_id, text]):
         logger.error("Missing required fields in comment data")
@@ -343,13 +344,13 @@ def process_new_comment(comment_data: dict[str, Any]) -> dict[str, Any]:
 
     # Get all existing comment embeddings
     table = dynamo_storage.dynamodb.Table(dynamo_storage.table_names["comment_embeddings"])
-    response = table.query(KeyConditionExpression=Key("conversation_id").eq(conversation_id))
+    response = table.query(KeyConditionExpression=boto3.dynamodb.conditions.Key("conversation_id").eq(conversation_id))
     existing_embeddings = response.get("Items", [])
 
     # Handle pagination if needed
     while "LastEvaluatedKey" in response:
         response = table.query(
-            KeyConditionExpression=Key("conversation_id").eq(conversation_id),
+            KeyConditionExpression=boto3.dynamodb.conditions.Key("conversation_id").eq(conversation_id),
             ExclusiveStartKey=response["LastEvaluatedKey"],
         )
         existing_embeddings.extend(response.get("Items", []))
@@ -408,7 +409,7 @@ def process_new_comment(comment_data: dict[str, Any]) -> dict[str, Any]:
 
     # Create and store graph edges to nearest neighbors
     edges = []
-    for i, (neighbor_idx, distance) in enumerate(zip(nearest_indices, nearest_distances, strict=False)):
+    for _i, (neighbor_idx, distance) in enumerate(zip(nearest_indices, nearest_distances, strict=False)):
         neighbor_id = int(existing_embeddings[neighbor_idx]["comment_id"])
 
         # Determine shared cluster layers

@@ -3,27 +3,24 @@ Profile the conversation processing with real data from PostgreSQL.
 This version uses detailed profiling to identify bottlenecks.
 """
 
+import argparse
 import cProfile
-import os
 import pstats
-import sys
 import time
 from io import StringIO
 
 import psycopg2
 from psycopg2 import extras
 
-# Add the parent directory to the path to import the module
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-# Import the profiler before any other polismath imports
-from tests.conversation_profiler import instrument_conversation_class, print_profiling_summary, restore_original_methods
+from polismath.conversation.conversation import Conversation
+from tests.conversation_profiler import (
+    instrument_conversation_class,
+    print_profiling_summary,
+    restore_original_methods,
+)
 
 # Apply instrumentation to the Conversation class
 instrument_conversation_class()
-
-# Now import polismath modules
-from polismath.conversation.conversation import Conversation
 
 
 def connect_to_db():
@@ -52,16 +49,16 @@ def fetch_votes(conn, conversation_id, limit=1000):
     cursor = conn.cursor(cursor_factory=extras.DictCursor)
 
     query = """
-    SELECT 
+    SELECT
         v.created as timestamp,
         v.tid as comment_id,
         v.pid as voter_id,
         v.vote
-    FROM 
+    FROM
         votes v
     WHERE
         v.zid = %s
-    ORDER BY 
+    ORDER BY
         v.created
     LIMIT %s
     """
@@ -111,14 +108,14 @@ def get_specific_conversation(conn, zid=None):
     if zid is None:
         # Get the most popular conversation
         query = """
-        SELECT 
-            zid, 
+        SELECT
+            zid,
             COUNT(*) as vote_count
-        FROM 
+        FROM
             votes
-        GROUP BY 
+        GROUP BY
             zid
-        ORDER BY 
+        ORDER BY
             vote_count DESC
         LIMIT 1
         """
@@ -126,10 +123,10 @@ def get_specific_conversation(conn, zid=None):
     else:
         # Get the specified conversation
         query = """
-        SELECT 
+        SELECT
             zid,
             (SELECT COUNT(*) FROM votes WHERE zid = %s) as vote_count
-        FROM 
+        FROM
             votes
         WHERE
             zid = %s
@@ -201,8 +198,6 @@ def profile_conversation(conn, zid=None, vote_limit=1000):
 
 def main():
     """Main function to run the profiling."""
-    import argparse
-
     parser = argparse.ArgumentParser(description="Profile Conversation class with PostgreSQL data.")
     parser.add_argument("--zid", type=int, help="Specific conversation ID to profile")
     parser.add_argument("--limit", type=int, default=1000, help="Maximum number of votes to process")

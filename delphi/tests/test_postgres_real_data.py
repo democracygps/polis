@@ -8,6 +8,7 @@ import json
 import os
 import sys
 import time
+import traceback
 
 import psycopg2
 import pytest
@@ -17,6 +18,7 @@ from psycopg2 import extras
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from polismath.conversation.conversation import Conversation
+from polismath.database.dynamodb import DynamoDBClient
 from polismath.database.postgres import PostgresClient, PostgresConfig
 
 
@@ -27,9 +29,6 @@ def init_dynamodb():
     Returns:
         Initialized DynamoDBClient
     """
-    # Import the DynamoDB client
-    from polismath.database.dynamodb import DynamoDBClient
-
     print("Initializing DynamoDBClient with localhost:8000 endpoint")
 
     # Create and initialize the client
@@ -60,8 +59,6 @@ def write_to_dynamodb(dynamodb_client, conversation_id, conv):
     Returns:
         Success status
     """
-    import time
-
     try:
         start_time = time.time()
         print(f"Writing conversation {conversation_id} to DynamoDB using optimized schema")
@@ -95,8 +92,6 @@ def write_to_dynamodb(dynamodb_client, conversation_id, conv):
         return success
     except Exception as e:
         print(f"Error writing to DynamoDB: {e}")
-        import traceback
-
         traceback.print_exc()
         return False
 
@@ -124,8 +119,6 @@ def fetch_votes(conn, conversation_id):  # , limit=0):
     Returns:
         Dictionary containing votes in the format expected by Conversation
     """
-    import time
-
     start_time = time.time()
 
     print(f"[{start_time:.2f}s] Fetching votes for conversation {conversation_id}")
@@ -136,16 +129,16 @@ def fetch_votes(conn, conversation_id):  # , limit=0):
     #     limit = 100
 
     query = """
-    SELECT 
+    SELECT
         v.created as timestamp,
         v.tid as comment_id,
         v.pid as voter_id,
         v.vote
-    FROM 
+    FROM
         votes v
     WHERE
         v.zid = %s
-    ORDER BY 
+    ORDER BY
         v.created
     """
     # LIMIT %s
@@ -210,7 +203,7 @@ def fetch_votes(conn, conversation_id):  # , limit=0):
 
         votes_list.extend(batch_votes)
         print(
-            f"[{time.time() - start_time:.2f}s] Converted batch of {len(batch)} votes ({i+1}-{end_idx}/{len(votes)}), batch took {time.time() - batch_start:.2f}s"
+            f"[{time.time() - start_time:.2f}s] Converted batch of {len(batch)} votes ({i + 1}-{end_idx}/{len(votes)}), batch took {time.time() - batch_start:.2f}s"
         )
 
     print(f"[{time.time() - start_time:.2f}s] Vote conversion completed in {time.time() - convert_start:.2f}s")
@@ -234,26 +227,24 @@ def fetch_comments(conn, conversation_id):  # , limit=0):
     Returns:
         Dictionary containing comments in the format expected by Conversation
     """
-    import time
-
     start_time = time.time()
 
     print(f"[{start_time:.2f}s] Fetching comments for conversation {conversation_id}")
     cursor = conn.cursor(cursor_factory=extras.DictCursor)
 
     query = """
-    SELECT 
+    SELECT
         c.created as timestamp,
         c.tid as comment_id,
         c.pid as author_id,
         c.mod as moderated,
         c.txt as comment_body,
         c.is_seed
-    FROM 
+    FROM
         comments c
     WHERE
         c.zid = %s
-    ORDER BY 
+    ORDER BY
         c.created
     """
 
@@ -327,8 +318,6 @@ def fetch_moderation(conn, conversation_id):
     Returns:
         Dictionary containing moderation data in the format expected by Conversation
     """
-    import time
-
     start_time = time.time()
 
     print(f"[{start_time:.2f}s] Fetching moderation data for conversation {conversation_id}")
@@ -362,8 +351,8 @@ def fetch_moderation(conn, conversation_id):
         print(f"[{time.time() - start_time:.2f}s] Checking if participants table exists...")
         table_check = """
         SELECT EXISTS (
-            SELECT FROM information_schema.tables 
-            WHERE table_schema = 'public' 
+            SELECT FROM information_schema.tables
+            WHERE table_schema = 'public'
             AND table_name = 'participants'
         )
         """
@@ -439,8 +428,6 @@ def get_popular_conversations(conn, limit=5):
     Returns:
         List of conversation IDs (zids) with high vote counts
     """
-    import time
-
     start_time = time.time()
 
     print(f"[{start_time:.2f}s] Finding {limit} popular conversations...")
@@ -451,8 +438,8 @@ def get_popular_conversations(conn, limit=5):
         print(f"[{time.time() - start_time:.2f}s] Checking if zinvites table exists...")
         table_check = """
         SELECT EXISTS (
-            SELECT FROM information_schema.tables 
-            WHERE table_schema = 'public' 
+            SELECT FROM information_schema.tables
+            WHERE table_schema = 'public'
             AND table_name = 'zinvites'
         )
         """
@@ -463,17 +450,17 @@ def get_popular_conversations(conn, limit=5):
             # Use a join query with zinvites
             print(f"[{time.time() - start_time:.2f}s] Using zinvites table for lookup...")
             query = """
-            SELECT 
-                v.zid, 
+            SELECT
+                v.zid,
                 COUNT(*) as vote_count,
                 MIN(z.zinvite) as zinvite
-            FROM 
+            FROM
                 votes v
             JOIN
                 zinvites z ON v.zid = z.zid
-            GROUP BY 
+            GROUP BY
                 v.zid
-            ORDER BY 
+            ORDER BY
                 vote_count DESC
             LIMIT %s
             """
@@ -481,15 +468,15 @@ def get_popular_conversations(conn, limit=5):
             # Fallback if zinvites table doesn't exist
             print(f"[{time.time() - start_time:.2f}s] Zinvites table not found, using votes table only")
             query = """
-            SELECT 
-                zid, 
+            SELECT
+                zid,
                 COUNT(*) as vote_count,
                 zid::text as zinvite
-            FROM 
+            FROM
                 votes
-            GROUP BY 
+            GROUP BY
                 zid
-            ORDER BY 
+            ORDER BY
                 vote_count DESC
             LIMIT %s
             """
@@ -509,7 +496,7 @@ def get_popular_conversations(conn, limit=5):
         # Display information about each conversation
         for i, row in enumerate(results):
             print(
-                f"[{time.time() - start_time:.2f}s] Conversation {i+1}: zid={row['zid']}, votes={row['vote_count']}, zinvite={row['zinvite']}"
+                f"[{time.time() - start_time:.2f}s] Conversation {i + 1}: zid={row['zid']}, votes={row['vote_count']}, zinvite={row['zinvite']}"
             )
 
     except Exception as e:
@@ -531,8 +518,6 @@ def test_conversation_from_postgres():
     """
     Test processing a conversation with data from PostgreSQL.
     """
-    import time
-
     start_time = time.time()
 
     print(f"[{time.time() - start_time:.2f}s] Starting PostgreSQL conversation test")
@@ -558,7 +543,7 @@ def test_conversation_from_postgres():
         # Process each conversation
         for idx, (conv_id, vote_count, zinvite) in enumerate(popular_convs):
             print(
-                f"\n[{time.time() - start_time:.2f}s] Processing conversation {idx+1}/{len(popular_convs)}: {conv_id} (zinvite: {zinvite}) with {vote_count} votes"
+                f"\n[{time.time() - start_time:.2f}s] Processing conversation {idx + 1}/{len(popular_convs)}: {conv_id} (zinvite: {zinvite}) with {vote_count} votes"
             )
 
             # Create a new conversation
@@ -690,7 +675,7 @@ def test_conversation_from_postgres():
                             (c["txt"] for c in comments["comments"] if str(c["tid"]) == str(comment_id)), "Unknown"
                         )
                         print(
-                            f"  {i+1}. Comment {comment_id} (Repness: {rep_item['repness']:.4f}): {comment_txt[:50]}..."
+                            f"  {i + 1}. Comment {comment_id} (Repness: {rep_item['repness']:.4f}): {comment_txt[:50]}..."
                         )
 
             # Save the results for manual inspection
@@ -725,8 +710,6 @@ def test_conversation_from_postgres():
                 )
             except Exception as e:
                 print(f"[{time.time() - start_time:.2f}s] Error with DynamoDB: {e}")
-                import traceback
-
                 traceback.print_exc()
 
             # Perform basic assertions
@@ -749,12 +732,12 @@ def test_conversation_from_postgres():
                 assert conv.repness is not None, "Representativeness should be computed"
                 assert "comment_repness" in conv.repness, "Comment representativeness should be computed"
 
-            print(f"[{time.time() - start_time:.2f}s] Conversation {idx+1}/{len(popular_convs)} processed successfully")
+            print(
+                f"[{time.time() - start_time:.2f}s] Conversation {idx + 1}/{len(popular_convs)} processed successfully"
+            )
 
     except Exception as e:
         print(f"[{time.time() - start_time:.2f}s] ERROR: Test failed with exception: {e}")
-        import traceback
-
         traceback.print_exc()
         raise
 
@@ -973,8 +956,6 @@ def test_dynamodb_direct():
 
     except Exception as e:
         print(f"Error in direct DynamoDB test: {e}")
-        import traceback
-
         traceback.print_exc()
         return False
 
@@ -1056,7 +1037,9 @@ def inspect_dynamodb_data():
                                 # Check for both naming conventions for repness value
                                 repness = rep_item.get("repness", 0)
                                 group_id = rep_item.get("group_id")
-                                print(f"      {i+1}. Comment {comment_id} in group {group_id} (Repness: {repness:.4f})")
+                                print(
+                                    f"      {i + 1}. Comment {comment_id} in group {group_id} (Repness: {repness:.4f})"
+                                )
             else:
                 print(f"No analysis data found for conversation {zid}")
     else:
@@ -1114,14 +1097,14 @@ def test_conversation_client_api():
 
         # Get conversation IDs
         zids_query = """
-        SELECT 
-            zid, 
+        SELECT
+            zid,
             COUNT(*) as vote_count
-        FROM 
+        FROM
             votes
-        GROUP BY 
+        GROUP BY
             zid
-        ORDER BY 
+        ORDER BY
             vote_count DESC
         LIMIT 1
         """
@@ -1191,7 +1174,7 @@ def test_conversation_client_api():
             print(f"Calculated representativeness for {len(conv.repness['comment_repness'])} comments")
 
         # Save the results using the PostgresClient API
-        math_data = conv.to_dict()
+        conv.to_dict()
 
         # Save results directly to math_main table (optional, uncomment to enable)
         # client.write_math_main(zid, math_data)
@@ -1210,8 +1193,6 @@ def test_conversation_client_api():
                 print("Failed to write conversation data to DynamoDB")
         except Exception as e:
             print(f"Error with DynamoDB: {e}")
-            import traceback
-
             traceback.print_exc()
 
         # Basic assertions
@@ -1240,8 +1221,6 @@ if __name__ == "__main__":
             inspect_dynamodb_data()
         elif sys.argv[1] == "limit" and len(sys.argv) > 2:
             # Run with a specific vote limit
-            import time
-
             start_time = time.time()
 
             # Set limit for votes
@@ -1250,16 +1229,16 @@ if __name__ == "__main__":
                 cursor = conn.cursor(cursor_factory=extras.DictCursor)
 
                 query = """
-                SELECT 
+                SELECT
                     v.created as timestamp,
                     v.tid as comment_id,
                     v.pid as voter_id,
                     v.vote
-                FROM 
+                FROM
                     votes v
                 WHERE
                     v.zid = %s
-                ORDER BY 
+                ORDER BY
                     v.created
                 LIMIT %s
                 """

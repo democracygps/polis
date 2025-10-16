@@ -10,6 +10,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+from sklearn.cluster import KMeans
 
 # Define simplified versions of the core math functions
 
@@ -36,7 +37,7 @@ def power_iteration(data: np.ndarray, iters: int = 100) -> np.ndarray:
     vector = rng.rand(n_cols)
     vector = normalize_vector(vector)
 
-    for i in range(iters):
+    for _i in range(iters):
         # Compute product
         product = xtxr(data, vector)
 
@@ -90,8 +91,6 @@ def project_data(data: np.ndarray, pca_results: dict[str, np.ndarray]) -> np.nda
 
 def kmeans_clustering(projections: np.ndarray, n_clusters: int = 3) -> list[dict[str, Any]]:
     """Simple k-means clustering."""
-    from sklearn.cluster import KMeans
-
     kmeans = KMeans(n_clusters=n_clusters, random_state=42)
     labels = kmeans.fit_predict(projections)
     centers = kmeans.cluster_centers_
@@ -201,7 +200,7 @@ def run_test(dataset_name: str) -> None:
         clusters = kmeans_clustering(projections, n_clusters)
 
         for i, cluster in enumerate(clusters):
-            print(f"Cluster {i+1}: {len(cluster['members'])} participants")
+            print(f"Cluster {i + 1}: {len(cluster['members'])} participants")
             print(f"  Center: [{cluster['center'][0]:.3f}, {cluster['center'][1]:.3f}]")
 
         print("\nSimplified math pipeline test SUCCESSFUL!")

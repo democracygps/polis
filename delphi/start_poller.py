@@ -3,15 +3,13 @@ import os
 # import subprocess # No longer needed
 import sys
 
-# Get the directory of this script
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-SCRIPTS_SUBDIR = os.path.join(SCRIPT_DIR, "scripts")
-
-# Removed sys.path manipulation
-
 # Import the main function from job_poller using package import
 # This requires delphi/scripts/__init__.py to exist
 from scripts.job_poller import main as job_poller_main
+
+# Get the directory of this script
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+SCRIPTS_SUBDIR = os.path.join(SCRIPT_DIR, "scripts")
 
 # Path to the Python poller script (for argv[0] and potentially for job_poller itself if it uses __file__)
 POLLER_SCRIPT_PATH = os.path.join(SCRIPTS_SUBDIR, "job_poller.py")

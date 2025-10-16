@@ -29,6 +29,19 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+class StorageContext:
+    """Context object to hold storage instances instead of using globals."""
+
+    def __init__(self):
+        self.dynamo_storage = None
+        self.postgres_client = None
+
+    def initialize_for_local_testing(self, dynamodb_endpoint=None):
+        """Initialize storage instances for local testing."""
+        self.dynamo_storage = DynamoDBStorage(region_name="us-east-1", endpoint_url=dynamodb_endpoint)
+        self.postgres_client = PostgresClient()
+
+
 def test_evoc(args):
     """
     Test EVOC integration with real datasets from biodiversity and bg2050.
@@ -100,7 +113,7 @@ def test_evoc(args):
             # Count noise points if possible
             try:
                 num_noise = np.sum(cluster_labels == -1)
-            except:
+            except Exception:
                 # If we can't count noise points, just report clusters
                 num_noise = 0
 
@@ -133,7 +146,7 @@ def test_evoc(args):
                 # Try with filtering out noise
                 num_layer_clusters = len(np.unique(layer[layer >= 0]))
                 num_layer_noise = np.sum(layer == -1)
-            except:
+            except Exception:
                 # If that fails, just count all unique values
                 num_layer_clusters = len(np.unique(layer))
                 num_layer_noise = 0
@@ -301,22 +314,12 @@ def lambda_local(args):
     os.environ["AWS_SECRET_ACCESS_KEY"] = "fakeSecretAccessKey"
     os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
 
-    # Reinitialize the DynamoDB storage with direct credentials
-    global dynamo_storage
-    dynamo_storage = DynamoDBStorage(region_name="us-east-1", endpoint_url=os.environ.get("DYNAMODB_ENDPOINT"))
+    # Initialize storage context for local testing
+    storage_context = StorageContext()
+    storage_context.initialize_for_local_testing(os.environ.get("DYNAMODB_ENDPOINT"))
 
-    # Import the handler
-
-    # Initialize PostgreSQL client if needed
-    global postgres_client
-    postgres_client = PostgresClient()
-
-    # Override lambda_handler's DynamoDB instance
-
-    # Create a wrapper function that uses our dynamo_storage
-    def process_with_local_dynamo(conversation_id: str):
-        # This is a modified version of process_conversation that uses our dynamo_storage
-        global dynamo_storage
+    # Create a wrapper function that uses our storage context
+    def process_with_local_dynamo(conversation_id: str, context: StorageContext):
         # Use the original code but with our dynamo_storage
         start_time = time.time()
         logger.info(f"Processing conversation: {conversation_id}")
@@ -329,7 +332,7 @@ def lambda_local(args):
                 zid = int(conversation_id)
             else:
                 # Try to lookup by zinvite/slug
-                zid = postgres_client.get_conversation_id_by_slug(conversation_id)
+                zid = context.postgres_client.get_conversation_id_by_slug(conversation_id)
                 if zid is None:
                     logger.error(f"Conversation not found for id: {conversation_id}")
                     return {
@@ -339,7 +342,7 @@ def lambda_local(args):
                     }
 
             logger.info(f"Retrieving comments for conversation {zid}")
-            comments = postgres_client.get_comments_by_conversation(zid)
+            comments = context.postgres_client.get_comments_by_conversation(zid)
             logger.info(f"Retrieved {len(comments)} comments from PostgreSQL")
 
             # Extract text, filter out any empty or None texts
@@ -394,20 +397,20 @@ def lambda_local(args):
             conversation_meta = DataConverter.create_conversation_meta(
                 conversation_id, embeddings, cluster_layers, metadata
             )
-            dynamo_storage.create_conversation_meta(conversation_meta)
+            context.dynamo_storage.create_conversation_meta(conversation_meta)
 
             # Convert and store embeddings
             embedding_models = DataConverter.batch_convert_embeddings(conversation_id, embeddings, projection)
 
             # Batch store embeddings
-            result = dynamo_storage.batch_create_comment_embeddings(embedding_models)
+            result = context.dynamo_storage.batch_create_comment_embeddings(embedding_models)
             logger.info(f"Stored {result['success']} embeddings with {result['failure']} failures")
 
             # Convert and store clusters
             cluster_models = DataConverter.batch_convert_clusters(conversation_id, cluster_layers, projection)
 
             # Batch store clusters
-            result = dynamo_storage.batch_create_comment_clusters(cluster_models)
+            result = context.dynamo_storage.batch_create_comment_clusters(cluster_models)
             logger.info(f"Stored {result['success']} cluster assignments with {result['failure']} failures")
 
             # Convert and store topics
@@ -421,7 +424,7 @@ def lambda_local(args):
             )
 
             # Batch store topics
-            result = dynamo_storage.batch_create_cluster_topics(topic_models)
+            result = context.dynamo_storage.batch_create_cluster_topics(topic_models)
             logger.info(f"Stored {result['success']} topics with {result['failure']} failures")
 
             # Create comment texts and store
@@ -437,7 +440,7 @@ def lambda_local(args):
                 text_models.append(text_model)
 
             # Store texts
-            result = dynamo_storage.batch_create_comment_texts(text_models)
+            result = context.dynamo_storage.batch_create_comment_texts(text_models)
             logger.info(f"Stored {result['success']} comment texts with {result['failure']} failures")
 
             dynamo_time = time.time() - dynamo_start
@@ -486,7 +489,7 @@ def lambda_local(args):
                     }
 
                 # Process with our local function
-                result = process_with_local_dynamo(conversation_id)
+                result = process_with_local_dynamo(conversation_id, storage_context)
 
                 return {"statusCode": 200, "body": json.dumps(result, default=str)}
             except Exception as e:

@@ -14,6 +14,9 @@ import pandas as pd
 # Add the parent directory to the path to import the polismath modules
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+# Import polismath modules
+from polismath.conversation.conversation import Conversation
+
 
 def check_environment():
     """Check if the required packages are installed and the environment is set up correctly."""
@@ -31,21 +34,13 @@ def check_environment():
 
     # Check if the polismath package is available
     try:
-        # Try importing key polismath modules
-        from polismath.conversation.conversation import Conversation
-        from polismath.pca_kmeans_rep.named_matrix import NamedMatrix
-        from polismath.pca_kmeans_rep.pca import pca_project_named_matrix
-
+        # Test if the modules are accessible (imports above will raise ImportError if failed)
         print("Polismath modules imported successfully")
         return True
-    except ImportError as e:
-        print(f"Error importing polismath modules: {e}")
+    except NameError as e:
+        print(f"Error accessing polismath modules: {e}")
         print("Make sure you've installed the package using 'pip install -e .' from the delphi directory")
         return False
-
-
-# Import polismath modules
-from polismath.conversation.conversation import Conversation
 
 
 def load_votes(votes_path):
@@ -240,7 +235,7 @@ def main():
     print(f"Found {len(group_consensus)} comments with votes from multiple groups")
     print("Top 5 Group Consensus Comments:")
     for i, comment in enumerate(group_consensus[:5]):
-        print(f"{i+1}. Comment {comment['tid']}: \"{comment['text']}\"")
+        print(f'{i + 1}. Comment {comment["tid"]}: "{comment["text"]}"')
         print(f"   Consensus Score: {comment['consensus_score']:.3f}")
         print(f"   Average Agreement: {comment['avg_agree']:.2f}, Agreement Spread: {comment['agree_spread']:.2f}")
         print(f"   Groups: {comment['groups']}")

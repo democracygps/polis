@@ -5,6 +5,7 @@ Test script to directly test the Conversation class with real data.
 
 import os
 import sys
+import traceback
 
 import numpy as np
 import pandas as pd
@@ -129,14 +130,12 @@ def test_conversation(dataset_name: str) -> None:
         print("Clustering Results:")
         print(f"  - Number of clusters: {len(updated_conv.group_clusters)}")
         for i, cluster in enumerate(updated_conv.group_clusters):
-            print(f"  - Cluster {i+1}: {len(cluster['members'])} participants")
+            print(f"  - Cluster {i + 1}: {len(cluster['members'])} participants")
 
         print("Conversation recompute SUCCESSFUL!")
 
     except Exception as e:
         print(f"Error during conversation processing: {e}")
-        import traceback
-
         traceback.print_exc()
         print("Conversation recompute FAILED!")
 

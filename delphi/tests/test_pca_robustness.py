@@ -259,7 +259,7 @@ def test_pca_complex_matrix():
 
     # Check projections
     assert len(proj_dict) == n_ptpts
-    for ptpt_id, proj in proj_dict.items():
+    for _ptpt_id, proj in proj_dict.items():
         assert proj.shape == (2,)
         assert not np.any(np.isnan(proj))
 

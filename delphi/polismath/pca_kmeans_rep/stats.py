@@ -8,6 +8,8 @@ particularly for measuring representativeness and significance.
 import math
 
 import numpy as np
+from scipy import stats
+from scipy.special import comb
 
 
 def prop_test(success_count: int, total_count: int) -> float:
@@ -200,8 +202,6 @@ def ci_95(values: np.ndarray) -> tuple[float, float]:
     # 95% CI using t-distribution
     t_crit = 1.96  # Approximation for large samples
     if n < 30:
-        from scipy import stats
-
         t_crit = stats.t.ppf(0.975, n - 1)
 
     lower = mean - t_crit * stderr
@@ -223,8 +223,6 @@ def bayesian_ci_95(success_count: int, total_count: int) -> tuple[float, float]:
     Returns:
         Tuple of (lower bound, upper bound)
     """
-    from scipy import stats
-
     # Jeffreys prior (Beta(0.5, 0.5))
     alpha = success_count + 0.5
     beta = total_count - success_count + 0.5
@@ -279,8 +277,6 @@ def binomial_test(success_count: int, total_count: int, p: float = 0.5) -> float
     Returns:
         P-value for the test
     """
-    from scipy import stats
-
     if total_count == 0:
         return 1.0
 
@@ -296,8 +292,6 @@ def binomial_test(success_count: int, total_count: int, p: float = 0.5) -> float
             return stats.binom_test(success_count, total_count, p)
         except AttributeError:
             # If neither is available, implement a simple approximation
-            from scipy.special import comb
-
             # Calculate binomial PMF
             def binom_pmf(k, n, p):
                 return comb(n, k) * (p**k) * ((1 - p) ** (n - k))
@@ -324,8 +318,6 @@ def fisher_exact_test(count_matrix: np.ndarray) -> tuple[float, float]:
     Returns:
         Tuple of (odds ratio, p-value)
     """
-    from scipy import stats
-
     if count_matrix.shape != (2, 2):
         raise ValueError("Count matrix must be 2x2")
 

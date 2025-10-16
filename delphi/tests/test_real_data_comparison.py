@@ -4,6 +4,7 @@ Test script to compare the Python conversion with the Clojure output.
 Runs the analysis on real data and compares results with tolerance.
 """
 
+import copy
 import json
 import os
 import sys
@@ -11,6 +12,11 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+
+from polismath.pca_kmeans_rep.clusters import cluster_named_matrix
+from polismath.pca_kmeans_rep.named_matrix import NamedMatrix
+from polismath.pca_kmeans_rep.pca import pca_project_named_matrix
+from polismath.pca_kmeans_rep.repness import conv_repness
 
 # Add the parent directory to the path to import the module
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -211,12 +217,6 @@ def compare_group_clusters(python_clusters, clojure_clusters):
 def run_manual_pipeline(conv: Conversation) -> Conversation:
     """Run a modified version of the recompute pipeline with better error handling."""
     # First, make a deep copy to avoid modifying the original
-    import copy
-
-    from polismath.pca_kmeans_rep.clusters import cluster_named_matrix
-    from polismath.pca_kmeans_rep.pca import pca_project_named_matrix
-    from polismath.pca_kmeans_rep.repness import conv_repness
-
     result = copy.deepcopy(conv)
 
     try:
@@ -252,11 +252,7 @@ def run_manual_pipeline(conv: Conversation) -> Conversation:
         matrix_values = np.nan_to_num(matrix_values, nan=0.0)
 
         # Create a new matrix with cleaned values
-        import pandas as pd
-
         clean_df = pd.DataFrame(matrix_values, index=matrix.rownames(), columns=matrix.colnames())
-        from polismath.pca_kmeans_rep.named_matrix import NamedMatrix
-
         clean_matrix = NamedMatrix(clean_df)
 
         # Perform PCA
@@ -317,7 +313,7 @@ def run_manual_pipeline(conv: Conversation) -> Conversation:
                             vote = matrix.values[row_idx, col_idx]
                             if not pd.isna(vote) and vote is not None:
                                 group_votes.append(float(vote))
-                        except:
+                        except Exception:
                             continue
 
                     # If we have votes
@@ -508,14 +504,9 @@ def run_real_data_comparison(dataset_name: str, votes_limit: int | None = None) 
                 print(f"Error processing vote: {e}")
 
         # Create raw matrix directly from numeric updates
-        import numpy as np
-        import pandas as pd
-
-        from polismath.pca_kmeans_rep.named_matrix import NamedMatrix
-
         # Get unique participant and comment IDs
-        ptpt_ids = sorted(set(upd[0] for upd in numeric_updates))
-        cmt_ids = sorted(set(upd[1] for upd in numeric_updates))
+        ptpt_ids = sorted({upd[0] for upd in numeric_updates})
+        cmt_ids = sorted({upd[1] for upd in numeric_updates})
 
         # Create empty matrix
         matrix_data = np.full((len(ptpt_ids), len(cmt_ids)), np.nan)
@@ -616,13 +607,13 @@ def run_real_data_comparison(dataset_name: str, votes_limit: int | None = None) 
         cp = comparisons["comment_priorities"]
         print("Comment Priorities:")
         print(
-            f"  - Strict matches (10% tolerance): {cp['matches_strict']}/{cp['total']} ({cp['match_rate_strict']*100:.1f}%)"
+            f"  - Strict matches (10% tolerance): {cp['matches_strict']}/{cp['total']} ({cp['match_rate_strict'] * 100:.1f}%)"
         )
         print(
-            f"  - Medium matches (20% tolerance): {cp['matches_medium']}/{cp['total']} ({cp['match_rate_medium']*100:.1f}%)"
+            f"  - Medium matches (20% tolerance): {cp['matches_medium']}/{cp['total']} ({cp['match_rate_medium'] * 100:.1f}%)"
         )
         print(
-            f"  - Loose matches (50% tolerance): {cp['matches_loose']}/{cp['total']} ({cp['match_rate_loose']*100:.1f}%)"
+            f"  - Loose matches (50% tolerance): {cp['matches_loose']}/{cp['total']} ({cp['match_rate_loose'] * 100:.1f}%)"
         )
         print(f"  - Best matching comments: {', '.join(cp['best_matches'][:5])}")
 

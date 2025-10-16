@@ -7,6 +7,7 @@ from PostgreSQL for report generation.
 import json
 import logging
 import os
+import traceback
 from collections import defaultdict
 from datetime import datetime
 from decimal import Decimal
@@ -76,13 +77,13 @@ class GroupDataProcessor:
         try:
             # Attempt to retrieve group assignments from math_main table
             sql = """
-            SELECT 
+            SELECT
                 data
-            FROM 
+            FROM
                 math_main
-            WHERE 
+            WHERE
                 zid = :zid
-            ORDER BY 
+            ORDER BY
                 modified DESC
             LIMIT 1
             """
@@ -147,7 +148,7 @@ class GroupDataProcessor:
             votes_data = self.postgres_client.get_votes_by_conversation(zid)
 
             # Get unique participants from votes
-            participant_ids = set(v["pid"] for v in votes_data if v.get("pid") is not None)
+            participant_ids = {v["pid"] for v in votes_data if v.get("pid") is not None}
 
             # Assign groups based on voting patterns
             # In a real implementation this would be based on PCA or similar clustering
@@ -191,8 +192,6 @@ class GroupDataProcessor:
 
         except Exception as e:
             logger.error(f"Error getting math data for conversation {zid}: {str(e)}")
-            import traceback
-
             logger.error(traceback.format_exc())
 
             # Return minimal structure to avoid errors downstream
@@ -289,8 +288,6 @@ class GroupDataProcessor:
 
                     except Exception as e:
                         logger.error(f"Error extracting group assignments from group-clusters: {e}")
-                        import traceback
-
                         logger.error(traceback.format_exc())
 
             # Last resort - check if there's a 'group-stats' that might have participant info
@@ -475,8 +472,6 @@ class GroupDataProcessor:
 
         except Exception as e:
             logger.error(f"Error getting vote data by groups for conversation {zid}: {str(e)}")
-            import traceback
-
             logger.error(traceback.format_exc())
 
             # Return empty structure to avoid errors downstream
@@ -697,8 +692,6 @@ class GroupDataProcessor:
 
         except Exception as e:
             logger.error(f"Error getting export data for conversation {zid}: {str(e)}")
-            import traceback
-
             logger.error(traceback.format_exc())
 
             # Return empty structure to avoid errors downstream

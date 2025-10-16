@@ -6,6 +6,7 @@ Test script to verify MinIO/S3 connection and list objects in the bucket.
 import logging
 import os
 import sys
+import traceback
 
 import boto3
 
@@ -61,7 +62,7 @@ def test_s3_access():
 
                 # Print first 10 objects
                 for i, obj in enumerate(objects[:10]):
-                    logger.info(f"  {i+1}. {obj.get('Key')} ({obj.get('Size')} bytes)")
+                    logger.info(f"  {i + 1}. {obj.get('Key')} ({obj.get('Size')} bytes)")
 
                 if len(objects) > 10:
                     logger.info(f"  ... and {len(objects) - 10} more")
@@ -75,8 +76,6 @@ def test_s3_access():
 
     except Exception as e:
         logger.error(f"Error connecting to S3/MinIO: {e}")
-        import traceback
-
         logger.error(traceback.format_exc())
         return False
 

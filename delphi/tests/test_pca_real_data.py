@@ -9,6 +9,7 @@ import sys
 
 import numpy as np
 import pandas as pd
+from sklearn.cluster import KMeans
 
 # Add the parent directory to the path to import the module
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -113,8 +114,6 @@ def test_pca_projection(dataset_name: str) -> None:
         print(f"Y range: [{min_y:.2f}, {max_y:.2f}]")
 
         # Calculate number of unique clusters
-        from sklearn.cluster import KMeans
-
         kmeans = KMeans(n_clusters=3, random_state=42).fit(proj_array)
         labels = kmeans.labels_
         unique_clusters = np.unique(labels)

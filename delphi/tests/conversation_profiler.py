@@ -12,6 +12,7 @@ from functools import wraps
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from polismath.conversation.conversation import Conversation
+from polismath.pca_kmeans_rep.named_matrix import NamedMatrix
 
 # Store the original methods to restore later
 ORIGINAL_METHODS = {}
@@ -176,7 +177,7 @@ def instrument_conversation_class():
                     ptpt_id = str(vote.get("pid"))  # Ensure string
                     comment_id = str(vote.get("tid"))  # Ensure string
                     vote_value = vote.get("vote")
-                    created = vote.get("created", last_vote_timestamp)
+                    vote.get("created", last_vote_timestamp)  # Track timestamp but don't use
 
                     # Skip invalid votes
                     if ptpt_id is None or comment_id is None or vote_value is None:
@@ -248,13 +249,13 @@ def instrument_conversation_class():
             batch_time = time.time() - batch_time
             elapsed = time.time() - profile_data.get("process_start_time", start_time)
             print(
-                f"[{elapsed:.2f}s] Processed votes {batch_start+1}-{batch_end}/{total_votes} ({batch_time:.2f}s, {batch_time/len(batch_votes):.4f}s per vote)"
+                f"[{elapsed:.2f}s] Processed votes {batch_start + 1}-{batch_end}/{total_votes} ({batch_time:.2f}s, {batch_time / len(batch_votes):.4f}s per vote)"
             )
 
         step_time = time.time() - step_start
         elapsed = time.time() - profile_data.get("process_start_time", start_time)
         print(
-            f"[{elapsed:.2f}s] Step 3: vote processing completed in {step_time:.2f}s for {vote_count} valid votes ({step_time/max(vote_count, 1):.4f}s per vote)"
+            f"[{elapsed:.2f}s] Step 3: vote processing completed in {step_time:.2f}s for {vote_count} valid votes ({step_time / max(vote_count, 1):.4f}s per vote)"
         )
 
         # Update last updated timestamp
@@ -317,8 +318,6 @@ def instrument_conversation_class():
     Conversation.update_votes = detailed_update_votes
 
     # Add special instrumentation for named_matrix.update method
-    from polismath.pca_kmeans_rep.named_matrix import NamedMatrix
-
     original_named_matrix_update = NamedMatrix.update
 
     @wraps(original_named_matrix_update)
@@ -364,8 +363,6 @@ def restore_original_methods():
         setattr(Conversation, method_name, original_method)
 
     # Also restore NamedMatrix.update
-    from polismath.pca_kmeans_rep.named_matrix import NamedMatrix
-
     # This assumes we've saved the original elsewhere
     if hasattr(NamedMatrix, "_original_update"):
         NamedMatrix.update = NamedMatrix._original_update
@@ -412,6 +409,5 @@ def print_profiling_summary():
 
 
 # Store the original NamedMatrix.update method
-from polismath.pca_kmeans_rep.named_matrix import NamedMatrix
 
 NamedMatrix._original_update = NamedMatrix.update

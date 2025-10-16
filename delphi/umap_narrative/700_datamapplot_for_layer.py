@@ -554,7 +554,7 @@ def load_conversation_data_from_dynamo(
     return data
 
 
-def create_visualization(
+def create_visualization(  # noqa: PLR0911
     zid: int,
     layer_id: int,
     data: dict[str, Any],

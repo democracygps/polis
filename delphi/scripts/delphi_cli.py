@@ -601,7 +601,7 @@ def display_conversation_status(status_data: dict[str, Any] | None) -> None:
         topics_by_layer[layer_id].append(topic)
 
     # Sort topics by cluster_id within each layer
-    for layer_id in topics_by_layer:
+    for topics in topics_by_layer.values():
         # Handle both dictionary and direct value formats for sorting
         def get_cluster_id(x: dict[str, Any]) -> int:
             if isinstance(x.get("cluster_id"), dict):
@@ -609,7 +609,7 @@ def display_conversation_status(status_data: dict[str, Any] | None) -> None:
             else:
                 return int(str(x.get("cluster_id", "0")))
 
-        topics_by_layer[layer_id].sort(key=get_cluster_id)
+        topics.sort(key=get_cluster_id)
 
     if not RICH_AVAILABLE or not IS_TERMINAL:
         print("\nConversation Status:")

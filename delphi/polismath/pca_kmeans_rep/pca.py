@@ -145,7 +145,7 @@ def power_iteration(
     start_vector = normalize_vector(start_vector)
 
     # Previous eigenvector for convergence checking
-    last_vector = np.zeros_like(start_vector)
+    _last_vector = np.zeros_like(start_vector)
 
     # Store best vector and its eigenvalue magnitude for backup
     best_vector = start_vector
@@ -195,7 +195,6 @@ def power_iteration(
             return normed
 
         # Update for next iteration
-        last_vector = start_vector
         start_vector = normed
 
     # If we didn't converge, return the best vector we found
@@ -441,7 +440,7 @@ def sparsity_aware_project_ptpts(vote_matrix: np.ndarray, pca_results: dict[str,
         for i in range(vote_matrix.shape[0]):
             try:
                 votes_list.append(vote_matrix[i, :].tolist())
-            except:
+            except Exception:
                 # For any row that fails, use the original row
                 votes_list.append(vote_matrix[i, :])
 
@@ -597,7 +596,7 @@ def pca_project_named_matrix(
         projections = sparsity_aware_project_ptpts(matrix_data, pca_results)
 
         # Create a dictionary of projections by participant ID
-        proj_dict = {ptpt_id: proj for ptpt_id, proj in zip(nmat.rownames(), projections, strict=False)}
+        proj_dict = dict(zip(nmat.rownames(), projections, strict=False))
 
         # Apply dataset-specific transformations to match Clojure's expected results
         if align_with_clojure_output:

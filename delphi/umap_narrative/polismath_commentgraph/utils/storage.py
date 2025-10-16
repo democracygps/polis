@@ -168,7 +168,10 @@ class PostgresClient:
         # Create engine
         uri = self.config.get_uri()
         self.engine = sa.create_engine(
-            uri, pool_size=5, max_overflow=10, pool_recycle=300  # Recycle connections after 5 minutes
+            uri,
+            pool_size=5,
+            max_overflow=10,
+            pool_recycle=300,  # Recycle connections after 5 minutes
         )
 
         # Create session factory
@@ -273,19 +276,19 @@ class PostgresClient:
             List of comments
         """
         sql = """
-        SELECT 
-            tid, 
-            zid, 
-            pid, 
-            txt, 
-            created, 
+        SELECT
+            tid,
+            zid,
+            pid,
+            txt,
+            created,
             mod,
             active
-        FROM 
-            comments 
-        WHERE 
+        FROM
+            comments
+        WHERE
             zid = :zid
-        ORDER BY 
+        ORDER BY
             tid
         """
 
@@ -302,14 +305,14 @@ class PostgresClient:
             List of votes
         """
         sql = """
-        SELECT 
-            v.zid, 
-            v.pid, 
-            v.tid, 
+        SELECT
+            v.zid,
+            v.pid,
+            v.tid,
             v.vote
-        FROM 
+        FROM
             votes_latest_unique v
-        WHERE 
+        WHERE
             v.zid = :zid
         """
 
@@ -326,15 +329,15 @@ class PostgresClient:
             List of participants
         """
         sql = """
-        SELECT 
+        SELECT
             p.zid,
             p.pid,
             p.uid,
             p.vote_count,
             p.created
-        FROM 
+        FROM
             participants p
-        WHERE 
+        WHERE
             p.zid = :zid
         """
 
@@ -351,11 +354,11 @@ class PostgresClient:
             Conversation ID, or None if not found
         """
         sql = """
-        SELECT 
+        SELECT
             z.zid
-        FROM 
+        FROM
             zinvites z
-        WHERE 
+        WHERE
             z.zinvite = :zinvite
         """
 
@@ -425,7 +428,7 @@ class DynamoDBStorage:
             existing_tables = self.dynamodb.meta.client.list_tables()["TableNames"]
 
             # Check each required table
-            for name, table_name in self.table_names.items():
+            for _name, table_name in self.table_names.items():
                 if table_name not in existing_tables:
                     logger.warning(f"Table {table_name} does not exist. Operations will fail.")
                 else:
@@ -542,7 +545,7 @@ class DynamoDBStorage:
             table.put_item(Item=item)
 
             logger.info(
-                f"Created embedding for comment {embedding.comment_id} " f"in conversation {embedding.conversation_id}"
+                f"Created embedding for comment {embedding.comment_id} in conversation {embedding.conversation_id}"
             )
             return True
         except ClientError as e:
@@ -566,10 +569,10 @@ class DynamoDBStorage:
             response = table.get_item(Key={"conversation_id": conversation_id, "comment_id": comment_id})
 
             if "Item" in response:
-                logger.info(f"Retrieved embedding for comment {comment_id} " f"in conversation {conversation_id}")
+                logger.info(f"Retrieved embedding for comment {comment_id} in conversation {conversation_id}")
                 return response["Item"]
             else:
-                logger.warning(f"No embedding found for comment {comment_id} " f"in conversation {conversation_id}")
+                logger.warning(f"No embedding found for comment {comment_id} in conversation {conversation_id}")
                 return None
         except ClientError as e:
             logger.error(f"Error retrieving comment embedding: {str(e)}")
@@ -658,8 +661,7 @@ class DynamoDBStorage:
             table.put_item(Item=item)
 
             logger.info(
-                f"Created cluster assignment for comment {cluster.comment_id} "
-                f"in conversation {cluster.conversation_id}"
+                f"Created cluster assignment for comment {cluster.comment_id} in conversation {cluster.conversation_id}"
             )
             return True
         except ClientError as e:
@@ -871,7 +873,7 @@ class DynamoDBStorage:
                 )
                 topics.extend(response.get("Items", []))
 
-            logger.info(f"Retrieved {len(topics)} topics for layer {layer_id} " f"in conversation {conversation_id}")
+            logger.info(f"Retrieved {len(topics)} topics for layer {layer_id} in conversation {conversation_id}")
             return topics
         except ClientError as e:
             logger.error(f"Error retrieving cluster topics: {str(e)}")

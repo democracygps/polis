@@ -20,7 +20,7 @@ PSEUDO_COUNT = 1.5  # Pseudocount for Bayesian smoothing
 
 def prop_test(p: float, n: int, p0: float) -> float:
     """One-proportion z-test."""
-    if n == 0 or p0 == 0 or p0 == 1:
+    if n == 0 or p0 in {0, 1}:
         return 0.0
 
     # Calculate standard error
@@ -91,7 +91,7 @@ def calculate_repness(vote_matrix: np.ndarray, clusters: list[dict[str, Any]]) -
     result = {"group_repness": {}}
 
     # For each group, calculate representativeness
-    for group_idx, group in enumerate(clusters):
+    for _group_idx, group in enumerate(clusters):
         group_id = group["id"]
         group_members = group["members"]
         other_members = [i for i in range(vote_matrix.shape[0]) if i not in group_members]
@@ -203,7 +203,7 @@ def run_test(dataset_name: str) -> None:
                 comment_idx = comment["comment_idx"]
                 comment_id = cmt_ids[comment_idx] if comment_idx < len(cmt_ids) else comment_idx
 
-                print(f"  Comment {i+1}: ID {comment_id}, Type: {comment['repful']}")
+                print(f"  Comment {i + 1}: ID {comment_id}, Type: {comment['repful']}")
                 print(f"    Agree: {comment['pa']:.2f}, Disagree: {comment['pd']:.2f}")
                 print(f"    Agree ratio: {comment.get('ra', 0):.2f}, Disagree ratio: {comment.get('rd', 0):.2f}")
                 print(

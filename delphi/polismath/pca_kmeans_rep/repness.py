@@ -59,7 +59,7 @@ def prop_test(p: float, n: int, p0: float) -> float:
     Returns:
         Z-score
     """
-    if n == 0 or p0 == 0 or p0 == 1:
+    if n == 0 or p0 in {0, 1}:
         return 0.0
 
     # Calculate standard error
@@ -179,7 +179,6 @@ def repness_metric(stats: dict[str, Any], key_prefix: str) -> float:
     # Get the relevant probability and test values
     p = stats[f"p{key_prefix}"]
     p_test = stats[f"p{key_prefix}t"]
-    r = stats[f"r{key_prefix}"]
     r_test = stats[f"r{key_prefix}t"]
 
     # Take probability into account

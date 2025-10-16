@@ -278,8 +278,8 @@ class Config:
             )
             / 1000.0
         )
-        config["poller"]["allowlist"] = to_int_list(os.environ.get("POLL_ALLOWLIST", []))
-        config["poller"]["blocklist"] = to_int_list(os.environ.get("POLL_BLOCKLIST", []))
+        config["poller"]["allowlist"] = to_int_list(os.environ.get("POLL_ALLOWLIST", ""))
+        config["poller"]["blocklist"] = to_int_list(os.environ.get("POLL_BLOCKLIST", ""))
 
         # Conversation
         config["conversation"]["max-ptpts"] = to_int(
@@ -398,7 +398,7 @@ class Config:
             config = self._config
 
             # Traverse path
-            for i, component in enumerate(components[:-1]):
+            for _i, component in enumerate(components[:-1]):
                 if component not in config:
                     config[component] = {}
 

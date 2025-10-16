@@ -6,12 +6,8 @@ from the original Clojure codebase.
 """
 
 from collections.abc import Callable, Iterable
-from typing import TypeVar
 
 import numpy as np
-
-T = TypeVar("T")
-U = TypeVar("U")
 
 
 def xor(a: bool, b: bool) -> bool:
@@ -81,7 +77,7 @@ def pass_vote(vote: float | None) -> bool:
     return vote is None
 
 
-def zip_collections(*colls: Iterable[T]) -> list[tuple[T, ...]]:
+def zip_collections[T](*colls: Iterable[T]) -> list[tuple[T, ...]]:
     """
     Zip multiple collections together.
     Similar to Python's built-in zip, but returns a list.
@@ -95,7 +91,7 @@ def zip_collections(*colls: Iterable[T]) -> list[tuple[T, ...]]:
     return list(zip(*colls, strict=False))
 
 
-def with_indices(coll: Iterable[T]) -> list[tuple[int, T]]:
+def with_indices[T](coll: Iterable[T]) -> list[tuple[int, T]]:
     """
     Combine elements of a collection with their indices.
 
@@ -108,7 +104,7 @@ def with_indices(coll: Iterable[T]) -> list[tuple[int, T]]:
     return list(enumerate(coll))
 
 
-def filter_by_index(coll: Iterable[T], indices: Iterable[int]) -> list[T]:
+def filter_by_index[T](coll: Iterable[T], indices: Iterable[int]) -> list[T]:
     """
     Filter a collection to only include items at specified indices.
 
@@ -124,7 +120,7 @@ def filter_by_index(coll: Iterable[T], indices: Iterable[int]) -> list[T]:
     return [item for i, item in enumerate(coll_list) if i in index_set]
 
 
-def map_rest(f: Callable[[T, T], U], coll: list[T]) -> list[U]:
+def map_rest[T, U](f: Callable[[T, T], U], coll: list[T]) -> list[U]:
     """
     Apply a function to each element and all remaining elements.
 
@@ -146,7 +142,7 @@ def map_rest(f: Callable[[T, T], U], coll: list[T]) -> list[U]:
     return result
 
 
-def mapv_rest(f: Callable[[T, T], U], coll: list[T]) -> list[U]:
+def mapv_rest[T, U](f: Callable[[T, T], U], coll: list[T]) -> list[U]:
     """
     Same as map_rest but guaranteed to return a list.
 
@@ -160,7 +156,7 @@ def mapv_rest(f: Callable[[T, T], U], coll: list[T]) -> list[U]:
     return map_rest(f, coll)
 
 
-def typed_indexof(coll: list[T], item: T) -> int:
+def typed_indexof[T](coll: list[T], item: T) -> int:
     """
     Find the index of an item in a collection.
 
@@ -177,7 +173,7 @@ def typed_indexof(coll: list[T], item: T) -> int:
         return -1
 
 
-def hash_map_subset(m: dict[T, U], keys: Iterable[T]) -> dict[T, U]:
+def hash_map_subset[T, U](m: dict[T, U], keys: Iterable[T]) -> dict[T, U]:
     """
     Create a subset of a dictionary containing only specified keys.
 
@@ -191,7 +187,7 @@ def hash_map_subset(m: dict[T, U], keys: Iterable[T]) -> dict[T, U]:
     return {k: m[k] for k in keys if k in m}
 
 
-def distinct(coll: Iterable[T]) -> list[T]:
+def distinct[T](coll: Iterable[T]) -> list[T]:
     """
     Return a list with duplicates removed, preserving order.
 

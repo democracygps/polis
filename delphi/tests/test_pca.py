@@ -95,14 +95,14 @@ class TestPowerIteration:
         assert not np.all(np.abs(result) < 1e-10)
 
         # Check the eigenvector property: data*result should be proportional to result
-        Av = data.T @ (data @ result)  # X^T X v
+        av = data.T @ (data @ result)  # X^T X v
 
         # Normalize both vectors for comparison
-        Av_norm = Av / np.linalg.norm(Av)
+        av_norm = av / np.linalg.norm(av)
         result_norm = result / np.linalg.norm(result)
 
         # Check that they are parallel (dot product close to 1 or -1)
-        assert np.abs(np.dot(Av_norm, result_norm)) > 0.99
+        assert np.abs(np.dot(av_norm, result_norm)) > 0.99
 
     def test_power_iteration_start_vector(self):
         """Test power iteration with a custom start vector."""
@@ -115,14 +115,14 @@ class TestPowerIteration:
         assert not np.all(np.abs(result) < 1e-10)
 
         # Check the eigenvector property: data*result should be proportional to result
-        Av = data.T @ (data @ result)  # X^T X v
+        av = data.T @ (data @ result)  # X^T X v
 
         # Normalize both vectors for comparison
-        Av_norm = Av / np.linalg.norm(Av)
+        av_norm = av / np.linalg.norm(av)
         result_norm = result / np.linalg.norm(result)
 
         # Check that they are parallel (dot product close to 1 or -1)
-        assert np.abs(np.dot(Av_norm, result_norm)) > 0.99
+        assert np.abs(np.dot(av_norm, result_norm)) > 0.99
 
 
 class TestWrappedPCA:

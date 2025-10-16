@@ -19,6 +19,7 @@ import uuid  # For generating job_id
 from datetime import datetime
 
 # Import from installed packages
+import datamapplot
 import evoc
 import numpy as np
 import ollama
@@ -217,8 +218,8 @@ def characterize_comment_clusters(cluster_layer, comment_texts):
     transformer = TfidfTransformer()
 
     # Fit and transform the entire corpus
-    X = vectorizer.fit_transform(comment_texts)
-    X_tfidf = transformer.fit_transform(X)
+    x = vectorizer.fit_transform(comment_texts)
+    x_tfidf = transformer.fit_transform(x)
 
     # Get feature names
     feature_names = vectorizer.get_feature_names_out()
@@ -234,7 +235,7 @@ def characterize_comment_clusters(cluster_layer, comment_texts):
         cluster_comments = [comment_texts[i] for i in cluster_members]
 
         # Find top words for this cluster by TF-IDF
-        cluster_tfidf = X_tfidf[cluster_members].toarray().mean(axis=0)
+        cluster_tfidf = x_tfidf[cluster_members].toarray().mean(axis=0)
         top_indices = np.argsort(cluster_tfidf)[-10:][::-1]  # Top 10 words
         top_words = [feature_names[i] for i in top_indices]
 
@@ -1148,7 +1149,7 @@ def create_enhanced_multilayer_index(output_path, conversation_name, layer_files
         )
 
         # Add links to each layer
-        for (layer_idx, num_clusters), file_path in zip(layer_info, layer_files, strict=False):
+        for (layer_idx, _num_clusters), file_path in zip(layer_info, layer_files, strict=False):
             file_name = os.path.basename(file_path)
             basic_view_file = file_name.replace("_named.html", "_enhanced.html")
             named_view_file = file_name
@@ -1400,14 +1401,8 @@ def main() -> None:
 
         # Store in DynamoDB if requested
         if not args.no_dynamo:
-            store_in_dynamo(
-                str(args.zid),
-                document_vectors,
-                document_map,
-                cluster_layers,
-                mock_comments,
-                comment_ids,
-            )
+            # DynamoDB storage is already handled above in the main function
+            logger.info("DynamoDB storage already completed")
 
         # Process each layer and create visualizations
         output_dir = os.path.join("polis_data", str(args.zid), "python_output", "comments_enhanced_multilayer")

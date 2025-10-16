@@ -16,7 +16,7 @@ This document provides a comprehensive guide on how to set up, run, and test the
 
 ### Prerequisites
 
-- Python 3.8+ (Python 3.12 recommended)
+- Python 3.12+ (Python 3.12 recommended)
 - pip (Python package manager)
 - Virtual environment (optional but recommended)
 
@@ -68,9 +68,6 @@ python run_tests.py --unit
 
 # Run only real data tests
 python run_tests.py --real
-
-# Run only demo scripts
-python run_tests.py --demo
 
 # Run only simplified test scripts
 python run_tests.py --simplified
@@ -231,18 +228,6 @@ python simplified_repness_test.py
 ```
 
 These scripts demonstrate the core algorithms without depending on the full package structure and can be useful for understanding the underlying mathematics.
-
-## Running the Demo Scripts
-
-The repository includes demo scripts that demonstrate the system's capabilities:
-
-```bash
-# Run the simple demo
-python simple_demo.py
-
-# Run the final demo
-python final_demo.py
-```
 
 ## Troubleshooting
 

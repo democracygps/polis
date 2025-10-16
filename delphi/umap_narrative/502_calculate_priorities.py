@@ -59,43 +59,61 @@ class PriorityCalculator:
 
         logger.info(f"Initialized priority calculator for conversation {conversation_id}")
 
-    def _importance_metric(self, A: int, P: int, S: int, E: float) -> float:
+    def _importance_metric(
+        self,
+        agree_vote_count: int,
+        pass_vote_count: int,
+        total_vote_count: int,
+        extremity_score: float,
+    ) -> float:
         """
         Calculate importance metric (matches Clojure implementation).
 
         Args:
-            A: Number of agree votes
-            P: Number of pass votes
-            S: Total number of votes
-            E: Extremity value
+            agree_vote_count: Number of agree votes
+            pass_vote_count: Number of pass votes
+            total_vote_count: Total number of votes
+            extremity_score: Extremity value
 
         Returns:
             Importance metric value
         """
-        p = (P + 1) / (S + 2)
-        a = (A + 1) / (S + 2)
-        return (1 - p) * (E + 1) * a
+        p = (pass_vote_count + 1) / (total_vote_count + 2)
+        a = (agree_vote_count + 1) / (total_vote_count + 2)
+        return (1 - p) * (extremity_score + 1) * a
 
-    def _priority_metric(self, is_meta: bool, A: int, P: int, S: int, E: float) -> float:
+    def _priority_metric(
+        self,
+        is_meta: bool,
+        agree_vote_count: int,
+        pass_vote_count: int,
+        total_vote_count: int,
+        extremity_score: float,
+    ) -> float:
         """
         Calculate priority metric (matches Clojure implementation).
 
         Args:
             is_meta: Whether the comment is a meta comment
-            A: Number of agree votes
-            P: Number of pass votes
-            S: Total number of votes
-            E: Extremity value
+            agree_vote_count: Number of agree votes
+            pass_vote_count: Number of pass votes
+            total_vote_count: Total number of votes
+            extremity_score: Extremity value
 
         Returns:
             Priority metric value
         """
-        META_PRIORITY = 7.0
+        meta_priority = 7.0
         if is_meta:
-            return META_PRIORITY**2
+            return meta_priority**2
         else:
-            importance = self._importance_metric(A, P, S, E)
-            scaling_factor = 1.0 + (8.0 * (2.0 ** (-S / 5.0)))
+            importance = self._importance_metric(
+                agree_vote_count,
+                pass_vote_count,
+                total_vote_count,
+                extremity_score,
+            )
+            scaling_factor = 1.0 + (8.0 * (2.0 ** (-total_vote_count / 5.0)))
             return (importance * scaling_factor) ** 2
 
     def get_comment_extremity(self, comment_id: str) -> float:
@@ -174,15 +192,21 @@ class PriorityCalculator:
                     logger.warning(f"Skipping item due to missing data: {item}")
                     continue
 
-                A = int(stats.get("agree", 0))
-                D = int(stats.get("disagree", 0))
-                S = int(stats.get("total", 0))
-                P = S - (A + D)
+                agree_vote_count = int(stats.get("agree", 0))
+                disagree_vote_count = int(stats.get("disagree", 0))
+                total_vote_count = int(stats.get("total", 0))
+                pass_vote_count = total_vote_count - (agree_vote_count + disagree_vote_count)
 
-                E = self.get_comment_extremity(comment_id)
+                extremity_score = self.get_comment_extremity(comment_id)
                 is_meta = False  # Assuming no meta comments for now
 
-                priority = self._priority_metric(is_meta, A, P, S, E)
+                priority = self._priority_metric(
+                    is_meta,
+                    agree_vote_count,
+                    pass_vote_count,
+                    total_vote_count,
+                    extremity_score,
+                )
 
                 # Prepare the update payload with the full key and the new priority
                 updates.append(
@@ -193,7 +217,15 @@ class PriorityCalculator:
                     }
                 )
 
-                logger.debug(f"Comment {comment_id}: A={A}, P={P}, S={S}, E={E:.4f}, priority={int(priority)}")
+                logger.debug(
+                    "Comment %s: agree=%s, pass=%s, total=%s, extremity=%.4f, priority=%s",
+                    comment_id,
+                    agree_vote_count,
+                    pass_vote_count,
+                    total_vote_count,
+                    extremity_score,
+                    int(priority),
+                )
 
             except Exception as e:
                 logger.warning(f"Error preparing update for comment {item.get('comment_id', 'N/A')}: {e}")
@@ -213,7 +245,7 @@ class PriorityCalculator:
         logger.info(f"Updating {len(updates)} priority values in DynamoDB")
         try:
             # Use a BatchWriter to efficiently handle multiple updates.
-            with self.comment_routing_table.batch_writer(overwrite_by_pkeys=["zid_tick", "comment_id"]) as batch:
+            with self.comment_routing_table.batch_writer(overwrite_by_pkeys=["zid_tick", "comment_id"]):
                 for item_update in updates:
                     # NOTE: BatchWriter does not support update_item. We must put the entire item.
                     # This requires fetching the full item first or knowing its structure.

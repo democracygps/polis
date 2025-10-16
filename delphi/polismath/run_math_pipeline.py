@@ -3,21 +3,28 @@
 Run the math pipeline for a Polis conversation using the polismath package.
 This script is adapted from the Pakistan test and is suitable for direct invocation.
 """
+
 import argparse
 import decimal
 import logging
 import os
 import sys
 import time
+import traceback
+
+import numpy as np
+import psycopg2
+from psycopg2 import extras
+
+from polismath.conversation.conversation import Conversation
+from polismath.database.dynamodb import DynamoDBClient
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def prepare_for_json(obj):
-    import numpy as np
-
+def prepare_for_json(obj):  # noqa: PLR0911
     if isinstance(obj, decimal.Decimal):
         return float(obj)
     elif hasattr(obj, "tolist"):
@@ -40,9 +47,6 @@ def prepare_for_json(obj):
 
 def connect_to_db():
     """Connect to PostgreSQL database using environment variables or defaults."""
-
-    import psycopg2
-
     try:
         # Check if DATABASE_URL is set and use it if available
         database_url = os.environ.get("DATABASE_URL")
@@ -56,7 +60,7 @@ def connect_to_db():
                 user=os.environ.get("DATABASE_USER", "postgres"),
                 password=os.environ.get("DATABASE_PASSWORD", "oiPorg3Nrz0yqDLE"),
                 host=os.environ.get("DATABASE_HOST", "localhost"),
-                port=os.environ.get("DATABASE_PORT", 5432),
+                port=int(os.environ.get("DATABASE_PORT", "5432")),
             )
 
         logger.info("Connected to database successfully")
@@ -71,10 +75,6 @@ def fetch_votes(conn, conversation_id):
     Fetch votes for a specific conversation from PostgreSQL.
     Returns a dictionary containing votes in the format expected by Conversation.
     """
-    import time
-
-    from psycopg2 import extras
-
     start_time = time.time()
     logger.info(f"[{start_time:.2f}s] Fetching votes for conversation {conversation_id}")
     cursor = conn.cursor(cursor_factory=extras.DictCursor)
@@ -115,10 +115,6 @@ def fetch_comments(conn, conversation_id):
     Fetch comments for a specific conversation from PostgreSQL.
     Returns a dictionary containing comments in the format expected by Conversation.
     """
-    import time
-
-    from psycopg2 import extras
-
     start_time = time.time()
     logger.info(f"[{start_time:.2f}s] Fetching comments for conversation {conversation_id}")
     cursor = conn.cursor(cursor_factory=extras.DictCursor)
@@ -161,10 +157,6 @@ def fetch_moderation(conn, conversation_id):
     Fetch moderation data for a specific conversation from PostgreSQL.
     Returns a dictionary containing moderation data in the format expected by Conversation.
     """
-    import time
-
-    from psycopg2 import extras
-
     start_time = time.time()
     logger.info(f"[{start_time:.2f}s] Fetching moderation data for conversation {conversation_id}")
     cursor = conn.cursor(cursor_factory=extras.DictCursor)
@@ -229,9 +221,6 @@ def main():
     start_time = time.time()
     logger.info(f"[{time.time() - start_time:.2f}s] Starting math pipeline for conversation {zid}")
 
-    # Import polismath modules
-    from polismath.conversation.conversation import Conversation
-
     # Connect to database
     logger.info(f"[{time.time() - start_time:.2f}s] Connecting to database...")
     conn = connect_to_db()
@@ -276,7 +265,9 @@ def main():
         for offset in range(0, min(total_votes, max_votes_to_process), batch_size):
             batch_start_time = time.time()
             end_idx = min(offset + batch_size, total_votes, max_votes_to_process)
-            logger.info(f"[{time.time() - start_time:.2f}s] Processing votes {offset+1} to {end_idx} of {total_votes}")
+            logger.info(
+                f"[{time.time() - start_time:.2f}s] Processing votes {offset + 1} to {end_idx} of {total_votes}"
+            )
 
             cursor = conn.cursor()
             batch_query = """
@@ -368,7 +359,6 @@ def main():
         # Save results to DynamoDB using the DynamoDBClient, as in the Pakistan test
         try:
             logger.info(f"[{time.time() - start_time:.2f}s] Initializing DynamoDB client...")
-            from polismath.database.dynamodb import DynamoDBClient
 
             # Use environment variables or sensible defaults for local/test
             endpoint_url = os.environ.get("DYNAMODB_ENDPOINT")
@@ -388,14 +378,10 @@ def main():
             logger.info(f"[{time.time() - start_time:.2f}s] Export to DynamoDB {'succeeded' if success else 'failed'}")
         except Exception as e:
             logger.error(f"[{time.time() - start_time:.2f}s] Error exporting to DynamoDB: {e}")
-            import traceback
-
             traceback.print_exc()
 
     except Exception as e:
         logger.error(f"Pipeline failed: {e}")
-        import traceback
-
         traceback.print_exc()
         sys.exit(1)
     finally:

@@ -259,7 +259,7 @@ def load_comment_texts(zid: int) -> dict[str, Any]:
         # Clean up connection
         try:
             postgres_client.shutdown()
-        except:
+        except Exception:
             pass
 
 
@@ -392,8 +392,6 @@ def s3_upload_file(local_file_path: str, s3_key: str) -> str | bool:
 
     except Exception as e:
         logger.error(f"Error uploading file to S3: {e}")
-        import traceback
-
         logger.error(traceback.format_exc())
         return False
 
@@ -566,8 +564,6 @@ def generate_static_datamapplot(zid: int, layer_num: int = 0, output_dir: str | 
                 logger.info(f"S3 URLs saved to {url_file}")
         except Exception as s3_error:
             logger.error(f"Error uploading to S3: {s3_error}")
-            import traceback
-
             logger.error(f"S3 upload traceback: {traceback.format_exc()}")
 
         return True

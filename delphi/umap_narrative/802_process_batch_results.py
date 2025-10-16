@@ -54,7 +54,7 @@ class ReportStorageService:
     def init_table(self):
         """Check if the table exists"""
         try:
-            self.table.table_status
+            _ = self.table.table_status  # Check table accessibility
             logger.info(f"Table {self.table_name} exists and is accessible.")
         except Exception as e:
             logger.error(f"Error checking table {self.table_name}: {str(e)}")

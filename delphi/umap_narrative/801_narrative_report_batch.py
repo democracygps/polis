@@ -21,10 +21,12 @@ Args:
 
 import argparse
 import asyncio
+import copy
 import json
 import logging
 import os
 import re  # Added re import for regex operations
+import subprocess
 import sys
 import time
 import traceback  # Added for detailed error tracing
@@ -36,6 +38,13 @@ from xml.dom.minidom import parseString
 
 import boto3
 import xmltodict
+from anthropic import (
+    Anthropic,
+    APIConnectionError,
+    APIError,
+    APIResponseValidationError,
+    APIStatusError,
+)
 
 # Import the model provider
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -187,7 +196,7 @@ class PolisConverter:
 
             # Add data for each group
             for group_id in group_keys:
-                group = ET.SubElement(
+                ET.SubElement(
                     comment,
                     f"group-{group_id}",
                     {
@@ -279,8 +288,6 @@ class BatchReportGenerator:
             # Parse the JSON data
             math_data = results[0]["data"]
             if isinstance(math_data, str):
-                import json
-
                 math_data = json.loads(math_data)
 
             logger.info(f"Successfully retrieved math_main data for conversation {conversation_id}")
@@ -290,8 +297,6 @@ class BatchReportGenerator:
 
         except Exception as e:
             logger.error(f"Error retrieving math_main data for conversation {conversation_id}: {str(e)}")
-            import traceback
-
             logger.error(traceback.format_exc())
             return None
 
@@ -383,8 +388,6 @@ class BatchReportGenerator:
             }
         except Exception as e:
             logger.error(f"Error getting conversation data: {str(e)}")
-            import traceback
-
             logger.error(traceback.format_exc())
             return None
         finally:
@@ -496,8 +499,8 @@ class BatchReportGenerator:
 
             # --- Step 2: Process the fetched data ---
 
-            available_layers = set(layer for clusters in all_clusters.values() for layer in clusters.keys())
-            layers_to_process = sorted(list(available_layers))
+            available_layers = {layer for clusters in all_clusters.values() for layer in clusters.keys()}
+            layers_to_process = sorted(available_layers)
             if self.layers is not None:
                 layers_to_process = [layer for layer in layers_to_process if layer in self.layers]
 
@@ -598,7 +601,7 @@ class BatchReportGenerator:
             logger.error(f"A critical error occurred in get_topics: {str(e)}", exc_info=True)
             return []
 
-    def filter_topics(
+    def filter_topics(  # noqa: PLR0911
         self,
         comment,
         topic_cluster_id=None,
@@ -943,8 +946,6 @@ class BatchReportGenerator:
             return xml
         except Exception as e:
             logger.error(f"Error in get_comments_as_xml: {str(e)}")
-            import traceback
-
             logger.error(traceback.format_exc())
             return ""
 
@@ -1177,8 +1178,6 @@ class BatchReportGenerator:
 
             except Exception as e:
                 logger.error(f"Error preparing prompt for topic {topic_name}: {str(e)}")
-                import traceback
-
                 logger.error(traceback.format_exc())
                 continue
 
@@ -1237,12 +1236,10 @@ class BatchReportGenerator:
             logger.error(
                 f"Error processing request for topic {request.get('metadata', {}).get('topic_name', 'unknown')}: {str(e)}"
             )
-            import traceback
-
             logger.error(traceback.format_exc())
             return None
 
-    async def submit_batch(self):
+    async def submit_batch(self):  # noqa: PLR0911
         """Prepare and process a batch of topic report requests using Anthropic's Batch API."""
         logger.info("=== Starting batch submission process ===")
 
@@ -1294,30 +1291,13 @@ class BatchReportGenerator:
             # Import Anthropic SDK
             logger.info("Importing Anthropic SDK...")
             try:
-                from anthropic import (
-                    Anthropic,
-                    APIConnectionError,
-                    APIError,
-                    APIResponseValidationError,
-                    APIStatusError,
-                )
-
                 logger.info("Successfully imported Anthropic SDK")
             except ImportError as e:
                 logger.error(f"Failed to import Anthropic SDK: {str(e)}")
                 logger.error(f"System paths: {sys.path}")
                 logger.error("Attempting to install Anthropic SDK...")
                 try:
-                    import subprocess
-
                     subprocess.check_call([sys.executable, "-m", "pip", "install", "anthropic"])
-                    from anthropic import (
-                        Anthropic,
-                        APIConnectionError,
-                        APIError,
-                        APIResponseValidationError,
-                        APIStatusError,
-                    )
 
                     logger.info("Successfully installed and imported Anthropic SDK")
                 except Exception as e:
@@ -1408,8 +1388,6 @@ class BatchReportGenerator:
                     # CRITICAL BUG FIX: Must use deepcopy here!
                     # Using shallow copy causes the debug truncation to modify the actual request sent to Anthropic
                     # This was causing the first batch item to fail with "Report data is not in the expected JSON format"
-                    import copy
-
                     debug_request = copy.deepcopy(formatted_batch_requests[0])
                     if "params" in debug_request:
                         # Truncate system content
@@ -1485,13 +1463,13 @@ class BatchReportGenerator:
 
                     # Check if the table exists
                     try:
-                        job_table.table_status
+                        _ = job_table.table_status  # Check table accessibility
                         logger.info("Successfully connected to Delphi_JobQueue table")
                     except Exception as e:
                         logger.error(f"Failed to connect to Delphi_JobQueue table: {str(e)}")
                         logger.error("Available tables:")
                         try:
-                            tables = list(dynamodb.tables.all())
+                            tables = list(self.dynamodb.tables.all())
                             for table in tables:
                                 logger.info(f"- {table.name}")
                         except Exception as e:

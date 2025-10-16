@@ -187,7 +187,7 @@ def test_vw_conversation():
 
     # Load the Clojure output for comparison
     with open(clojure_output_path) as f:
-        clojure_output = json.load(f)
+        json.load(f)
 
     # Create a new conversation
     conv_id = "vw"

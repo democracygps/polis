@@ -8,6 +8,7 @@ import logging
 import threading
 
 import fastapi
+import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -195,9 +196,6 @@ class Server:
         """
         if self._running:
             return
-
-        # Import uvicorn here to avoid circular imports
-        import uvicorn
 
         self._uvicorn = uvicorn
 

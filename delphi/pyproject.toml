@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "delphi-polis"
 version = "0.1.0"
 description = "Mathematical analytics pipeline for Polis conversations"
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 
 dependencies = [
     "numpy>=1.26.4,<2.0",
@@ -66,13 +66,13 @@ dev = [
     "httpx>=0.23.0",
     "moto>=4.1.0",
     # Code quality - streamlined modern stack
-    "ruff>=0.1.0",      # Replaces flake8, isort, and many others
-    "black>=23.0.0",    # Formatter
-    "mypy>=1.5.0",      # Type checker
-    "bandit[toml]>=1.8.0",  # Security scanner
-    "pre-commit>=3.0.0",
+    "ruff>=0.14.0",      # Replaces flake8, isort, and many others
+    "black>=25.9.0",    # Formatter
+    "mypy>=1.18.2",      # Type checker
+    "bandit[toml]>=1.8.6",  # Security scanner
+    "pre-commit>=4.3.0",
     # Dependency management
-    "pip-tools>=7.0.0",
+    "pip-tools>=7.5.1",
     # Type stubs
     "types-requests",
     "types-psycopg2",
@@ -82,6 +82,7 @@ notebook = [
     "jupyter>=1.0.0",
     "ipython>=8.0.0",
     "matplotlib>=3.10.6",
+    "seaborn>=0.12.0",
 ]
 
 [project.scripts]
@@ -147,7 +148,7 @@ markers = [
 # Black code formatting
 [tool.black]
 line-length = 120
-target-version = ["py39", "py310", "py311", "py312"]
+target-version = ["py312", "py313", "py314"]
 include = '\.pyi?$'
 extend-exclude = '''
 /(
@@ -167,9 +168,10 @@ extend-exclude = '''
 [tool.ruff]
 target-version = "py312"
 line-length = 120  # Match Black
+[tool.ruff.lint]
 select = [
     "E",   # pycodestyle errors
-    "W",   # pycodestyle warnings  
+    "W",   # pycodestyle warnings
     "F",   # pyflakes
     "I",   # isort (import sorting)
     "B",   # flake8-bugbear
@@ -190,16 +192,16 @@ ignore = [
     "D408", "D409", "D410", "D411", "D412", "D413", "D414", "D415",  # docstring sections
     "D416", "D417", "D418", "D419",  # docstring sections
     "PLR0913", # too many arguments
-    "PLR0912", # too many branches  
+    "PLR0912", # too many branches
     "PLR0915", # too many statements
     "PLR2004", # magic values in comparisons
 ]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "tests/*" = ["PLR2004"]  # Magic value used in comparison
 "scripts/*" = ["T201"]   # Print statements are OK in scripts
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["polismath", "umap_narrative"]
 
 # isort configuration

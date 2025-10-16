@@ -365,8 +365,8 @@ class PostgresClient:
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("delphi_poller")
 
-# Global flag for graceful shutdown
-running = True
+# Event for graceful shutdown signaling
+shutdown_event = threading.Event()
 
 # Exit code from 803_check_batch_status.py script if batch is still processing
 EXIT_CODE_PROCESSING_CONTINUES = 3
@@ -374,9 +374,8 @@ EXIT_CODE_PROCESSING_CONTINUES = 3
 
 def signal_handler(sig: int, frame: Any) -> None:
     """Handle exit signals gracefully."""
-    global running
     logger.info("Shutdown signal received. Stopping workers...")
-    running = False
+    shutdown_event.set()
 
 
 class JobProcessor:
@@ -401,7 +400,7 @@ class JobProcessor:
         self.table = self.dynamodb.Table("Delphi_JobQueue")
 
         try:
-            self.table.table_status
+            _ = self.table.table_status  # Check table accessibility
             logger.info("Successfully connected to Delphi_JobQueue table")
         except Exception as e:
             logger.error(f"Failed to connect to Delphi_JobQueue table: {e}")
@@ -750,7 +749,7 @@ class JobProcessor:
                     )
 
             # 2. Execute the command and stream logs to prevent deadlocks
-            self.update_job_logs(job, {"level": "INFO", "message": f'Executing command: {" ".join(cmd)}'})
+            self.update_job_logs(job, {"level": "INFO", "message": f"Executing command: {' '.join(cmd)}"})
 
             env = os.environ.copy()
             env["DELPHI_JOB_ID"] = job_id
@@ -817,7 +816,7 @@ class JobProcessor:
 def poll_and_process(processor: JobProcessor, interval: int = 10) -> None:
     """The main loop for a worker thread."""
     logger.info(f"Worker {processor.worker_id} starting job polling...")
-    while running:
+    while not shutdown_event.is_set():
         claimed_job = None
         try:
             # Step 1: Find the next available job.
@@ -904,7 +903,7 @@ def main() -> None:
             threads.append(t)
             logger.info(f"Started worker thread {i + 1}")
 
-        while running and any(t.is_alive() for t in threads):
+        while not shutdown_event.is_set() and any(t.is_alive() for t in threads):
             time.sleep(1)
 
         logger.info("All workers have stopped. Exiting.")

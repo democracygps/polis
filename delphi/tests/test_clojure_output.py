@@ -38,7 +38,7 @@ def analyze_clojure_output(dataset_name: str) -> dict[str, Any]:
         structure["comment_priorities"] = {
             "count": len(priorities),
             "sample": dict(list(priorities.items())[:5]),
-            "data_types": set(type(v).__name__ for v in list(priorities.values())[:10]),
+            "data_types": {type(v).__name__ for v in list(priorities.values())[:10]},
         }
 
     # Analyze group clusters

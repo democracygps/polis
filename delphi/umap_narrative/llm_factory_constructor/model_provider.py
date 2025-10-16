@@ -11,6 +11,7 @@ import logging
 import os
 from typing import Any
 
+import ollama
 import requests
 
 # Configure logging
@@ -60,8 +61,6 @@ class OllamaProvider(ModelProvider):
 
         # Import ollama here to allow for optional dependency
         try:
-            import ollama
-
             self.ollama = ollama
             # Configure endpoint if specified
             if endpoint != "http://localhost:11434":
@@ -293,7 +292,7 @@ class AnthropicProvider(ModelProvider):
                 }
             )
 
-    def get_batch_responses(self, batch_requests: list[dict[str, Any]]) -> dict[str, Any]:
+    def get_batch_responses(self, batch_requests: list[dict[str, Any]]) -> dict[str, Any]:  # noqa: PLR0911
         """
         Submit a batch of requests to the Anthropic Batch API.
 

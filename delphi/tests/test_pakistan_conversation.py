@@ -13,10 +13,19 @@ import decimal
 import json
 import logging
 import os
-import sys
 import time
+import traceback
 
+import numpy as np
 import pytest
+
+from polismath.conversation.conversation import Conversation
+from tests.test_postgres_real_data import (
+    connect_to_db,
+    fetch_comments,
+    fetch_moderation,
+    init_dynamodb,
+)
 
 
 # Custom JSON encoder for handling Decimal and other types
@@ -30,7 +39,7 @@ class ExtendedJSONEncoder(json.JSONEncoder):
 
 
 # Helper function to convert dictionaries with special types for JSON serialization
-def prepare_for_json(obj):
+def prepare_for_json(obj):  # noqa: PLR0911
     """
     Recursively process data structures to make them JSON serializable,
     particularly handling Decimal, numpy arrays, and datetime objects.
@@ -41,8 +50,6 @@ def prepare_for_json(obj):
     Returns:
         JSON-serializable version of the object
     """
-    import numpy as np
-
     if isinstance(obj, decimal.Decimal):
         return float(obj)
     elif hasattr(obj, "tolist"):  # Convert numpy arrays to lists
@@ -63,23 +70,9 @@ def prepare_for_json(obj):
         return obj
 
 
-# Add the parent directory to the path to import the module
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.insert(0, parent_dir)
-
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Import required modules
-from polismath.conversation.conversation import Conversation
-from tests.test_postgres_real_data import (
-    connect_to_db,
-    fetch_comments,
-    fetch_moderation,
-    init_dynamodb,
-)
 
 # Constants
 PAKISTAN_ZID = 22154
@@ -153,22 +146,22 @@ def test_pakistan_conversation_batch():
                 break
 
             logger.info(
-                f"[{time.time() - start_time:.2f}s] Processing batch {batch_num+1} (votes {offset+1} to {offset+batch_size})..."
+                f"[{time.time() - start_time:.2f}s] Processing batch {batch_num + 1} (votes {offset + 1} to {offset + batch_size})..."
             )
 
             # Custom SQL to fetch a batch of votes
             cursor = conn.cursor()
             batch_query = """
-            SELECT 
+            SELECT
                 v.created as timestamp,
                 v.tid as comment_id,
                 v.pid as voter_id,
                 v.vote
-            FROM 
+            FROM
                 votes v
             WHERE
                 v.zid = %s
-            ORDER BY 
+            ORDER BY
                 v.created
             LIMIT %s OFFSET %s
             """
@@ -176,7 +169,7 @@ def test_pakistan_conversation_batch():
             vote_batch = cursor.fetchall()
             cursor.close()
 
-            logger.info(f"[{time.time() - start_time:.2f}s] Fetched {len(vote_batch)} votes in batch {batch_num+1}")
+            logger.info(f"[{time.time() - start_time:.2f}s] Fetched {len(vote_batch)} votes in batch {batch_num + 1}")
 
             # Format votes for conversation update
             votes_list = []
@@ -206,12 +199,12 @@ def test_pakistan_conversation_batch():
             update_start = time.time()
             conv = conv.update_votes(batch_votes, recompute=False)  # Don't recompute until all batches processed
             logger.info(
-                f"[{time.time() - start_time:.2f}s] Batch {batch_num+1} update completed in {time.time() - update_start:.2f}s"
+                f"[{time.time() - start_time:.2f}s] Batch {batch_num + 1} update completed in {time.time() - update_start:.2f}s"
             )
 
             # Log batch timing
             logger.info(
-                f"[{time.time() - start_time:.2f}s] Batch {batch_num+1} completed in {time.time() - batch_start:.2f}s"
+                f"[{time.time() - start_time:.2f}s] Batch {batch_num + 1} completed in {time.time() - batch_start:.2f}s"
             )
 
             # Process all batches
@@ -352,8 +345,6 @@ def test_pakistan_conversation_batch():
 
         except Exception as e:
             logger.error(f"[{time.time() - start_time:.2f}s] Error with DynamoDB: {e}")
-            import traceback
-
             traceback.print_exc()
 
         # Perform basic assertions
@@ -378,8 +369,6 @@ def test_pakistan_conversation_batch():
 
     except Exception as e:
         logger.error(f"[{time.time() - start_time:.2f}s] ERROR: Test failed with exception: {e}")
-        import traceback
-
         traceback.print_exc()
         raise
 

@@ -10,12 +10,6 @@ from typing import Any, TypeVar, overload
 
 import numpy as np
 
-# Configure logging
-logger = logging.getLogger(__name__)
-
-# Generic type variable for structure-preserving conversions
-T = TypeVar("T")
-
 from ..schemas.dynamo_models import (
     ClusterCharacteristic,
     ClusterLayer,
@@ -34,7 +28,11 @@ from ..schemas.dynamo_models import (
     UMAPParameters,
 )
 
+# Configure logging
 logger = logging.getLogger(__name__)
+
+# Generic type variable for structure-preserving conversions
+T = TypeVar("T")
 
 
 class DataConverter:
@@ -69,7 +67,7 @@ class DataConverter:
     def convert_floats_to_decimal(obj: np.ndarray) -> list[Any]: ...
 
     @staticmethod
-    def convert_floats_to_decimal(
+    def convert_floats_to_decimal(  # noqa: PLR0911
         obj: Any,
     ) -> dict[str, Any] | list[Any] | Decimal | int | Any:
         """
@@ -96,9 +94,9 @@ class DataConverter:
             return [DataConverter.convert_floats_to_decimal(item) for item in obj]
         elif isinstance(obj, np.ndarray):
             return [DataConverter.convert_floats_to_decimal(item) for item in obj.tolist()]
-        elif isinstance(obj, np.float32) or isinstance(obj, np.float64):
+        elif isinstance(obj, np.float32 | np.float64):
             return Decimal(str(obj))
-        elif isinstance(obj, np.int32) or isinstance(obj, np.int64):
+        elif isinstance(obj, np.int32 | np.int64):
             return int(obj)
         return obj
 
@@ -703,7 +701,7 @@ class DataConverter:
             nearest_indices = np.argsort(distances)[1 : k_neighbors + 1]  # Skip self
             nearest_distances = distances[nearest_indices]
 
-            for j, (neighbor_idx, distance) in enumerate(zip(nearest_indices, nearest_distances, strict=False)):
+            for _j, (neighbor_idx, distance) in enumerate(zip(nearest_indices, nearest_distances, strict=False)):
                 # Only create edge once (avoid duplicates)
                 edge_key = tuple(sorted([i, neighbor_idx]))
                 if edge_key in generated_edges:
@@ -926,7 +924,7 @@ class DataConverter:
                                 comment_text = comments[idx].get("comment", comments[idx].get("body", ""))
                                 if comment_text:
                                     sample_comments.append(comment_text)
-                            except:
+                            except Exception:
                                 pass
 
                 # If no actual comments, use placeholders

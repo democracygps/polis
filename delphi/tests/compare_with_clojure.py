@@ -7,10 +7,12 @@ This script analyzes the results from our recent improvements.
 import json
 import os
 import sys
+import traceback
 from typing import Any
 
 import numpy as np
 import pandas as pd
+from scipy.stats import wasserstein_distance
 
 # Add the parent directory to the path to import the module
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
@@ -113,8 +115,6 @@ def compare_clusters(python_clusters, clojure_clusters) -> dict[str, Any]:
 
         # Calculate earth mover's distance
         try:
-            from scipy.stats import wasserstein_distance
-
             size_similarity = 1.0 - min(wasserstein_distance(python_norm, clojure_norm), 1.0)
         except ImportError:
             # Fallback to simple difference if scipy not available
@@ -195,8 +195,7 @@ def compare_projections(python_projections, clojure_projections) -> dict[str, An
         distances = []
         same_quadrant = 0
 
-        for pid in transformed_py_projs:
-            py_proj = transformed_py_projs[pid]
+        for pid, py_proj in transformed_py_projs.items():
             cl_proj = cl_projs[pid]
 
             # Calculate Euclidean distance
@@ -230,8 +229,6 @@ def compare_projections(python_projections, clojure_projections) -> dict[str, An
 
     # Create histograms and compare overlap
     try:
-        from scipy.stats import wasserstein_distance
-
         if python_dists and clojure_dists:
             # Normalize distributions for comparison
             p_min, p_max = min(python_dists), max(python_dists)
@@ -335,8 +332,6 @@ def run_direct_comparison(dataset_name: str) -> dict[str, Any]:
         return results
     except Exception as e:
         print(f"Error during comparison: {e}")
-        import traceback
-
         traceback.print_exc()
 
         return {"dataset": dataset_name, "success": False, "error": str(e)}

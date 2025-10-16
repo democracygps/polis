@@ -9,15 +9,15 @@ NC='\033[0m' # No Color
 
 echo -e "${GREEN}Setting up Delphi development environment...${NC}"
 
-# Check if Python 3.9+ is available
+# Check if Python 3.12+ is available
 if ! command -v python3 &> /dev/null; then
     echo -e "${RED}Error: Python 3 is required but not installed.${NC}"
     exit 1
 fi
 
 PYTHON_VERSION=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
-if ! python3 -c 'import sys; exit(0 if sys.version_info >= (3, 9) else 1)'; then
-    echo -e "${RED}Error: Python 3.9+ is required, but found Python ${PYTHON_VERSION}${NC}"
+if ! python3 -c 'import sys; exit(0 if sys.version_info >= (3, 12) else 1)'; then
+    echo -e "${RED}Error: Python 3.12+ is required, but found Python ${PYTHON_VERSION}${NC}"
     exit 1
 fi
 
