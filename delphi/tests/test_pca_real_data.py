@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 
 # Add the parent directory to the path to import the module
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from polismath.pca_kmeans_rep.named_matrix import NamedMatrix
 from polismath.pca_kmeans_rep.pca import pca_project_named_matrix
@@ -26,8 +26,8 @@ def load_votes_from_csv(votes_path: str, limit: int | None = None) -> np.ndarray
         df = pd.read_csv(votes_path)
 
     # Get unique participant and comment IDs
-    ptpt_ids = sorted(df['voter-id'].unique())
-    cmt_ids = sorted(df['comment-id'].unique())
+    ptpt_ids = sorted(df["voter-id"].unique())
+    cmt_ids = sorted(df["comment-id"].unique())
 
     # Create a matrix of NaNs
     vote_matrix = np.full((len(ptpt_ids), len(cmt_ids)), np.nan)
@@ -37,12 +37,12 @@ def load_votes_from_csv(votes_path: str, limit: int | None = None) -> np.ndarray
     cmt_map = {cid: i for i, cid in enumerate(cmt_ids)}
 
     for _, row in df.iterrows():
-        pid = row['voter-id']
-        cid = row['comment-id']
+        pid = row["voter-id"]
+        cid = row["comment-id"]
 
         # Convert vote to numeric value
         try:
-            vote_val = float(row['vote'])
+            vote_val = float(row["vote"])
             # Normalize to ensure only -1, 0, or 1
             if vote_val > 0:
                 vote_val = 1.0
@@ -52,10 +52,10 @@ def load_votes_from_csv(votes_path: str, limit: int | None = None) -> np.ndarray
                 vote_val = 0.0
         except ValueError:
             # Handle text values
-            vote_text = str(row['vote']).lower()
-            if vote_text == 'agree':
+            vote_text = str(row["vote"]).lower()
+            if vote_text == "agree":
                 vote_val = 1.0
-            elif vote_text == 'disagree':
+            elif vote_text == "disagree":
                 vote_val = -1.0
             else:
                 vote_val = 0.0  # Pass or unknown
@@ -65,22 +65,21 @@ def load_votes_from_csv(votes_path: str, limit: int | None = None) -> np.ndarray
 
     # Create a NamedMatrix
     return NamedMatrix(
-        matrix=vote_matrix,
-        rownames=[str(pid) for pid in ptpt_ids],
-        colnames=[str(cid) for cid in cmt_ids]
+        matrix=vote_matrix, rownames=[str(pid) for pid in ptpt_ids], colnames=[str(cid) for cid in cmt_ids]
     )
+
 
 def test_pca_projection(dataset_name: str) -> None:
     """Test PCA projection on a real dataset."""
     print(f"Testing PCA on {dataset_name} dataset")
 
     # Set paths based on dataset name
-    if dataset_name == 'biodiversity':
-        data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'real_data/biodiversity'))
-        votes_path = os.path.join(data_dir, '2025-03-18-2000-3atycmhmer-votes.csv')
-    elif dataset_name == 'vw':
-        data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'real_data/vw'))
-        votes_path = os.path.join(data_dir, '2025-03-18-1954-4anfsauat2-votes.csv')
+    if dataset_name == "biodiversity":
+        data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "real_data/biodiversity"))
+        votes_path = os.path.join(data_dir, "2025-03-18-2000-3atycmhmer-votes.csv")
+    elif dataset_name == "vw":
+        data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "real_data/vw"))
+        votes_path = os.path.join(data_dir, "2025-03-18-1954-4anfsauat2-votes.csv")
     else:
         raise ValueError(f"Unknown dataset: {dataset_name}")
 
@@ -115,6 +114,7 @@ def test_pca_projection(dataset_name: str) -> None:
 
         # Calculate number of unique clusters
         from sklearn.cluster import KMeans
+
         kmeans = KMeans(n_clusters=3, random_state=42).fit(proj_array)
         labels = kmeans.labels_
         unique_clusters = np.unique(labels)
@@ -129,8 +129,9 @@ def test_pca_projection(dataset_name: str) -> None:
         # If PCA fails, the fixes are not complete
         print("PCA projection FAILED - more fixes needed")
 
+
 if __name__ == "__main__":
     # Test both datasets
-    test_pca_projection('biodiversity')
-    print("\n" + "="*50 + "\n")
-    test_pca_projection('vw')
+    test_pca_projection("biodiversity")
+    print("\n" + "=" * 50 + "\n")
+    test_pca_projection("vw")

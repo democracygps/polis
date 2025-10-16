@@ -20,10 +20,10 @@ from polismath.pca_kmeans_rep.named_matrix import NamedMatrix
 def clean_named_matrix(nmat: NamedMatrix) -> NamedMatrix:
     """
     Clean a named matrix by replacing NaN values with zeros.
-    
+
     Args:
         nmat: NamedMatrix to clean
-        
+
     Returns:
         Cleaned NamedMatrix
     """
@@ -32,20 +32,16 @@ def clean_named_matrix(nmat: NamedMatrix) -> NamedMatrix:
     values = np.nan_to_num(values, nan=0.0)
 
     # Create a new NamedMatrix with the cleaned values
-    return NamedMatrix(
-        matrix=values,
-        rownames=nmat.rownames(),
-        colnames=nmat.colnames()
-    )
+    return NamedMatrix(matrix=values, rownames=nmat.rownames(), colnames=nmat.colnames())
 
 
 def transpose_named_matrix(nmat: NamedMatrix) -> NamedMatrix:
     """
     Transpose a named matrix.
-    
+
     Args:
         nmat: NamedMatrix to transpose
-        
+
     Returns:
         Transposed NamedMatrix
     """
@@ -53,21 +49,17 @@ def transpose_named_matrix(nmat: NamedMatrix) -> NamedMatrix:
     values = nmat.values.T
 
     # Create a new NamedMatrix with rows and columns swapped
-    return NamedMatrix(
-        matrix=values,
-        rownames=nmat.colnames(),
-        colnames=nmat.rownames()
-    )
+    return NamedMatrix(matrix=values, rownames=nmat.colnames(), colnames=nmat.rownames())
 
 
-def correlation_matrix(nmat: NamedMatrix, method: str = 'pearson') -> np.ndarray:
+def correlation_matrix(nmat: NamedMatrix, method: str = "pearson") -> np.ndarray:
     """
     Compute correlation matrix for a NamedMatrix.
-    
+
     Args:
         nmat: NamedMatrix to compute correlations for
         method: Correlation method ('pearson', 'spearman', or 'kendall')
-        
+
     Returns:
         Correlation matrix as numpy array
     """
@@ -76,11 +68,11 @@ def correlation_matrix(nmat: NamedMatrix, method: str = 'pearson') -> np.ndarray
     values = np.nan_to_num(values, nan=0.0)
 
     # Compute correlation matrix
-    if method == 'pearson':
+    if method == "pearson":
         corr = np.corrcoef(values)
-    elif method == 'spearman':
+    elif method == "spearman":
         corr, _ = scipy.stats.spearmanr(values)
-    elif method == 'kendall':
+    elif method == "kendall":
         # Compute pairwise correlations
         n = values.shape[0]
         corr = np.zeros((n, n))
@@ -96,19 +88,18 @@ def correlation_matrix(nmat: NamedMatrix, method: str = 'pearson') -> np.ndarray
     return corr
 
 
-def hierarchical_cluster(nmat: NamedMatrix,
-                        method: str = 'complete',
-                        metric: str = 'correlation',
-                        transpose: bool = False) -> dict[str, Any]:
+def hierarchical_cluster(
+    nmat: NamedMatrix, method: str = "complete", metric: str = "correlation", transpose: bool = False
+) -> dict[str, Any]:
     """
     Perform hierarchical clustering on a NamedMatrix.
-    
+
     Args:
         nmat: NamedMatrix to cluster
         method: Linkage method ('single', 'complete', 'average', 'weighted', 'centroid', 'median', 'ward')
         metric: Distance metric ('correlation', 'euclidean', 'cityblock', etc.)
         transpose: Whether to transpose the matrix before clustering
-        
+
     Returns:
         Dictionary with hierarchical clustering results
     """
@@ -131,10 +122,10 @@ def hierarchical_cluster(nmat: NamedMatrix,
 
     # Convert to a more convenient format
     result = {
-        'linkage': linkage.tolist(),
-        'names': names,
-        'leaves': hcluster.leaves_list(linkage).tolist(),
-        'distances': distances.tolist()
+        "linkage": linkage.tolist(),
+        "names": names,
+        "leaves": hcluster.leaves_list(linkage).tolist(),
+        "distances": distances.tolist(),
     }
 
     return result
@@ -143,32 +134,32 @@ def hierarchical_cluster(nmat: NamedMatrix,
 def flatten_hierarchical_cluster(hclust_result: dict[str, Any]) -> list[str]:
     """
     Extract leaf node ordering from hierarchical clustering results.
-    
+
     Args:
         hclust_result: Result from hierarchical_cluster
-        
+
     Returns:
         List of names in hierarchical order
     """
     # Get leaves and names
-    leaves = hclust_result['leaves']
-    names = hclust_result['names']
+    leaves = hclust_result["leaves"]
+    names = hclust_result["names"]
 
     # Return names in hierarchical order
     return [names[i] for i in leaves]
 
 
-def blockify_correlation_matrix(corr_matrix: np.ndarray,
-                              row_order: list[int],
-                              col_order: list[int] | None = None) -> np.ndarray:
+def blockify_correlation_matrix(
+    corr_matrix: np.ndarray, row_order: list[int], col_order: list[int] | None = None
+) -> np.ndarray:
     """
     Reorder a correlation matrix based on clustering results.
-    
+
     Args:
         corr_matrix: Correlation matrix to reorder
         row_order: List of row indices in desired order
         col_order: List of column indices in desired order (defaults to row_order)
-        
+
     Returns:
         Reordered correlation matrix
     """
@@ -182,19 +173,18 @@ def blockify_correlation_matrix(corr_matrix: np.ndarray,
     return reordered
 
 
-def compute_correlation(vote_matrix: NamedMatrix,
-                       method: str = 'pearson',
-                       cluster_method: str = 'complete',
-                       metric: str = 'correlation') -> dict[str, Any]:
+def compute_correlation(
+    vote_matrix: NamedMatrix, method: str = "pearson", cluster_method: str = "complete", metric: str = "correlation"
+) -> dict[str, Any]:
     """
     Compute correlations and hierarchical clustering for a vote matrix.
-    
+
     Args:
         vote_matrix: NamedMatrix containing votes
         method: Correlation method
         cluster_method: Hierarchical clustering method
         metric: Distance metric
-        
+
     Returns:
         Dictionary with correlation and clustering results
     """
@@ -205,52 +195,48 @@ def compute_correlation(vote_matrix: NamedMatrix,
     corr = correlation_matrix(comment_matrix, method)
 
     # Perform hierarchical clustering
-    hclust_result = hierarchical_cluster(
-        comment_matrix,
-        method=cluster_method,
-        metric=metric
-    )
+    hclust_result = hierarchical_cluster(comment_matrix, method=cluster_method, metric=metric)
 
     # Get leaf ordering
-    leaf_order = hclust_result['leaves']
+    leaf_order = hclust_result["leaves"]
 
     # Reorder correlation matrix
     reordered_corr = blockify_correlation_matrix(corr, leaf_order)
 
     # Return results
     return {
-        'correlation': corr.tolist(),
-        'reordered_correlation': reordered_corr.tolist(),
-        'hierarchical_clustering': hclust_result,
-        'comment_order': flatten_hierarchical_cluster(hclust_result),
-        'comment_ids': comment_matrix.rownames()
+        "correlation": corr.tolist(),
+        "reordered_correlation": reordered_corr.tolist(),
+        "hierarchical_clustering": hclust_result,
+        "comment_order": flatten_hierarchical_cluster(hclust_result),
+        "comment_ids": comment_matrix.rownames(),
     }
 
 
 def prepare_correlation_export(corr_result: dict[str, Any]) -> dict[str, Any]:
     """
     Prepare correlation results for export to JSON.
-    
+
     Args:
         corr_result: Result from compute_correlation
-        
+
     Returns:
         Export-ready dictionary
     """
     # Convert numpy arrays to lists
     result = {
-        'correlation': corr_result['correlation'],
-        'reordered_correlation': corr_result['reordered_correlation'],
-        'comment_order': corr_result['comment_order'],
-        'comment_ids': corr_result['comment_ids']
+        "correlation": corr_result["correlation"],
+        "reordered_correlation": corr_result["reordered_correlation"],
+        "comment_order": corr_result["comment_order"],
+        "comment_ids": corr_result["comment_ids"],
     }
 
     # Simplify hierarchical clustering data
-    hclust = corr_result['hierarchical_clustering']
-    result['hierarchical_clustering'] = {
-        'linkage': hclust['linkage'],
-        'names': hclust['names'],
-        'leaves': hclust['leaves']
+    hclust = corr_result["hierarchical_clustering"]
+    result["hierarchical_clustering"] = {
+        "linkage": hclust["linkage"],
+        "names": hclust["names"],
+        "leaves": hclust["leaves"],
     }
 
     return result
@@ -259,38 +245,35 @@ def prepare_correlation_export(corr_result: dict[str, Any]) -> dict[str, Any]:
 def save_correlation_to_json(corr_result: dict[str, Any], filepath: str) -> None:
     """
     Save correlation results to a JSON file.
-    
+
     Args:
         corr_result: Result from compute_correlation or prepare_correlation_export
         filepath: Path to save the JSON file
-        
+
     Returns:
         None
     """
     # Prepare for export if needed
-    if 'distances' in corr_result.get('hierarchical_clustering', {}):
+    if "distances" in corr_result.get("hierarchical_clustering", {}):
         export_data = prepare_correlation_export(corr_result)
     else:
         export_data = corr_result
 
     # Write to file
-    with open(filepath, 'w') as f:
+    with open(filepath, "w") as f:
         json.dump(export_data, f)
 
 
-def participant_correlation(vote_matrix: NamedMatrix,
-                          p1_id: str,
-                          p2_id: str,
-                          method: str = 'pearson') -> float:
+def participant_correlation(vote_matrix: NamedMatrix, p1_id: str, p2_id: str, method: str = "pearson") -> float:
     """
     Compute correlation between two participants.
-    
+
     Args:
         vote_matrix: NamedMatrix containing votes
         p1_id: ID of first participant
         p2_id: ID of second participant
         method: Correlation method
-        
+
     Returns:
         Correlation coefficient
     """
@@ -314,11 +297,11 @@ def participant_correlation(vote_matrix: NamedMatrix,
     p2_common = p2_votes[mask]
 
     # Compute correlation
-    if method == 'pearson':
+    if method == "pearson":
         corr, _ = scipy.stats.pearsonr(p1_common, p2_common)
-    elif method == 'spearman':
+    elif method == "spearman":
         corr, _ = scipy.stats.spearmanr(p1_common, p2_common)
-    elif method == 'kendall':
+    elif method == "kendall":
         corr, _ = scipy.stats.kendalltau(p1_common, p2_common)
     else:
         raise ValueError(f"Unknown correlation method: {method}")
@@ -330,15 +313,14 @@ def participant_correlation(vote_matrix: NamedMatrix,
     return corr
 
 
-def participant_correlation_matrix(vote_matrix: NamedMatrix,
-                                 method: str = 'pearson') -> dict[str, Any]:
+def participant_correlation_matrix(vote_matrix: NamedMatrix, method: str = "pearson") -> dict[str, Any]:
     """
     Compute correlation matrix for all participants.
-    
+
     Args:
         vote_matrix: NamedMatrix containing votes
         method: Correlation method
-        
+
     Returns:
         Dictionary with correlation matrix and participant IDs
     """
@@ -351,19 +333,11 @@ def participant_correlation_matrix(vote_matrix: NamedMatrix,
     # Compute pairwise correlations
     for i in range(n_participants):
         for j in range(i, n_participants):
-            corr = participant_correlation(
-                vote_matrix,
-                participant_ids[i],
-                participant_ids[j],
-                method
-            )
+            corr = participant_correlation(vote_matrix, participant_ids[i], participant_ids[j], method)
             corr_matrix[i, j] = corr
             corr_matrix[j, i] = corr
 
     # Set diagonal to 1
     np.fill_diagonal(corr_matrix, 1.0)
 
-    return {
-        'correlation': corr_matrix.tolist(),
-        'participant_ids': participant_ids
-    }
+    return {"correlation": corr_matrix.tolist(), "participant_ids": participant_ids}

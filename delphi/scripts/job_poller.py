@@ -60,9 +60,7 @@ class PostgresConfig:
         else:
             self.host = host or os.environ.get("DATABASE_HOST", "localhost")
             self.port = port or int(os.environ.get("DATABASE_PORT", "5432"))
-            self.database = database or os.environ.get(
-                "DATABASE_NAME", "polisDB_prod_local_mar14"
-            )
+            self.database = database or os.environ.get("DATABASE_NAME", "polisDB_prod_local_mar14")
             self.user = user or os.environ.get("DATABASE_USER", "postgres")
             self.password = password or os.environ.get("DATABASE_PASSWORD", "")
 
@@ -224,9 +222,7 @@ class PostgresClient:
         finally:
             session.close()
 
-    def query(
-        self, sql: str, params: dict[str, Any] | None = None
-    ) -> list[dict[str, Any]]:
+    def query(self, sql: str, params: dict[str, Any] | None = None) -> list[dict[str, Any]]:
         """
         Execute a SQL query.
 
@@ -366,9 +362,7 @@ class PostgresClient:
 
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("delphi_poller")
 
 # Global flag for graceful shutdown
@@ -392,28 +386,18 @@ class JobProcessor:
         """Initialize the job processor."""
         self.worker_id = str(uuid.uuid4())
         raw_endpoint = endpoint_url or os.environ.get("DYNAMODB_ENDPOINT")
-        self.endpoint_url = (
-            raw_endpoint if raw_endpoint and raw_endpoint.strip() else None
-        )
+        self.endpoint_url = raw_endpoint if raw_endpoint and raw_endpoint.strip() else None
 
         # Determine instance type from environment variable set by configure_instance.py
-        self.instance_type = os.environ.get(
-            "INSTANCE_SIZE", "default"
-        )  # Default to 'default' if not set
-        logger.info(
-            f"Worker {self.worker_id} initialized for instance type: {self.instance_type}"
-        )
+        self.instance_type = os.environ.get("INSTANCE_SIZE", "default")  # Default to 'default' if not set
+        logger.info(f"Worker {self.worker_id} initialized for instance type: {self.instance_type}")
 
         # Initialize PostgresClient - it will be used per-query within poll_and_process
         # No need to store it as self.postgres_client if we instantiate it on demand.
         # If performance becomes an issue, connection pooling could be considered.
 
-        logger.info(
-            f"Connecting to DynamoDB at {self.endpoint_url or 'default AWS endpoint'}"
-        )
-        self.dynamodb = boto3.resource(
-            "dynamodb", endpoint_url=self.endpoint_url, region_name=region
-        )
+        logger.info(f"Connecting to DynamoDB at {self.endpoint_url or 'default AWS endpoint'}")
+        self.dynamodb = boto3.resource("dynamodb", endpoint_url=self.endpoint_url, region_name=region)
         self.table = self.dynamodb.Table("Delphi_JobQueue")
 
         try:
@@ -462,9 +446,7 @@ class JobProcessor:
             now_iso = datetime.now(UTC).isoformat()
             for job in processing_jobs:
                 if job.get("lock_expires_at", "z") < now_iso:
-                    logger.warning(
-                        f"Found zombie job {job['job_id']} with expired lock. Re-queueing."
-                    )
+                    logger.warning(f"Found zombie job {job['job_id']} with expired lock. Re-queueing.")
                     actionable_jobs.append(job)
 
             if not actionable_jobs:
@@ -473,9 +455,7 @@ class JobProcessor:
             # 3. Sort all actionable jobs by priority and then by creation date
             actionable_jobs.sort(
                 key=lambda x: (
-                    (
-                        0 if x.get("status") == "PENDING" else 1
-                    ),  # PENDING jobs are highest priority
+                    (0 if x.get("status") == "PENDING" else 1),  # PENDING jobs are highest priority
                     x.get("created_at", ""),
                 )
             )
@@ -525,16 +505,12 @@ class JobProcessor:
                 },
                 ReturnValues="ALL_NEW",
             )
-            logger.info(
-                f"Successfully claimed job {job_id}. Lock expires at {new_expiry_iso}."
-            )
+            logger.info(f"Successfully claimed job {job_id}. Lock expires at {new_expiry_iso}.")
             return response.get("Attributes")
 
         except ClientError as e:
             if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
-                logger.warning(
-                    f"Job {job_id} was claimed by another worker in a race condition. Skipping."
-                )
+                logger.warning(f"Job {job_id} was claimed by another worker in a race condition. Skipping.")
             else:
                 logger.error(f"DynamoDB error claiming job {job_id}: {e}")
             return None
@@ -563,9 +539,7 @@ class JobProcessor:
 
             if count_result and count_result[0] is not None:
                 comment_count = count_result[0]["count"]
-                logger.info(
-                    f"Conversation {conversation_id} has {comment_count} comments."
-                )
+                logger.info(f"Conversation {conversation_id} has {comment_count} comments.")
                 return "large" if comment_count > 5000 else "normal"
             logger.warning(
                 f"Could not retrieve comment count for conversation {conversation_id}. Defaulting to 'normal' size."
@@ -580,9 +554,7 @@ class JobProcessor:
             if pg_client:
                 pg_client.shutdown()
 
-    def release_lock(
-        self, job: dict[str, Any], is_still_processing: bool = False
-    ) -> None:
+    def release_lock(self, job: dict[str, Any], is_still_processing: bool = False) -> None:
         """Releases the lock on a job, optionally setting it to be re-checked."""
         job_id = job["job_id"]
         logger.info(f"Releasing lock for job {job_id}.")
@@ -597,9 +569,7 @@ class JobProcessor:
                 )
             else:
                 # For jobs that are finished (completed/failed), just remove the lock.
-                self.table.update_item(
-                    Key={"job_id": job_id}, UpdateExpression="REMOVE lock_expires_at"
-                )
+                self.table.update_item(Key={"job_id": job_id}, UpdateExpression="REMOVE lock_expires_at")
         except Exception as e:
             logger.error(f"Failed to release lock for job {job_id}: {e}")
 
@@ -639,9 +609,7 @@ class JobProcessor:
                 level = log_entry.get("level", "INFO")
                 color = colors.get(level, "")
                 short_job_id = job["job_id"][:8]
-                print(
-                    f"{color}[DELPHI JOB {short_job_id}] {level}{reset}: {log_entry.get('message', '')}"
-                )
+                print(f"{color}[DELPHI JOB {short_job_id}] {level}{reset}: {log_entry.get('message', '')}")
 
             # Keep only the most recent log entries
             current_logs["entries"] = current_logs["entries"][-50:]
@@ -782,9 +750,7 @@ class JobProcessor:
                     )
 
             # 2. Execute the command and stream logs to prevent deadlocks
-            self.update_job_logs(
-                job, {"level": "INFO", "message": f'Executing command: {" ".join(cmd)}'}
-            )
+            self.update_job_logs(job, {"level": "INFO", "message": f'Executing command: {" ".join(cmd)}'})
 
             env = os.environ.copy()
             env["DELPHI_JOB_ID"] = job_id
@@ -803,9 +769,7 @@ class JobProcessor:
             start_time = time.time()
             for line in iter(process.stdout.readline, ""):
                 # Log each line of output as it arrives
-                self.update_job_logs(
-                    job, {"level": "INFO", "message": f"[stdout] {line.strip()}"}
-                )
+                self.update_job_logs(job, {"level": "INFO", "message": f"[stdout] {line.strip()}"})
                 if time.time() - start_time > timeout_seconds:
                     raise subprocess.TimeoutExpired(cmd, timeout_seconds)
 
@@ -821,18 +785,12 @@ class JobProcessor:
                     self.complete_job(
                         job,
                         success,
-                        error=(
-                            f"Script failed with exit code {return_code}"
-                            if not success
-                            else None
-                        ),
+                        error=(f"Script failed with exit code {return_code}" if not success else None),
                     )
 
             elif job_type == "CREATE_NARRATIVE_BATCH":
                 if success:
-                    logger.info(
-                        f"Job {job_id}: CREATE_NARRATIVE_BATCH completed successfully."
-                    )
+                    logger.info(f"Job {job_id}: CREATE_NARRATIVE_BATCH completed successfully.")
                     self.complete_job(job, True)
                 else:
                     self.complete_job(
@@ -845,18 +803,12 @@ class JobProcessor:
                 self.complete_job(
                     job,
                     success,
-                    error=(
-                        f"Process exited with code {return_code}"
-                        if not success
-                        else None
-                    ),
+                    error=(f"Process exited with code {return_code}" if not success else None),
                 )
 
         except subprocess.TimeoutExpired:
             logger.error(f"Job {job_id} timed out after {timeout_seconds} seconds.")
-            self.complete_job(
-                job, False, error=f"Job process timed out after {timeout_seconds}s."
-            )
+            self.complete_job(job, False, error=f"Job process timed out after {timeout_seconds}s.")
         except Exception as e:
             logger.error(f"Critical error processing job {job_id}: {e}", exc_info=True)
             self.complete_job(job, False, error=f"Critical poller error: {str(e)}")
@@ -947,9 +899,7 @@ def main() -> None:
         processor = JobProcessor(endpoint_url=args.endpoint_url, region=args.region)
         threads = []
         for i in range(args.max_workers):
-            t = threading.Thread(
-                target=poll_and_process, args=(processor, args.interval), daemon=True
-            )
+            t = threading.Thread(target=poll_and_process, args=(processor, args.interval), daemon=True)
             t.start()
             threads.append(t)
             logger.info(f"Started worker thread {i + 1}")

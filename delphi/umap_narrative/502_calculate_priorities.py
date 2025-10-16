@@ -19,9 +19,7 @@ import boto3
 from boto3.dynamodb.conditions import Key
 
 # Set up logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -59,9 +57,7 @@ class PriorityCalculator:
         self.comment_routing_table = self.dynamodb.Table("Delphi_CommentRouting")
         self.comment_extremity_table = self.dynamodb.Table("Delphi_CommentExtremity")
 
-        logger.info(
-            f"Initialized priority calculator for conversation {conversation_id}"
-        )
+        logger.info(f"Initialized priority calculator for conversation {conversation_id}")
 
     def _importance_metric(self, A: int, P: int, S: int, E: float) -> float:
         """
@@ -80,9 +76,7 @@ class PriorityCalculator:
         a = (A + 1) / (S + 2)
         return (1 - p) * (E + 1) * a
 
-    def _priority_metric(
-        self, is_meta: bool, A: int, P: int, S: int, E: float
-    ) -> float:
+    def _priority_metric(self, is_meta: bool, A: int, P: int, S: int, E: float) -> float:
         """
         Calculate priority metric (matches Clojure implementation).
 
@@ -137,9 +131,7 @@ class PriorityCalculator:
         Returns:
             List of comment routing items
         """
-        logger.info(
-            f"Querying GSI 'zid-index' for conversation {self.conversation_id}..."
-        )
+        logger.info(f"Querying GSI 'zid-index' for conversation {self.conversation_id}...")
         all_items = []
         try:
             # Query the GSI where the partition key 'zid' matches the conversation_id
@@ -159,18 +151,14 @@ class PriorityCalculator:
                 )
                 all_items.extend(response.get("Items", []))
 
-            logger.info(
-                f"Found {len(all_items)} comment routing entries via GSI query."
-            )
+            logger.info(f"Found {len(all_items)} comment routing entries via GSI query.")
             return all_items
 
         except Exception as e:
             logger.error(f"Error querying comment routing data from GSI: {e}")
             return []
 
-    def calculate_comment_updates(
-        self, comment_data: list[dict[str, Any]]
-    ) -> list[dict[str, Any]]:
+    def calculate_comment_updates(self, comment_data: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """
         Calculate priorities and return a list of items to be updated,
         including their primary keys.
@@ -179,9 +167,7 @@ class PriorityCalculator:
         for item in comment_data:
             try:
                 comment_id = item.get("comment_id")
-                zid_tick = item.get(
-                    "zid_tick"
-                )  # The primary key we need for the update
+                zid_tick = item.get("zid_tick")  # The primary key we need for the update
                 stats = item.get("stats", {})
 
                 if not all([comment_id, zid_tick, stats]):
@@ -207,14 +193,10 @@ class PriorityCalculator:
                     }
                 )
 
-                logger.debug(
-                    f"Comment {comment_id}: A={A}, P={P}, S={S}, E={E:.4f}, priority={int(priority)}"
-                )
+                logger.debug(f"Comment {comment_id}: A={A}, P={P}, S={S}, E={E:.4f}, priority={int(priority)}")
 
             except Exception as e:
-                logger.warning(
-                    f"Error preparing update for comment {item.get('comment_id', 'N/A')}: {e}"
-                )
+                logger.warning(f"Error preparing update for comment {item.get('comment_id', 'N/A')}: {e}")
 
         return updates
 
@@ -231,9 +213,7 @@ class PriorityCalculator:
         logger.info(f"Updating {len(updates)} priority values in DynamoDB")
         try:
             # Use a BatchWriter to efficiently handle multiple updates.
-            with self.comment_routing_table.batch_writer(
-                overwrite_by_pkeys=["zid_tick", "comment_id"]
-            ) as batch:
+            with self.comment_routing_table.batch_writer(overwrite_by_pkeys=["zid_tick", "comment_id"]) as batch:
                 for item_update in updates:
                     # NOTE: BatchWriter does not support update_item. We must put the entire item.
                     # This requires fetching the full item first or knowing its structure.
@@ -258,9 +238,7 @@ class PriorityCalculator:
             comment_data = self.get_comment_routing_data()
 
             if not comment_data:
-                logger.warning(
-                    "No comment routing data found - conversation likely has no votes yet. This is normal."
-                )
+                logger.warning("No comment routing data found - conversation likely has no votes yet. This is normal.")
                 return True
 
             # 2. Calculate priorities and prepare update payloads
@@ -280,17 +258,12 @@ class PriorityCalculator:
                 )
 
                 # Log some statistics (restored from original)
-                priority_values = [
-                    item["ExpressionAttributeValues"][":p"]
-                    for item in updates_to_perform
-                ]
+                priority_values = [item["ExpressionAttributeValues"][":p"] for item in updates_to_perform]
                 if priority_values:
                     avg_priority = sum(priority_values) / len(priority_values)
                     max_priority = max(priority_values)
                     min_priority = min(priority_values)
-                    logger.info(
-                        f"Priority statistics: min={min_priority}, max={max_priority}, avg={avg_priority:.2f}"
-                    )
+                    logger.info(f"Priority statistics: min={min_priority}, max={max_priority}, avg={avg_priority:.2f}")
 
             else:
                 logger.error(f"Priority update failed after {elapsed:.2f}s")
@@ -298,17 +271,13 @@ class PriorityCalculator:
             return success
 
         except Exception as e:
-            logger.critical(
-                f"A critical error occurred in the run process: {e}", exc_info=True
-            )
+            logger.critical(f"A critical error occurred in the run process: {e}", exc_info=True)
             return False
 
 
 def main() -> None:
     """Main function."""
-    parser = argparse.ArgumentParser(
-        description="Calculate comment priorities using group-based extremity"
-    )
+    parser = argparse.ArgumentParser(description="Calculate comment priorities using group-based extremity")
     parser.add_argument(
         "--conversation_id",
         "--zid",
@@ -326,9 +295,7 @@ def main() -> None:
         help="DynamoDB endpoint URL for local development (e.g., http://localhost:8000)",
     )
 
-    parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Enable verbose logging"
-    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose logging")
 
     args = parser.parse_args()
 

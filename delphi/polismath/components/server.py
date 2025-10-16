@@ -56,12 +56,10 @@ class Server:
     FastAPI server for Pol.is math.
     """
 
-    def __init__(self,
-                conversation_manager: ConversationManager,
-                config: Config | None = None):
+    def __init__(self, conversation_manager: ConversationManager, config: Config | None = None):
         """
         Initialize a server.
-        
+
         Args:
             conversation_manager: Conversation manager
             config: Configuration for the server
@@ -71,9 +69,7 @@ class Server:
 
         # Create FastAPI app
         self.app = FastAPI(
-            title="Pol.is Math API",
-            description="API for Pol.is mathematical processing",
-            version="0.1.0"
+            title="Pol.is Math API", description="API for Pol.is mathematical processing", version="0.1.0"
         )
 
         # Set up CORS
@@ -106,6 +102,7 @@ class Server:
         """
         Set up API routes.
         """
+
         # Health check
         @self.app.get("/health")
         async def health_check():
@@ -115,16 +112,7 @@ class Server:
         @self.app.post("/api/v3/votes/{conversation_id}")
         async def process_votes(conversation_id: str, vote_request: VoteRequest):
             # Convert to format expected by conversation manager
-            votes = {
-                "votes": [
-                    {
-                        "pid": vote.pid,
-                        "tid": vote.tid,
-                        "vote": vote.vote
-                    }
-                    for vote in vote_request.votes
-                ]
-            }
+            votes = {"votes": [{"pid": vote.pid, "tid": vote.tid, "vote": vote.vote} for vote in vote_request.votes]}
 
             # Process votes
             conv = self.conversation_manager.process_votes(conversation_id, votes)
@@ -140,7 +128,7 @@ class Server:
                 "mod_out_tids": mod_request.mod_out_tids or [],
                 "mod_in_tids": mod_request.mod_in_tids or [],
                 "meta_tids": mod_request.meta_tids or [],
-                "mod_out_ptpts": mod_request.mod_out_ptpts or []
+                "mod_out_ptpts": mod_request.mod_out_ptpts or [],
             }
 
             # Update moderation
@@ -186,24 +174,20 @@ class Server:
         """
         Set up request validation.
         """
+
         @self.app.exception_handler(fastapi.exceptions.RequestValidationError)
         async def validation_exception_handler(request, exc):
-            return JSONResponse(
-                status_code=422,
-                content={"detail": str(exc)}
-            )
+            return JSONResponse(status_code=422, content={"detail": str(exc)})
 
     def _setup_error_handling(self) -> None:
         """
         Set up error handling.
         """
+
         @self.app.exception_handler(Exception)
         async def generic_exception_handler(request, exc):
             logger.exception("Unhandled exception")
-            return JSONResponse(
-                status_code=500,
-                content={"detail": "Internal server error"}
-            )
+            return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
     def start(self) -> None:
         """
@@ -214,25 +198,18 @@ class Server:
 
         # Import uvicorn here to avoid circular imports
         import uvicorn
+
         self._uvicorn = uvicorn
 
         # Get port and host
-        port = self.config.get('server.port', 8080)
-        host = self.config.get('server.host', '0.0.0.0')
+        port = self.config.get("server.port", 8080)
+        host = self.config.get("server.host", "0.0.0.0")
 
         # Start in a separate thread
         def run_server():
-            self._uvicorn.run(
-                self.app,
-                host=host,
-                port=port,
-                log_level=self.config.get('logging.level', 'info')
-            )
+            self._uvicorn.run(self.app, host=host, port=port, log_level=self.config.get("logging.level", "info"))
 
-        self._server_thread = threading.Thread(
-            target=run_server,
-            daemon=True
-        )
+        self._server_thread = threading.Thread(target=run_server, daemon=True)
         self._server_thread.start()
 
         self._running = True
@@ -261,16 +238,14 @@ class ServerManager:
     _lock = threading.RLock()
 
     @classmethod
-    def get_server(cls,
-                 conversation_manager: ConversationManager,
-                 config: Config | None = None) -> Server:
+    def get_server(cls, conversation_manager: ConversationManager, config: Config | None = None) -> Server:
         """
         Get the server instance.
-        
+
         Args:
             conversation_manager: Conversation manager
             config: Configuration
-            
+
         Returns:
             Server instance
         """

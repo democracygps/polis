@@ -18,24 +18,28 @@ import pandas as pd
 # Add the parent directory to the path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+
 def green(text):
     """Return text in green"""
     return f"\033[92m{text}\033[0m"
+
 
 def red(text):
     """Return text in red"""
     return f"\033[91m{text}\033[0m"
 
+
 def yellow(text):
     """Return text in yellow"""
     return f"\033[93m{text}\033[0m"
+
 
 def print_attributes(obj, max_attrs=10):
     """Print a summary of object attributes to help with debugging"""
     print(yellow("  --- Object Attributes ---"))
 
     # Get all non-callable attributes
-    attrs = [attr for attr in dir(obj) if not attr.startswith('_') and not callable(getattr(obj, attr))]
+    attrs = [attr for attr in dir(obj) if not attr.startswith("_") and not callable(getattr(obj, attr))]
 
     # Limit to max_attrs
     if len(attrs) > max_attrs:
@@ -56,20 +60,20 @@ def print_attributes(obj, max_attrs=10):
                     print(f"  {attr}: Empty {type(value).__name__}")
             elif isinstance(value, dict):
                 print(f"  {attr}: {type(value).__name__} with keys: {list(value.keys())[:5]}")
-            elif attr == 'rating_mat' or attr == 'raw_rating_mat':
+            elif attr == "rating_mat" or attr == "raw_rating_mat":
                 # Special handling for matrix objects
                 print(f"  {attr}: {type(value).__name__}")
                 # Check for common matrix properties
-                if hasattr(value, 'shape'):
+                if hasattr(value, "shape"):
                     print(f"    Shape: {value.shape}")
-                if hasattr(value, 'matrix') and hasattr(value.matrix, 'shape'):
+                if hasattr(value, "matrix") and hasattr(value.matrix, "shape"):
                     print(f"    Internal matrix shape: {value.matrix.shape}")
-                if hasattr(value, 'rownames') and callable(value.rownames):
+                if hasattr(value, "rownames") and callable(value.rownames):
                     try:
                         print(f"    Row count: {len(value.rownames())}")
                     except Exception:
                         pass
-                if hasattr(value, 'colnames') and callable(value.colnames):
+                if hasattr(value, "colnames") and callable(value.colnames):
                     try:
                         print(f"    Column count: {len(value.colnames())}")
                     except Exception:
@@ -82,11 +86,12 @@ def print_attributes(obj, max_attrs=10):
 
     print(yellow("  ------------------------"))
 
+
 def load_data(dataset_name):
     """Load votes and comments data for a dataset"""
     print(f"Loading data for {dataset_name} dataset...")
 
-    base_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'real_data', dataset_name)
+    base_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "real_data", dataset_name)
     votes_pattern = "-votes.csv"
     comments_pattern = "-comments.csv"
 
@@ -118,19 +123,16 @@ def load_data(dataset_name):
         # Convert to the format expected by the system
         votes = []
         for _, row in votes_df.iterrows():
-            votes.append({
-                'pid': str(row['voter-id']),
-                'tid': str(row['comment-id']),
-                'vote': float(row['vote'])
-            })
+            votes.append({"pid": str(row["voter-id"]), "tid": str(row["comment-id"]), "vote": float(row["vote"])})
 
-        comments = {str(row['comment-id']): row['comment-body'] for _, row in comments_df.iterrows()}
+        comments = {str(row["comment-id"]): row["comment-body"] for _, row in comments_df.iterrows()}
 
         return votes, comments
     except Exception as e:
         print(red(f"Error loading data: {e}"))
         traceback.print_exc()
         return None, None
+
 
 def initialize_conversation(votes, comments):
     """Initialize a conversation with votes and comments"""
@@ -144,7 +146,7 @@ def initialize_conversation(votes, comments):
 
         # Check the empty conversation's matrix structures
         print("  Initial conversation state:")
-        if hasattr(conv, 'rating_mat'):
+        if hasattr(conv, "rating_mat"):
             try:
                 print(f"  Initial matrix shape: {conv.rating_mat.values.shape}")
             except:
@@ -155,8 +157,12 @@ def initialize_conversation(votes, comments):
         conv = conv.update_votes({"votes": votes}, recompute=True)
 
         # If we still don't have results, try to force recomputation
-        if (not hasattr(conv, 'pca') or conv.pca is None or
-            not hasattr(conv, 'group_clusters') or not conv.group_clusters):
+        if (
+            not hasattr(conv, "pca")
+            or conv.pca is None
+            or not hasattr(conv, "group_clusters")
+            or not conv.group_clusters
+        ):
             try:
                 print("  Forcing explicit recomputation...")
                 conv = conv.recompute()
@@ -174,6 +180,7 @@ def initialize_conversation(votes, comments):
         traceback.print_exc()
         return None
 
+
 def analyze_conversation(conv, votes=None, comments=None):
     """Analyze the conversation and extract results with comment text if available"""
     results = {}
@@ -185,16 +192,16 @@ def analyze_conversation(conv, votes=None, comments=None):
         results["n_votes"] = len(votes)  # Use the votes we passed in
 
         # Get the rating matrix
-        rating_matrix = getattr(conv, 'rating_mat', None)
+        rating_matrix = getattr(conv, "rating_mat", None)
 
         # Debug output to understand the rating matrix's structure
         print("  Examining matrix structure...")
 
         if rating_matrix is not None:
             # Try various ways to get dimensions
-            if hasattr(rating_matrix, 'matrix'):
+            if hasattr(rating_matrix, "matrix"):
                 matrix = rating_matrix.matrix
-                if hasattr(matrix, 'shape'):
+                if hasattr(matrix, "shape"):
                     print(f"  Matrix shape: {matrix.shape}")
                     results["n_ptpts"] = matrix.shape[0]
                     results["n_cmts"] = matrix.shape[1]
@@ -202,7 +209,7 @@ def analyze_conversation(conv, votes=None, comments=None):
                     print("  Matrix has no shape attribute")
 
             # Try to use the named indices
-            if hasattr(rating_matrix, 'rownames') and callable(rating_matrix.rownames):
+            if hasattr(rating_matrix, "rownames") and callable(rating_matrix.rownames):
                 try:
                     row_names = rating_matrix.rownames()
                     print(f"  Found {len(row_names)} row names")
@@ -210,7 +217,7 @@ def analyze_conversation(conv, votes=None, comments=None):
                 except Exception as e:
                     print(f"  Error getting rownames: {e}")
 
-            if hasattr(rating_matrix, 'colnames') and callable(rating_matrix.colnames):
+            if hasattr(rating_matrix, "colnames") and callable(rating_matrix.colnames):
                 try:
                     col_names = rating_matrix.colnames()
                     print(f"  Found {len(col_names)} column names")
@@ -221,13 +228,13 @@ def analyze_conversation(conv, votes=None, comments=None):
             # If we still don't have participant and comment counts
             if "n_ptpts" not in results or "n_cmts" not in results:
                 # Try one more method - convert to dict and check its structure
-                if hasattr(rating_matrix, 'to_dict'):
+                if hasattr(rating_matrix, "to_dict"):
                     try:
                         matrix_dict = rating_matrix.to_dict()
-                        if 'rows' in matrix_dict:
-                            results["n_ptpts"] = len(matrix_dict['rows'])
-                        if 'cols' in matrix_dict:
-                            results["n_cmts"] = len(matrix_dict['cols'])
+                        if "rows" in matrix_dict:
+                            results["n_ptpts"] = len(matrix_dict["rows"])
+                        if "cols" in matrix_dict:
+                            results["n_cmts"] = len(matrix_dict["cols"])
                     except Exception as e:
                         print(f"  Error converting matrix to dict: {e}")
 
@@ -235,7 +242,7 @@ def analyze_conversation(conv, votes=None, comments=None):
         if "n_ptpts" not in results or not results["n_ptpts"]:
             # Try getting a count of unique participant IDs from votes
             try:
-                unique_ptpts = set(v['pid'] for v in votes)
+                unique_ptpts = set(v["pid"] for v in votes)
                 results["n_ptpts"] = len(unique_ptpts)
                 print(f"  Found {len(unique_ptpts)} unique participants in votes")
             except Exception:
@@ -244,14 +251,14 @@ def analyze_conversation(conv, votes=None, comments=None):
         if "n_cmts" not in results or not results["n_cmts"]:
             # Try getting a count of unique comment IDs from votes
             try:
-                unique_cmts = set(v['tid'] for v in votes)
+                unique_cmts = set(v["tid"] for v in votes)
                 results["n_cmts"] = len(unique_cmts)
                 print(f"  Found {len(unique_cmts)} unique comments in votes")
             except Exception:
                 results["n_cmts"] = 0
 
         # PCA results
-        pca = getattr(conv, 'pca', None)
+        pca = getattr(conv, "pca", None)
         if pca and isinstance(pca, dict):
             if "center" in pca and pca["center"] is not None:
                 results["pca_center"] = pca["center"].tolist() if hasattr(pca["center"], "tolist") else pca["center"]
@@ -268,12 +275,12 @@ def analyze_conversation(conv, votes=None, comments=None):
 
         # Cluster results - be more thorough in detecting clusters
         print("  Examining clusters...")
-        clusters = getattr(conv, 'group_clusters', None)
+        clusters = getattr(conv, "group_clusters", None)
 
         # If direct group_clusters attribute isn't available, try other attributes
         if not clusters:
             # Try alternative attribute names
-            for attr_name in ['clusters', 'groups', 'group_clusters']:
+            for attr_name in ["clusters", "groups", "group_clusters"]:
                 if hasattr(conv, attr_name):
                     clusters = getattr(conv, attr_name)
                     print(f"  Found clusters in '{attr_name}' attribute")
@@ -281,7 +288,7 @@ def analyze_conversation(conv, votes=None, comments=None):
 
         # If we have a dictionary, try to find clusters inside it
         if isinstance(clusters, dict):
-            for key in ['clusters', 'groups', 'data']:
+            for key in ["clusters", "groups", "data"]:
                 if key in clusters:
                     clusters = clusters[key]
                     print(f"  Found clusters in '{key}' key")
@@ -290,8 +297,8 @@ def analyze_conversation(conv, votes=None, comments=None):
         # Make sure clusters is a list
         if not isinstance(clusters, list):
             # It could be stored in a nested structure
-            if hasattr(conv, 'math_result') and isinstance(conv.math_result, dict):
-                for key in ['clusters', 'groups', 'group_clusters']:
+            if hasattr(conv, "math_result") and isinstance(conv.math_result, dict):
+                for key in ["clusters", "groups", "group_clusters"]:
                     if key in conv.math_result:
                         clusters = conv.math_result[key]
                         print(f"  Found clusters in math_result['{key}']")
@@ -313,7 +320,7 @@ def analyze_conversation(conv, votes=None, comments=None):
                     results["cluster_sizes"] = [len(cluster["members"]) for cluster in clusters]
                 elif all(isinstance(c, dict) and "size" in c for c in clusters):
                     results["cluster_sizes"] = [cluster["size"] for cluster in clusters]
-                elif all(hasattr(c, 'members') for c in clusters):
+                elif all(hasattr(c, "members") for c in clusters):
                     results["cluster_sizes"] = [len(cluster.members) for cluster in clusters]
                 else:
                     print("  Warning: Couldn't determine cluster sizes from structure")
@@ -327,7 +334,7 @@ def analyze_conversation(conv, votes=None, comments=None):
             results["cluster_sizes"] = []
 
         # Representative comments
-        repness = getattr(conv, 'repness', None)
+        repness = getattr(conv, "repness", None)
         results["repness_available"] = repness is not None
 
         if repness is not None:
@@ -382,16 +389,17 @@ def analyze_conversation(conv, votes=None, comments=None):
         traceback.print_exc()
         return None
 
+
 def save_results(results, dataset_name, conv=None):
     """Save results to a file and optionally dump conversation attributes"""
-    output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'system_test_output')
+    output_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "system_test_output")
     os.makedirs(output_dir, exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_file = os.path.join(output_dir, f"{dataset_name}_results_{timestamp}.json")
 
     try:
-        with open(output_file, 'w') as f:
+        with open(output_file, "w") as f:
             json.dump(results, f, indent=2)
         print(green(f"Results saved to {output_file}"))
 
@@ -402,7 +410,7 @@ def save_results(results, dataset_name, conv=None):
                 # Get all attributes
                 for attr in dir(conv):
                     # Skip private attributes and methods
-                    if attr.startswith('_') or callable(getattr(conv, attr)):
+                    if attr.startswith("_") or callable(getattr(conv, attr)):
                         continue
 
                     # Get attribute value
@@ -410,7 +418,7 @@ def save_results(results, dataset_name, conv=None):
 
                     # Try to make it JSON serializable
                     try:
-                        if hasattr(value, 'tolist'):
+                        if hasattr(value, "tolist"):
                             conv_attrs[attr] = f"Array shape: {value.shape}"
                         elif isinstance(value, (list, dict, str, int, float, bool, type(None))):
                             # For basic types, we can include directly (with size info for collections)
@@ -434,7 +442,7 @@ def save_results(results, dataset_name, conv=None):
 
                 # Save conversation attributes to a separate file
                 attrs_file = os.path.join(output_dir, f"{dataset_name}_conversation_attrs_{timestamp}.json")
-                with open(attrs_file, 'w') as f:
+                with open(attrs_file, "w") as f:
                     json.dump(conv_attrs, f, indent=2)
                 print(green(f"Conversation attributes saved to {attrs_file}"))
             except Exception as conv_err:
@@ -445,11 +453,12 @@ def save_results(results, dataset_name, conv=None):
         print(red(f"Error saving results: {e}"))
         return None
 
+
 def display_results_summary(results):
     """Display a summary of the results"""
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print("RESULTS SUMMARY")
-    print("="*50)
+    print("=" * 50)
 
     print("Dataset metrics:")
     print(f"  - {results['n_ptpts']} participants")
@@ -469,26 +478,27 @@ def display_results_summary(results):
             if comments:
                 print(f"\n  {group.upper()}:")
                 for i, comment in enumerate(comments):
-                    if 'tid' in comment:
-                        comment_id = comment['tid']
-                        score_info = f" (z-score: {comment['z']:.2f})" if 'z' in comment else ""
+                    if "tid" in comment:
+                        comment_id = comment["tid"]
+                        score_info = f" (z-score: {comment['z']:.2f})" if "z" in comment else ""
 
-                        if 'text' in comment:
+                        if "text" in comment:
                             # Truncate text if too long
-                            text = comment['text']
+                            text = comment["text"]
                             if len(text) > 80:
                                 text = text[:77] + "..."
-                            print(f"    {i+1}. Comment {comment_id}{score_info}: \"{text}\"")
+                            print(f'    {i+1}. Comment {comment_id}{score_info}: "{text}"')
                         else:
                             print(f"    {i+1}. Comment {comment_id}{score_info}")
 
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
+
 
 def run_full_pipeline_test(dataset_name):
     """Run a full pipeline test on a dataset"""
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print(f"TESTING FULL PIPELINE WITH {dataset_name.upper()} DATASET")
-    print("="*50 + "\n")
+    print("=" * 50 + "\n")
 
     # Step 1: Load the data
     votes, comments = load_data(dataset_name)
@@ -516,12 +526,13 @@ def run_full_pipeline_test(dataset_name):
     print(green(f"\nFull pipeline test for {dataset_name} dataset PASSED"))
     return True
 
+
 def run_notebook_check():
     """Check if notebooks can be imported and run"""
     try:
         print("\nChecking notebook functionality...")
-        notebook_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'eda_notebooks')
-        run_analysis_path = os.path.join(notebook_dir, 'run_analysis.py')
+        notebook_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "eda_notebooks")
+        run_analysis_path = os.path.join(notebook_dir, "run_analysis.py")
 
         if not os.path.exists(run_analysis_path):
             print(yellow("  run_analysis.py not found in notebooks directory. Skipping notebook check."))
@@ -543,12 +554,18 @@ def run_notebook_check():
         traceback.print_exc()
         return False
 
+
 def main():
     """Main function to run the system test"""
-    parser = argparse.ArgumentParser(description='Run a full system test for the Polis math Python implementation')
-    parser.add_argument('--dataset', type=str, choices=['biodiversity', 'vw'], default='biodiversity',
-                      help='Dataset to use for testing (default: biodiversity)')
-    parser.add_argument('--skip-notebook', action='store_true', help='Skip notebook functionality check')
+    parser = argparse.ArgumentParser(description="Run a full system test for the Polis math Python implementation")
+    parser.add_argument(
+        "--dataset",
+        type=str,
+        choices=["biodiversity", "vw"],
+        default="biodiversity",
+        help="Dataset to use for testing (default: biodiversity)",
+    )
+    parser.add_argument("--skip-notebook", action="store_true", help="Skip notebook functionality check")
     args = parser.parse_args()
 
     # Start time
@@ -576,6 +593,7 @@ def main():
     else:
         print(red("\nOVERALL RESULT: FAILURE"))
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

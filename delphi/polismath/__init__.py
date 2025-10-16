@@ -5,7 +5,7 @@ This is the Python implementation of the mathematical components
 of the Pol.is conversation system.
 """
 
-__version__ = '0.1.0'
+__version__ = "0.1.0"
 
 from polismath.components.config import Config, ConfigManager
 from polismath.system import System, SystemManager

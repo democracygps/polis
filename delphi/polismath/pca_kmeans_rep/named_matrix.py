@@ -16,8 +16,8 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 # Progress reporting constants
-PROGRESS_INTERVAL = 5000   # Report progress every N items
-REPORT_THRESHOLD = 8000    # Only report detailed progress for operations larger than this
+PROGRESS_INTERVAL = 5000  # Report progress every N items
+REPORT_THRESHOLD = 8000  # Only report detailed progress for operations larger than this
 
 
 class IndexHash:
@@ -29,7 +29,7 @@ class IndexHash:
     def __init__(self, names: list[Any] | None = None):
         """
         Initialize an IndexHash with optional initial names.
-        
+
         Args:
             names: Optional list of initial names
         """
@@ -47,22 +47,22 @@ class IndexHash:
     def index(self, name: Any) -> int | None:
         """
         Get the index for a given name, or None if not found.
-        
+
         Args:
             name: The name to look up
-            
+
         Returns:
             The index if found, None otherwise
         """
         return self._index_hash.get(name)
 
-    def append(self, name: Any) -> 'IndexHash':
+    def append(self, name: Any) -> "IndexHash":
         """
         Add a new name to the index.
-        
+
         Args:
             name: The name to add
-            
+
         Returns:
             A new IndexHash with the added name
         """
@@ -74,13 +74,13 @@ class IndexHash:
         new_index._index_hash[name] = len(new_index._names) - 1
         return new_index
 
-    def append_many(self, names: list[Any]) -> 'IndexHash':
+    def append_many(self, names: list[Any]) -> "IndexHash":
         """
         Add multiple names to the index.
-        
+
         Args:
             names: List of names to add
-            
+
         Returns:
             A new IndexHash with the added names
         """
@@ -89,13 +89,13 @@ class IndexHash:
             result = result.append(name)
         return result
 
-    def subset(self, names: list[Any]) -> 'IndexHash':
+    def subset(self, names: list[Any]) -> "IndexHash":
         """
         Create a subset of the index with only the specified names.
-        
+
         Args:
             names: List of names to include in the subset
-            
+
         Returns:
             A new IndexHash containing only the specified names
         """
@@ -115,19 +115,21 @@ class IndexHash:
 class NamedMatrix:
     """
     A matrix with named rows and columns.
-    
+
     This is the Python equivalent of the Clojure NamedMatrix implementation,
     using pandas DataFrame as the underlying storage.
     """
 
-    def __init__(self,
-                 matrix: np.ndarray | pd.DataFrame | None = None,
-                 rownames: list[Any] | None = None,
-                 colnames: list[Any] | None = None,
-                 enforce_numeric: bool = True):
+    def __init__(
+        self,
+        matrix: np.ndarray | pd.DataFrame | None = None,
+        rownames: list[Any] | None = None,
+        colnames: list[Any] | None = None,
+        enforce_numeric: bool = True,
+    ):
         """
         Initialize a NamedMatrix with optional initial data.
-        
+
         Args:
             matrix: Initial matrix data (numpy array or pandas DataFrame)
             rownames: List of row names
@@ -141,10 +143,7 @@ class NamedMatrix:
         # Initialize the matrix data
         if matrix is None:
             # Create an empty DataFrame
-            self._matrix = pd.DataFrame(
-                index=self._row_index.get_names(),
-                columns=self._col_index.get_names()
-            )
+            self._matrix = pd.DataFrame(index=self._row_index.get_names(), columns=self._col_index.get_names())
         elif isinstance(matrix, pd.DataFrame):
             # If DataFrame is provided, use it directly
             self._matrix = matrix.copy()
@@ -166,11 +165,7 @@ class NamedMatrix:
             # Convert numpy array to DataFrame
             rows = rownames if rownames is not None else range(matrix.shape[0])
             cols = colnames if colnames is not None else range(matrix.shape[1])
-            self._matrix = pd.DataFrame(
-                matrix,
-                index=rows,
-                columns=cols
-            )
+            self._matrix = pd.DataFrame(matrix, index=rows, columns=cols)
 
         # Ensure numeric data if requested
         if enforce_numeric:
@@ -195,7 +190,9 @@ class NamedMatrix:
 
         # Check if the matrix is already numeric
         try:
-            if pd.api.types.is_numeric_dtype(self._matrix.dtypes.iloc[0]) and not self._matrix.dtypes.iloc[0] == np.dtype('O'):
+            if pd.api.types.is_numeric_dtype(self._matrix.dtypes.iloc[0]) and not self._matrix.dtypes.iloc[
+                0
+            ] == np.dtype("O"):
                 return
         except (IndexError, AttributeError):
             # Handle empty DataFrames or other issues
@@ -231,11 +228,7 @@ class NamedMatrix:
                     continue
 
         # Create a new DataFrame with the numeric values
-        self._matrix = pd.DataFrame(
-            numeric_matrix,
-            index=self._matrix.index,
-            columns=self._matrix.columns
-        )
+        self._matrix = pd.DataFrame(numeric_matrix, index=self._matrix.index, columns=self._matrix.columns)
 
     @property
     def matrix(self) -> pd.DataFrame:
@@ -263,10 +256,10 @@ class NamedMatrix:
         """Get the column index object."""
         return self._col_index
 
-    def copy(self) -> 'NamedMatrix':
+    def copy(self) -> "NamedMatrix":
         """
         Create a deep copy of the NamedMatrix.
-        
+
         Returns:
             A new NamedMatrix with the same data
         """
@@ -276,18 +269,15 @@ class NamedMatrix:
         result._col_index = self._col_index
         return result
 
-    def update(self,
-               row: Any,
-               col: Any,
-               value: Any) -> 'NamedMatrix':
+    def update(self, row: Any, col: Any, value: Any) -> "NamedMatrix":
         """
         Update a single value in the matrix, adding new rows/columns as needed.
-        
+
         Args:
             row: Row name
             col: Column name
             value: New value
-            
+
         Returns:
             A new NamedMatrix with the updated value
         """
@@ -336,14 +326,13 @@ class NamedMatrix:
         result._col_index = new_col_index
         return result
 
-    def batch_update(self,
-                    updates: list[tuple[Any, Any, Any]]) -> 'NamedMatrix':
+    def batch_update(self, updates: list[tuple[Any, Any, Any]]) -> "NamedMatrix":
         """
         Apply multiple updates to the matrix in a single efficient operation.
-        
+
         Args:
             updates: List of (row, col, val) tuples
-            
+
         Returns:
             Updated NamedMatrix with all changes applied at once
         """
@@ -363,8 +352,12 @@ class NamedMatrix:
         existing_cols = set(self._matrix.columns)
 
         if should_report:
-            logger.info(f"[{time.time() - start_time:.2f}s] Found {len(existing_rows)} existing rows and {len(existing_cols)} existing columns")
-            logger.info(f"[{time.time() - start_time:.2f}s] First pass: identifying new rows/columns and processing values")
+            logger.info(
+                f"[{time.time() - start_time:.2f}s] Found {len(existing_rows)} existing rows and {len(existing_cols)} existing columns"
+            )
+            logger.info(
+                f"[{time.time() - start_time:.2f}s] First pass: identifying new rows/columns and processing values"
+            )
 
         # First pass: identify new rows/columns and process values
         new_rows = set()
@@ -377,7 +370,9 @@ class NamedMatrix:
                 progress_pct = (i / total_updates) * 100
                 elapsed = time.time() - start_time
                 remaining = (elapsed / i) * (total_updates - i) if i > 0 else 0
-                logger.info(f"[{elapsed:.2f}s] Processed {i}/{total_updates} updates ({progress_pct:.1f}%) - Est. remaining: {remaining:.2f}s")
+                logger.info(
+                    f"[{elapsed:.2f}s] Processed {i}/{total_updates} updates ({progress_pct:.1f}%) - Est. remaining: {remaining:.2f}s"
+                )
 
             # Track new rows and columns
             if row not in existing_rows and row not in new_rows:
@@ -405,8 +400,12 @@ class NamedMatrix:
             processed_updates[(row, col)] = processed_value
 
         if should_report:
-            logger.info(f"[{time.time() - start_time:.2f}s] Found {len(new_rows)} new rows and {len(new_cols)} new columns")
-            logger.info(f"[{time.time() - start_time:.2f}s] Creating new matrix with {len(existing_rows) + len(new_rows)} rows and {len(existing_cols) + len(new_cols)} columns")
+            logger.info(
+                f"[{time.time() - start_time:.2f}s] Found {len(new_rows)} new rows and {len(new_cols)} new columns"
+            )
+            logger.info(
+                f"[{time.time() - start_time:.2f}s] Creating new matrix with {len(existing_rows) + len(new_rows)} rows and {len(existing_cols) + len(new_cols)} columns"
+            )
 
         # Create complete row and column lists (existing + new)
         all_rows = sorted(list(existing_rows) + list(new_rows))
@@ -417,17 +416,15 @@ class NamedMatrix:
         matrix_creation_start = time.time()
         if new_rows or new_cols or self._matrix.empty:
             # Create new DataFrame with all rows and columns
-            matrix_copy = pd.DataFrame(
-                index=all_rows,
-                columns=all_cols,
-                dtype=float
-            )
+            matrix_copy = pd.DataFrame(index=all_rows, columns=all_cols, dtype=float)
 
             # Fill with NaN
             matrix_copy.values[:] = np.nan
 
             if should_report:
-                logger.info(f"[{time.time() - start_time:.2f}s] New DataFrame created in {time.time() - matrix_creation_start:.2f}s")
+                logger.info(
+                    f"[{time.time() - start_time:.2f}s] New DataFrame created in {time.time() - matrix_creation_start:.2f}s"
+                )
                 logger.info(f"[{time.time() - start_time:.2f}s] Copying existing values...")
 
             # Copy existing values from original matrix
@@ -450,12 +447,16 @@ class NamedMatrix:
                             matrix_copy.values[row_idx, col_idx] = existing_data[i, j]
 
                     if should_report:
-                        logger.info(f"[{time.time() - start_time:.2f}s] Copied {total_values} values in {time.time() - copy_start:.2f}s")
+                        logger.info(
+                            f"[{time.time() - start_time:.2f}s] Copied {total_values} values in {time.time() - copy_start:.2f}s"
+                        )
 
                 except Exception as e:
                     # Fallback to slower method if vectorized approach fails
                     if should_report:
-                        logger.warning(f"[{time.time() - start_time:.2f}s] Vectorized copy failed: {e}, falling back to element-wise copy")
+                        logger.warning(
+                            f"[{time.time() - start_time:.2f}s] Vectorized copy failed: {e}, falling back to element-wise copy"
+                        )
 
                     # Element-wise copy
                     for i, row in enumerate(self._matrix.index):
@@ -463,18 +464,28 @@ class NamedMatrix:
                             matrix_copy.at[row, col] = self._matrix.iloc[i, j]
 
                             # Report progress for large matrices
-                            if should_report and total_values > REPORT_THRESHOLD and (i * len(self._matrix.columns) + j + 1) % PROGRESS_INTERVAL == 0:
+                            if (
+                                should_report
+                                and total_values > REPORT_THRESHOLD
+                                and (i * len(self._matrix.columns) + j + 1) % PROGRESS_INTERVAL == 0
+                            ):
                                 copied = i * len(self._matrix.columns) + j + 1
                                 pct = (copied / total_values) * 100
-                                logger.info(f"[{time.time() - start_time:.2f}s] Copied {copied}/{total_values} values ({pct:.1f}%)")
+                                logger.info(
+                                    f"[{time.time() - start_time:.2f}s] Copied {copied}/{total_values} values ({pct:.1f}%)"
+                                )
 
                     if should_report:
-                        logger.info(f"[{time.time() - start_time:.2f}s] Completed element-wise copy in {time.time() - copy_start:.2f}s")
+                        logger.info(
+                            f"[{time.time() - start_time:.2f}s] Completed element-wise copy in {time.time() - copy_start:.2f}s"
+                        )
         else:
             # No new rows or columns needed, just make a copy
             matrix_copy = self._matrix.copy()
             if should_report:
-                logger.info(f"[{time.time() - start_time:.2f}s] No resizing needed, created copy in {time.time() - matrix_creation_start:.2f}s")
+                logger.info(
+                    f"[{time.time() - start_time:.2f}s] No resizing needed, created copy in {time.time() - matrix_creation_start:.2f}s"
+                )
 
         # Apply all updates at once
         if should_report:
@@ -493,7 +504,9 @@ class NamedMatrix:
                 elapsed = time.time() - update_start
                 estimated_total = (elapsed / update_count) * len(processed_updates)
                 remaining = estimated_total - elapsed
-                logger.info(f"[{time.time() - start_time:.2f}s] Applied {update_count}/{len(processed_updates)} updates ({progress_pct:.1f}%) - Est. remaining: {remaining:.2f}s")
+                logger.info(
+                    f"[{time.time() - start_time:.2f}s] Applied {update_count}/{len(processed_updates)} updates ({progress_pct:.1f}%) - Est. remaining: {remaining:.2f}s"
+                )
 
         if should_report:
             logger.info(f"[{time.time() - start_time:.2f}s] Updates applied in {time.time() - update_start:.2f}s")
@@ -507,31 +520,32 @@ class NamedMatrix:
 
         if should_report:
             total_time = time.time() - start_time
-            logger.info(f"[{total_time:.2f}s] Batch update completed in {total_time:.2f}s - Final matrix size: {result._matrix.shape}")
+            logger.info(
+                f"[{total_time:.2f}s] Batch update completed in {total_time:.2f}s - Final matrix size: {result._matrix.shape}"
+            )
 
         return result
 
-    def update_many(self,
-                   updates: list[tuple[Any, Any, Any]]) -> 'NamedMatrix':
+    def update_many(self, updates: list[tuple[Any, Any, Any]]) -> "NamedMatrix":
         """
         Update multiple values in the matrix.
-        
+
         Args:
             updates: List of (row, col, value) tuples
-            
+
         Returns:
             A new NamedMatrix with the updated values
         """
         # Use the more efficient batch_update method
         return self.batch_update(updates)
 
-    def rowname_subset(self, rownames: list[Any]) -> 'NamedMatrix':
+    def rowname_subset(self, rownames: list[Any]) -> "NamedMatrix":
         """
         Create a subset of the matrix with only the specified rows.
-        
+
         Args:
             rownames: List of row names to include
-            
+
         Returns:
             A new NamedMatrix with only the specified rows
         """
@@ -540,11 +554,7 @@ class NamedMatrix:
 
         if not valid_rows:
             # Return an empty matrix with the same columns
-            return NamedMatrix(
-                pd.DataFrame(columns=self.colnames()),
-                rownames=[],
-                colnames=self.colnames()
-            )
+            return NamedMatrix(pd.DataFrame(columns=self.colnames()), rownames=[], colnames=self.colnames())
 
         # Create a subset of the matrix
         subset_df = self._matrix.loc[valid_rows]
@@ -556,13 +566,13 @@ class NamedMatrix:
         result._col_index = self._col_index
         return result
 
-    def colname_subset(self, colnames: list[Any]) -> 'NamedMatrix':
+    def colname_subset(self, colnames: list[Any]) -> "NamedMatrix":
         """
         Create a subset of the matrix with only the specified columns.
-        
+
         Args:
             colnames: List of column names to include
-            
+
         Returns:
             A new NamedMatrix with only the specified columns
         """
@@ -571,11 +581,7 @@ class NamedMatrix:
 
         if not valid_cols:
             # Return an empty matrix with the same rows
-            return NamedMatrix(
-                pd.DataFrame(index=self.rownames()),
-                rownames=self.rownames(),
-                colnames=[]
-            )
+            return NamedMatrix(pd.DataFrame(index=self.rownames()), rownames=self.rownames(), colnames=[])
 
         # Create a subset of the matrix
         subset_df = self._matrix[valid_cols]
@@ -590,10 +596,10 @@ class NamedMatrix:
     def get_row_by_name(self, row_name: Any) -> np.ndarray:
         """
         Get a row of the matrix by name.
-        
+
         Args:
             row_name: The name of the row
-            
+
         Returns:
             The row as a numpy array
         """
@@ -604,10 +610,10 @@ class NamedMatrix:
     def get_col_by_name(self, col_name: Any) -> np.ndarray:
         """
         Get a column of the matrix by name.
-        
+
         Args:
             col_name: The name of the column
-            
+
         Returns:
             The column as a numpy array
         """
@@ -615,13 +621,13 @@ class NamedMatrix:
             raise KeyError(f"Column name '{col_name}' not found")
         return self._matrix[col_name].values
 
-    def zero_out_columns(self, colnames: list[Any]) -> 'NamedMatrix':
+    def zero_out_columns(self, colnames: list[Any]) -> "NamedMatrix":
         """
         Set all values in the specified columns to zero.
-        
+
         Args:
             colnames: List of column names to zero out
-            
+
         Returns:
             A new NamedMatrix with zeroed columns
         """
@@ -640,13 +646,13 @@ class NamedMatrix:
         result._col_index = self._col_index
         return result
 
-    def inv_rowname_subset(self, rownames: list[Any]) -> 'NamedMatrix':
+    def inv_rowname_subset(self, rownames: list[Any]) -> "NamedMatrix":
         """
         Create a subset excluding the specified rows.
-        
+
         Args:
             rownames: List of row names to exclude
-            
+
         Returns:
             A new NamedMatrix without the specified rows
         """
@@ -664,23 +670,25 @@ class NamedMatrix:
         """
         Human-readable string representation.
         """
-        return (f"NamedMatrix with {len(self.rownames())} rows and "
-                f"{len(self.colnames())} columns\n{self._matrix}")
+        return f"NamedMatrix with {len(self.rownames())} rows and " f"{len(self.colnames())} columns\n{self._matrix}"
 
 
 # Utility functions
 
-def create_named_matrix(matrix_data: np.ndarray | list[list[Any]] | None = None,
-                        rownames: list[Any] | None = None,
-                        colnames: list[Any] | None = None) -> NamedMatrix:
+
+def create_named_matrix(
+    matrix_data: np.ndarray | list[list[Any]] | None = None,
+    rownames: list[Any] | None = None,
+    colnames: list[Any] | None = None,
+) -> NamedMatrix:
     """
     Create a NamedMatrix from data.
-    
+
     Args:
         matrix_data: Initial matrix data (numpy array or nested lists)
         rownames: List of row names
         colnames: List of column names
-        
+
     Returns:
         A new NamedMatrix
     """

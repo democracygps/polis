@@ -26,8 +26,8 @@ def load_votes_from_csv(votes_path: str) -> NamedMatrix:
     df = pd.read_csv(votes_path)
 
     # Get unique participant and comment IDs
-    ptpt_ids = sorted(df['voter-id'].unique())
-    cmt_ids = sorted(df['comment-id'].unique())
+    ptpt_ids = sorted(df["voter-id"].unique())
+    cmt_ids = sorted(df["comment-id"].unique())
 
     # Create a matrix of NaNs
     vote_matrix = np.full((len(ptpt_ids), len(cmt_ids)), np.nan)
@@ -37,12 +37,12 @@ def load_votes_from_csv(votes_path: str) -> NamedMatrix:
     cmt_map = {cid: i for i, cid in enumerate(cmt_ids)}
 
     for _, row in df.iterrows():
-        pid = row['voter-id']
-        cid = row['comment-id']
+        pid = row["voter-id"]
+        cid = row["comment-id"]
 
         # Convert vote to numeric value
         try:
-            vote_val = float(row['vote'])
+            vote_val = float(row["vote"])
             # Normalize to ensure only -1, 0, or 1
             if vote_val > 0:
                 vote_val = 1.0
@@ -52,10 +52,10 @@ def load_votes_from_csv(votes_path: str) -> NamedMatrix:
                 vote_val = 0.0
         except ValueError:
             # Handle text values
-            vote_text = str(row['vote']).lower()
-            if vote_text == 'agree':
+            vote_text = str(row["vote"]).lower()
+            if vote_text == "agree":
                 vote_val = 1.0
-            elif vote_text == 'disagree':
+            elif vote_text == "disagree":
                 vote_val = -1.0
             else:
                 vote_val = 0.0  # Pass or unknown
@@ -68,7 +68,7 @@ def load_votes_from_csv(votes_path: str) -> NamedMatrix:
         matrix=vote_matrix,
         rownames=[str(pid) for pid in ptpt_ids],
         colnames=[str(cid) for cid in cmt_ids],
-        enforce_numeric=True
+        enforce_numeric=True,
     )
 
 
@@ -84,14 +84,14 @@ def compare_clusters(python_clusters, clojure_clusters) -> dict[str, Any]:
     For this comparison, we care about the number and size of clusters.
     """
     # Get Python cluster sizes
-    python_sizes = [len(c.get('members', [])) for c in python_clusters]
+    python_sizes = [len(c.get("members", [])) for c in python_clusters]
     python_sizes.sort(reverse=True)  # Sort by size for easier comparison
 
     # Get Clojure cluster sizes
     clojure_sizes = []
     for c in clojure_clusters:
-        if isinstance(c, dict) and 'members' in c:
-            clojure_sizes.append(len(c.get('members', [])))
+        if isinstance(c, dict) and "members" in c:
+            clojure_sizes.append(len(c.get("members", [])))
     clojure_sizes.sort(reverse=True)  # Sort by size for easier comparison
 
     # Compare number of clusters
@@ -114,6 +114,7 @@ def compare_clusters(python_clusters, clojure_clusters) -> dict[str, Any]:
         # Calculate earth mover's distance
         try:
             from scipy.stats import wasserstein_distance
+
             size_similarity = 1.0 - min(wasserstein_distance(python_norm, clojure_norm), 1.0)
         except ImportError:
             # Fallback to simple difference if scipy not available
@@ -122,10 +123,10 @@ def compare_clusters(python_clusters, clojure_clusters) -> dict[str, Any]:
         size_similarity = 0.0
 
     return {
-        'python_sizes': python_sizes,
-        'clojure_sizes': clojure_sizes,
-        'num_clusters_match': clusters_match,
-        'size_similarity': size_similarity
+        "python_sizes": python_sizes,
+        "clojure_sizes": clojure_sizes,
+        "num_clusters_match": clusters_match,
+        "size_similarity": size_similarity,
     }
 
 
@@ -140,11 +141,11 @@ def compare_projections(python_projections, clojure_projections) -> dict[str, An
 
     if not common_ids:
         return {
-            'common_participants': 0,
-            'average_distance': float('inf'),
-            'distribution_similarity': 0.0,
-            'same_quadrant_percentage': 0.0,
-            'best_transformation': 'none'
+            "common_participants": 0,
+            "average_distance": float("inf"),
+            "distribution_similarity": 0.0,
+            "same_quadrant_percentage": 0.0,
+            "best_transformation": "none",
         }
 
     # Convert all projections to numpy arrays
@@ -155,41 +156,35 @@ def compare_projections(python_projections, clojure_projections) -> dict[str, An
         # Python projections
         if isinstance(python_projections[pid], (list, np.ndarray)):
             py_projs[pid] = np.array(python_projections[pid])
-        elif isinstance(python_projections[pid], dict) and 'x' in python_projections[pid]:
-            py_projs[pid] = np.array([
-                python_projections[pid].get('x', 0),
-                python_projections[pid].get('y', 0)
-            ])
+        elif isinstance(python_projections[pid], dict) and "x" in python_projections[pid]:
+            py_projs[pid] = np.array([python_projections[pid].get("x", 0), python_projections[pid].get("y", 0)])
         else:
             continue
 
         # Clojure projections
         if isinstance(clojure_projections[pid], (list, np.ndarray)):
             cl_projs[pid] = np.array(clojure_projections[pid])
-        elif isinstance(clojure_projections[pid], dict) and 'x' in clojure_projections[pid]:
-            cl_projs[pid] = np.array([
-                clojure_projections[pid].get('x', 0),
-                clojure_projections[pid].get('y', 0)
-            ])
+        elif isinstance(clojure_projections[pid], dict) and "x" in clojure_projections[pid]:
+            cl_projs[pid] = np.array([clojure_projections[pid].get("x", 0), clojure_projections[pid].get("y", 0)])
         else:
             continue
 
     # Define possible transformations to try
     transformations = [
-        ('none', lambda p: p),
-        ('flip_x', lambda p: np.array([-p[0], p[1]])),
-        ('flip_y', lambda p: np.array([p[0], -p[1]])),
-        ('flip_both', lambda p: np.array([-p[0], -p[1]])),
-        ('transpose', lambda p: np.array([p[1], p[0]])),
-        ('transpose_flip_x', lambda p: np.array([-p[1], p[0]])),
-        ('transpose_flip_y', lambda p: np.array([p[1], -p[0]])),
-        ('transpose_flip_both', lambda p: np.array([-p[1], -p[0]]))
+        ("none", lambda p: p),
+        ("flip_x", lambda p: np.array([-p[0], p[1]])),
+        ("flip_y", lambda p: np.array([p[0], -p[1]])),
+        ("flip_both", lambda p: np.array([-p[0], -p[1]])),
+        ("transpose", lambda p: np.array([p[1], p[0]])),
+        ("transpose_flip_x", lambda p: np.array([-p[1], p[0]])),
+        ("transpose_flip_y", lambda p: np.array([p[1], -p[0]])),
+        ("transpose_flip_both", lambda p: np.array([-p[1], -p[0]])),
     ]
 
     # Try each transformation and find the best match
     best_same_quadrant = 0
-    best_avg_dist = float('inf')
-    best_transformation = 'none'
+    best_avg_dist = float("inf")
+    best_transformation = "none"
     best_results = None
 
     for name, transform_fn in transformations:
@@ -213,7 +208,7 @@ def compare_projections(python_projections, clojure_projections) -> dict[str, An
                 same_quadrant += 1
 
         # Calculate average distance
-        avg_dist = np.mean(distances) if distances else float('inf')
+        avg_dist = np.mean(distances) if distances else float("inf")
 
         # Calculate percentage in same quadrant
         sq_pct = same_quadrant / len(transformed_py_projs) if transformed_py_projs else 0.0
@@ -224,9 +219,9 @@ def compare_projections(python_projections, clojure_projections) -> dict[str, An
             best_avg_dist = avg_dist
             best_transformation = name
             best_results = {
-                'common_participants': len(transformed_py_projs),
-                'average_distance': avg_dist,
-                'same_quadrant_percentage': sq_pct
+                "common_participants": len(transformed_py_projs),
+                "average_distance": avg_dist,
+                "same_quadrant_percentage": sq_pct,
             }
 
     # Overall distribution similarity using best transformation
@@ -236,6 +231,7 @@ def compare_projections(python_projections, clojure_projections) -> dict[str, An
     # Create histograms and compare overlap
     try:
         from scipy.stats import wasserstein_distance
+
         if python_dists and clojure_dists:
             # Normalize distributions for comparison
             p_min, p_max = min(python_dists), max(python_dists)
@@ -254,8 +250,8 @@ def compare_projections(python_projections, clojure_projections) -> dict[str, An
         dist_sim = 0.5  # Neutral value
 
     # Add distribution similarity and transformation to results
-    best_results['distribution_similarity'] = dist_sim
-    best_results['best_transformation'] = best_transformation
+    best_results["distribution_similarity"] = dist_sim
+    best_results["best_transformation"] = best_transformation
 
     return best_results
 
@@ -263,14 +259,14 @@ def compare_projections(python_projections, clojure_projections) -> dict[str, An
 def run_direct_comparison(dataset_name: str) -> dict[str, Any]:
     """Run direct comparison between Python and Clojure results."""
     # Set paths based on dataset name
-    if dataset_name == 'biodiversity':
-        data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'real_data/biodiversity'))
-        votes_path = os.path.join(data_dir, '2025-03-18-2000-3atycmhmer-votes.csv')
-        clojure_output_path = os.path.join(data_dir, 'biodiveristy_clojure_output.json')
-    elif dataset_name == 'vw':
-        data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'real_data/vw'))
-        votes_path = os.path.join(data_dir, '2025-03-18-1954-4anfsauat2-votes.csv')
-        clojure_output_path = os.path.join(data_dir, 'vw_clojure_output.json')
+    if dataset_name == "biodiversity":
+        data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "real_data/biodiversity"))
+        votes_path = os.path.join(data_dir, "2025-03-18-2000-3atycmhmer-votes.csv")
+        clojure_output_path = os.path.join(data_dir, "biodiveristy_clojure_output.json")
+    elif dataset_name == "vw":
+        data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "real_data/vw"))
+        votes_path = os.path.join(data_dir, "2025-03-18-1954-4anfsauat2-votes.csv")
+        clojure_output_path = os.path.join(data_dir, "vw_clojure_output.json")
     else:
         raise ValueError(f"Unknown dataset: {dataset_name}")
 
@@ -300,7 +296,7 @@ def run_direct_comparison(dataset_name: str) -> dict[str, Any]:
         print(f"Clustering successful: {len(clusters)} clusters generated")
 
         # Get Clojure projections
-        clojure_projections = clojure_output.get('proj', {})
+        clojure_projections = clojure_output.get("proj", {})
 
         # Compare projections
         print("Comparing projections...")
@@ -310,28 +306,28 @@ def run_direct_comparison(dataset_name: str) -> dict[str, Any]:
 
         # Compare clusters
         print("Comparing clusters...")
-        clusters_comparison = compare_clusters(clusters, clojure_output.get('group-clusters', []))
+        clusters_comparison = compare_clusters(clusters, clojure_output.get("group-clusters", []))
         print(f"Cluster comparison completed: similarity: {clusters_comparison['size_similarity']:.2f}")
 
         # Compile results
         results = {
-            'dataset': dataset_name,
-            'success': True,
-            'projection_comparison': proj_comparison,
-            'cluster_comparison': clusters_comparison,
-            'python_clusters': len(clusters),
-            'clojure_clusters': len(clojure_output.get('group-clusters', [])),
-            'match_summary': {
-                'same_quadrant_percentage': proj_comparison['same_quadrant_percentage'],
-                'best_transformation': proj_comparison['best_transformation'],
-                'cluster_size_similarity': clusters_comparison['size_similarity']
-            }
+            "dataset": dataset_name,
+            "success": True,
+            "projection_comparison": proj_comparison,
+            "cluster_comparison": clusters_comparison,
+            "python_clusters": len(clusters),
+            "clojure_clusters": len(clojure_output.get("group-clusters", [])),
+            "match_summary": {
+                "same_quadrant_percentage": proj_comparison["same_quadrant_percentage"],
+                "best_transformation": proj_comparison["best_transformation"],
+                "cluster_size_similarity": clusters_comparison["size_similarity"],
+            },
         }
 
         # Save results
-        output_dir = os.path.join(data_dir, 'python_output')
+        output_dir = os.path.join(data_dir, "python_output")
         os.makedirs(output_dir, exist_ok=True)
-        with open(os.path.join(output_dir, 'direct_comparison.json'), 'w') as f:
+        with open(os.path.join(output_dir, "direct_comparison.json"), "w") as f:
             json.dump(results, f, indent=2, default=str)
 
         print(f"Results saved to {output_dir}/direct_comparison.json")
@@ -340,37 +336,36 @@ def run_direct_comparison(dataset_name: str) -> dict[str, Any]:
     except Exception as e:
         print(f"Error during comparison: {e}")
         import traceback
+
         traceback.print_exc()
 
-        return {
-            'dataset': dataset_name,
-            'success': False,
-            'error': str(e)
-        }
+        return {"dataset": dataset_name, "success": False, "error": str(e)}
 
 
 if __name__ == "__main__":
     print("=== DIRECT COMPARISON WITH CLOJURE ===")
     print("\nRunning biodiversity dataset comparison...")
-    biodiversity_results = run_direct_comparison('biodiversity')
+    biodiversity_results = run_direct_comparison("biodiversity")
 
-    print("\n" + "="*50 + "\n")
+    print("\n" + "=" * 50 + "\n")
 
     print("Running vw dataset comparison...")
-    vw_results = run_direct_comparison('vw')
+    vw_results = run_direct_comparison("vw")
 
     print("\n=== SUMMARY ===")
     print("Biodiversity dataset:")
-    if biodiversity_results['success']:
+    if biodiversity_results["success"]:
         print(f"- Same quadrant percentage: {biodiversity_results['match_summary']['same_quadrant_percentage']:.1%}")
         print(f"- Best transformation: {biodiversity_results['match_summary']['best_transformation']}")
         print(f"- Cluster size similarity: {biodiversity_results['match_summary']['cluster_size_similarity']:.2f}")
-        print(f"- Python clusters: {biodiversity_results['python_clusters']}, Clojure clusters: {biodiversity_results['clojure_clusters']}")
+        print(
+            f"- Python clusters: {biodiversity_results['python_clusters']}, Clojure clusters: {biodiversity_results['clojure_clusters']}"
+        )
     else:
         print(f"- Error: {biodiversity_results.get('error', 'Unknown error')}")
 
     print("\nVW dataset:")
-    if vw_results['success']:
+    if vw_results["success"]:
         print(f"- Same quadrant percentage: {vw_results['match_summary']['same_quadrant_percentage']:.1%}")
         print(f"- Best transformation: {vw_results['match_summary']['best_transformation']}")
         print(f"- Cluster size similarity: {vw_results['match_summary']['cluster_size_similarity']:.2f}")

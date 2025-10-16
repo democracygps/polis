@@ -12,13 +12,12 @@ import numpy as np
 import pandas as pd
 
 # Add the parent directory to the path to import the polismath modules
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 
 def check_environment():
     """Check if the required packages are installed and the environment is set up correctly."""
-    required_packages = [
-        'pandas', 'numpy', 'matplotlib', 'seaborn'
-    ]
+    required_packages = ["pandas", "numpy", "matplotlib", "seaborn"]
 
     missing_packages = []
     for package in required_packages:
@@ -44,6 +43,7 @@ def check_environment():
         print("Make sure you've installed the package using 'pip install -e .' from the delphi directory")
         return False
 
+
 # Import polismath modules
 from polismath.conversation.conversation import Conversation
 
@@ -57,12 +57,12 @@ def load_votes(votes_path):
     votes_list = []
 
     for _, row in df.iterrows():
-        pid = str(row['voter-id'])
-        tid = str(row['comment-id'])
+        pid = str(row["voter-id"])
+        tid = str(row["comment-id"])
 
         # Ensure vote value is a float (-1, 0, or 1)
         try:
-            vote_val = float(row['vote'])
+            vote_val = float(row["vote"])
             # Normalize to ensure only -1, 0, or 1
             if vote_val > 0:
                 vote_val = 1.0
@@ -72,33 +72,28 @@ def load_votes(votes_path):
                 vote_val = 0.0
         except ValueError:
             # Handle text values
-            vote_text = str(row['vote']).lower()
-            if vote_text == 'agree':
+            vote_text = str(row["vote"]).lower()
+            if vote_text == "agree":
                 vote_val = 1.0
-            elif vote_text == 'disagree':
+            elif vote_text == "disagree":
                 vote_val = -1.0
             else:
                 vote_val = 0.0  # Pass or unknown
 
-        votes_list.append({
-            'pid': pid,
-            'tid': tid,
-            'vote': vote_val
-        })
+        votes_list.append({"pid": pid, "tid": tid, "vote": vote_val})
 
     # Pack into the expected votes format
-    return {
-        'votes': votes_list
-    }
+    return {"votes": votes_list}
+
 
 def main():
     # Define paths to data files
-    data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'real_data/biodiversity'))
-    votes_path = os.path.join(data_dir, '2025-03-18-2000-3atycmhmer-votes.csv')
-    comments_path = os.path.join(data_dir, '2025-03-18-2000-3atycmhmer-comments.csv')
+    data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "real_data/biodiversity"))
+    votes_path = os.path.join(data_dir, "2025-03-18-2000-3atycmhmer-votes.csv")
+    comments_path = os.path.join(data_dir, "2025-03-18-2000-3atycmhmer-comments.csv")
 
     # Create output directory
-    output_dir = os.path.join(os.path.dirname(__file__), 'output')
+    output_dir = os.path.join(os.path.dirname(__file__), "output")
     os.makedirs(output_dir, exist_ok=True)
 
     print("Loading comments...")
@@ -109,9 +104,9 @@ def main():
     # Create a mapping of comment IDs to comment bodies
     comment_map = {}
     for _, row in comments_df.iterrows():
-        comment_id = str(row['comment-id'])
-        comment_body = row['comment-body']
-        moderated = row['moderated']
+        comment_id = str(row["comment-id"])
+        comment_body = row["comment-body"]
+        moderated = row["moderated"]
 
         # Only include moderated-in comments (value=1)
         if moderated == 1:
@@ -126,7 +121,7 @@ def main():
 
     # Create conversation object
     print("Creating conversation...")
-    conv_id = 'biodiversity'
+    conv_id = "biodiversity"
     conv = Conversation(conv_id)
 
     # Update with votes and recompute everything
@@ -142,18 +137,18 @@ def main():
     # Save results
     print("\nSaving results...")
     # Save summary
-    with open(os.path.join(output_dir, 'summary.json'), 'w') as f:
+    with open(os.path.join(output_dir, "summary.json"), "w") as f:
         json.dump(summary, f, indent=2)
 
     # Save full conversation data
     full_data = conv.get_full_data()
-    with open(os.path.join(output_dir, 'full_data.json'), 'w') as f:
+    with open(os.path.join(output_dir, "full_data.json"), "w") as f:
         # Convert numpy arrays to lists
         serializable_data = json.dumps(full_data, default=lambda x: x.tolist() if isinstance(x, np.ndarray) else x)
         f.write(serializable_data)
 
     # Save comment map
-    with open(os.path.join(output_dir, 'comment_map.json'), 'w') as f:
+    with open(os.path.join(output_dir, "comment_map.json"), "w") as f:
         json.dump(comment_map, f, indent=2)
 
     # Compute group consensus
@@ -167,8 +162,8 @@ def main():
             group_agreements = []
 
             for group in conv.group_clusters:
-                group_id = group['id']
-                members = group['members']
+                group_id = group["id"]
+                members = group["members"]
 
                 # Skip groups with too few members
                 if len(members) < 5:
@@ -201,16 +196,14 @@ def main():
                 total_votes = agree_count + disagree_count
                 if total_votes > 0:
                     agree_ratio = agree_count / total_votes
-                    group_agreements.append({
-                        'group_id': group_id,
-                        'agree_ratio': agree_ratio,
-                        'total_votes': total_votes
-                    })
+                    group_agreements.append(
+                        {"group_id": group_id, "agree_ratio": agree_ratio, "total_votes": total_votes}
+                    )
 
             # Only include comments with votes from at least 2 groups
             if len(group_agreements) >= 2:
                 # Calculate metrics
-                agree_ratios = [g['agree_ratio'] for g in group_agreements]
+                agree_ratios = [g["agree_ratio"] for g in group_agreements]
                 min_agree = min(agree_ratios)
                 avg_agree = sum(agree_ratios) / len(agree_ratios)
                 agree_spread = max(agree_ratios) - min(agree_ratios)
@@ -219,26 +212,28 @@ def main():
                 # High if average agreement is high and spread is low
                 consensus_score = avg_agree * (1 - agree_spread)
 
-                results.append({
-                    'tid': comment_id,
-                    'text': comment_map[comment_id],
-                    'groups': len(group_agreements),
-                    'min_agree': min_agree,
-                    'avg_agree': avg_agree,
-                    'agree_spread': agree_spread,
-                    'consensus_score': consensus_score,
-                    'group_details': group_agreements
-                })
+                results.append(
+                    {
+                        "tid": comment_id,
+                        "text": comment_map[comment_id],
+                        "groups": len(group_agreements),
+                        "min_agree": min_agree,
+                        "avg_agree": avg_agree,
+                        "agree_spread": agree_spread,
+                        "consensus_score": consensus_score,
+                        "group_details": group_agreements,
+                    }
+                )
 
         # Sort by consensus score (descending)
-        results.sort(key=lambda x: x['consensus_score'], reverse=True)
+        results.sort(key=lambda x: x["consensus_score"], reverse=True)
         return results
 
     # Compute group consensus
     group_consensus = compute_group_agreement(conv, comment_map)
 
     # Save consensus data
-    with open(os.path.join(output_dir, 'group_consensus.json'), 'w') as f:
+    with open(os.path.join(output_dir, "group_consensus.json"), "w") as f:
         json.dump(group_consensus, f, indent=2)
 
     # Display top group consensus comments
@@ -252,6 +247,7 @@ def main():
         print()
 
     print(f"Analysis complete. Results saved to {output_dir}/")
+
 
 if __name__ == "__main__":
     # Check for command line arguments

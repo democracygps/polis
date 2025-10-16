@@ -16,11 +16,11 @@ from polismath.pca_kmeans_rep.pca import pca_project_named_matrix
 from polismath.pca_kmeans_rep.repness import conv_repness, participant_stats
 
 __all__ = [
-    'NamedMatrix',
-    'pca_project_named_matrix',
-    'cluster_named_matrix',
-    'Cluster',
-    'conv_repness',
-    'participant_stats',
-    'compute_correlation',
+    "NamedMatrix",
+    "pca_project_named_matrix",
+    "cluster_named_matrix",
+    "Cluster",
+    "conv_repness",
+    "participant_stats",
+    "compute_correlation",
 ]

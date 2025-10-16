@@ -66,9 +66,7 @@ try:
                 },
                 ReturnValues="UPDATED_NEW",
             )
-            print(
-                f"  Job {job_id} updated to FAILED: {update_response.get('Attributes', {})}"
-            )
+            print(f"  Job {job_id} updated to FAILED: {update_response.get('Attributes', {})}")
         except Exception as e:
             print(f"  Error updating job {job_id}: {str(e)}")
 

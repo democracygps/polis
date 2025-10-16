@@ -47,9 +47,7 @@ def connect_to_db():
         # Check if DATABASE_URL is set and use it if available
         database_url = os.environ.get("DATABASE_URL")
         if database_url:
-            logger.info(
-                f"Using DATABASE_URL: {database_url.split('@')[1] if '@' in database_url else '(hidden)'}"
-            )
+            logger.info(f"Using DATABASE_URL: {database_url.split('@')[1] if '@' in database_url else '(hidden)'}")
             conn = psycopg2.connect(database_url)
         else:
             # Fall back to individual connection parameters
@@ -78,9 +76,7 @@ def fetch_votes(conn, conversation_id):
     from psycopg2 import extras
 
     start_time = time.time()
-    logger.info(
-        f"[{start_time:.2f}s] Fetching votes for conversation {conversation_id}"
-    )
+    logger.info(f"[{start_time:.2f}s] Fetching votes for conversation {conversation_id}")
     cursor = conn.cursor(cursor_factory=extras.DictCursor)
     query = """
     SELECT v.created as timestamp, v.tid as comment_id, v.pid as voter_id, v.vote
@@ -124,9 +120,7 @@ def fetch_comments(conn, conversation_id):
     from psycopg2 import extras
 
     start_time = time.time()
-    logger.info(
-        f"[{start_time:.2f}s] Fetching comments for conversation {conversation_id}"
-    )
+    logger.info(f"[{start_time:.2f}s] Fetching comments for conversation {conversation_id}")
     cursor = conn.cursor(cursor_factory=extras.DictCursor)
     query = """
     SELECT c.created as timestamp, c.tid as comment_id, c.pid as author_id, c.mod as moderated, c.txt as comment_body, c.is_seed
@@ -172,9 +166,7 @@ def fetch_moderation(conn, conversation_id):
     from psycopg2 import extras
 
     start_time = time.time()
-    logger.info(
-        f"[{start_time:.2f}s] Fetching moderation data for conversation {conversation_id}"
-    )
+    logger.info(f"[{start_time:.2f}s] Fetching moderation data for conversation {conversation_id}")
     cursor = conn.cursor(cursor_factory=extras.DictCursor)
     try:
         query_mod_comments = """
@@ -217,12 +209,8 @@ def fetch_moderation(conn, conversation_id):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Run math pipeline for a Polis conversation"
-    )
-    parser.add_argument(
-        "--zid", type=int, required=True, help="Conversation ID to process"
-    )
+    parser = argparse.ArgumentParser(description="Run math pipeline for a Polis conversation")
+    parser.add_argument("--zid", type=int, required=True, help="Conversation ID to process")
     parser.add_argument(
         "--max-votes",
         type=int,
@@ -239,9 +227,7 @@ def main():
 
     zid = args.zid
     start_time = time.time()
-    logger.info(
-        f"[{time.time() - start_time:.2f}s] Starting math pipeline for conversation {zid}"
-    )
+    logger.info(f"[{time.time() - start_time:.2f}s] Starting math pipeline for conversation {zid}")
 
     # Import polismath modules
     from polismath.conversation.conversation import Conversation
@@ -254,16 +240,12 @@ def main():
         sys.exit(1)
 
     try:
-        logger.info(
-            f"[{time.time() - start_time:.2f}s] Creating conversation object for zid: {zid}"
-        )
+        logger.info(f"[{time.time() - start_time:.2f}s] Creating conversation object for zid: {zid}")
         conv = Conversation(str(zid))
 
         logger.info(f"[{time.time() - start_time:.2f}s] Fetching comments...")
         comments = fetch_comments(conn, zid)
-        logger.info(
-            f"[{time.time() - start_time:.2f}s] {len(comments['comments'])} comments fetched"
-        )
+        logger.info(f"[{time.time() - start_time:.2f}s] {len(comments['comments'])} comments fetched")
 
         logger.info(f"[{time.time() - start_time:.2f}s] Fetching moderation data...")
         moderation = fetch_moderation(conn, zid)
@@ -280,29 +262,21 @@ def main():
 
         # Get batch size from command line arguments
         batch_size = args.batch_size
-        logger.info(
-            f"[{time.time() - start_time:.2f}s] Using batch size of {batch_size}"
-        )
+        logger.info(f"[{time.time() - start_time:.2f}s] Using batch size of {batch_size}")
 
         # Get max votes to process from command line arguments
-        max_votes_to_process = (
-            args.max_votes if args.max_votes is not None else total_votes
-        )
+        max_votes_to_process = args.max_votes if args.max_votes is not None else total_votes
         if max_votes_to_process < total_votes:
             logger.info(
                 f"[{time.time() - start_time:.2f}s] Limiting to {max_votes_to_process} votes (out of {total_votes} total)"
             )
         else:
-            logger.info(
-                f"[{time.time() - start_time:.2f}s] Processing all {total_votes} votes"
-            )
+            logger.info(f"[{time.time() - start_time:.2f}s] Processing all {total_votes} votes")
 
         for offset in range(0, min(total_votes, max_votes_to_process), batch_size):
             batch_start_time = time.time()
             end_idx = min(offset + batch_size, total_votes, max_votes_to_process)
-            logger.info(
-                f"[{time.time() - start_time:.2f}s] Processing votes {offset+1} to {end_idx} of {total_votes}"
-            )
+            logger.info(f"[{time.time() - start_time:.2f}s] Processing votes {offset+1} to {end_idx} of {total_votes}")
 
             cursor = conn.cursor()
             batch_query = """
@@ -339,31 +313,23 @@ def main():
             conv = conv.update_votes(batch_votes, recompute=False)
             update_end = time.time()
 
-            logger.info(
-                f"[{time.time() - start_time:.2f}s] Vote update completed in {update_end - update_start:.2f}s"
-            )
+            logger.info(f"[{time.time() - start_time:.2f}s] Vote update completed in {update_end - update_start:.2f}s")
             logger.info(
                 f"[{time.time() - start_time:.2f}s] Total batch processing time: {time.time() - batch_start_time:.2f}s"
             )
 
-        logger.info(
-            f"[{time.time() - start_time:.2f}s] Running final computation with detailed timing..."
-        )
+        logger.info(f"[{time.time() - start_time:.2f}s] Running final computation with detailed timing...")
 
         # PCA computation
         pca_start = time.time()
         logger.info(f"[{time.time() - start_time:.2f}s] Starting PCA computation...")
         conv._compute_pca()
         pca_end = time.time()
-        logger.info(
-            f"[{time.time() - start_time:.2f}s] PCA computation completed in {pca_end - pca_start:.2f}s"
-        )
+        logger.info(f"[{time.time() - start_time:.2f}s] PCA computation completed in {pca_end - pca_start:.2f}s")
 
         # Clustering computation
         cluster_start = time.time()
-        logger.info(
-            f"[{time.time() - start_time:.2f}s] Starting clustering computation..."
-        )
+        logger.info(f"[{time.time() - start_time:.2f}s] Starting clustering computation...")
         conv._compute_clusters()
         cluster_end = time.time()
         logger.info(
@@ -372,9 +338,7 @@ def main():
 
         # Representativeness computation
         repness_start = time.time()
-        logger.info(
-            f"[{time.time() - start_time:.2f}s] Starting representativeness computation..."
-        )
+        logger.info(f"[{time.time() - start_time:.2f}s] Starting representativeness computation...")
         conv._compute_repness()
         repness_end = time.time()
         logger.info(
@@ -383,9 +347,7 @@ def main():
 
         # Participant info computation
         info_start = time.time()
-        logger.info(
-            f"[{time.time() - start_time:.2f}s] Starting participant info computation..."
-        )
+        logger.info(f"[{time.time() - start_time:.2f}s] Starting participant info computation...")
         conv._compute_participant_info()
         info_end = time.time()
         logger.info(
@@ -401,15 +363,11 @@ def main():
         logger.info(f"Comments: {conv.comment_count}")
         logger.info(f"Participants: {conv.participant_count}")
         if conv.repness and "comment_repness" in conv.repness:
-            logger.info(
-                f"Representativeness for {len(conv.repness['comment_repness'])} comments"
-            )
+            logger.info(f"Representativeness for {len(conv.repness['comment_repness'])} comments")
 
         # Save results to DynamoDB using the DynamoDBClient, as in the Pakistan test
         try:
-            logger.info(
-                f"[{time.time() - start_time:.2f}s] Initializing DynamoDB client..."
-            )
+            logger.info(f"[{time.time() - start_time:.2f}s] Initializing DynamoDB client...")
             from polismath.database.dynamodb import DynamoDBClient
 
             # Use environment variables or sensible defaults for local/test
@@ -424,20 +382,12 @@ def main():
                 aws_secret_access_key=aws_secret_access_key,
             )
             dynamodb_client.initialize()
-            logger.info(
-                f"[{time.time() - start_time:.2f}s] DynamoDB client initialized"
-            )
-            logger.info(
-                f"[{time.time() - start_time:.2f}s] Exporting conversation to DynamoDB..."
-            )
+            logger.info(f"[{time.time() - start_time:.2f}s] DynamoDB client initialized")
+            logger.info(f"[{time.time() - start_time:.2f}s] Exporting conversation to DynamoDB...")
             success = conv.export_to_dynamodb(dynamodb_client)
-            logger.info(
-                f"[{time.time() - start_time:.2f}s] Export to DynamoDB {'succeeded' if success else 'failed'}"
-            )
+            logger.info(f"[{time.time() - start_time:.2f}s] Export to DynamoDB {'succeeded' if success else 'failed'}")
         except Exception as e:
-            logger.error(
-                f"[{time.time() - start_time:.2f}s] Error exporting to DynamoDB: {e}"
-            )
+            logger.error(f"[{time.time() - start_time:.2f}s] Error exporting to DynamoDB: {e}")
             import traceback
 
             traceback.print_exc()

@@ -69,9 +69,7 @@ def detect_instance_type() -> str:
                     logger.info(f"Using instance type from file: {instance_type}")
                     return instance_type
                 else:
-                    logger.warning(
-                        f"Unknown instance type in file: {instance_type}, using default configuration"
-                    )
+                    logger.warning(f"Unknown instance type in file: {instance_type}, using default configuration")
         except Exception as e:
             logger.warning(f"Error reading instance_size.txt: {e}")
 

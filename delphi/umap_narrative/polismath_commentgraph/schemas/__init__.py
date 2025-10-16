@@ -18,16 +18,16 @@ from .dynamo_models import (
 )
 
 __all__ = [
-    'ConversationMeta',
-    'CommentEmbedding',
-    'CommentCluster',
-    'ClusterTopic',
-    'UMAPGraphEdge',
+    "ConversationMeta",
+    "CommentEmbedding",
+    "CommentCluster",
+    "ClusterTopic",
+    "UMAPGraphEdge",
     # 'CommentText' - removed to avoid data duplication
-    'CommentRequest',
-    'EmbeddingResponse',
-    'ClusterAssignmentResponse',
-    'SimilarCommentResponse',
-    'RoutingResponse',
-    'VisualizationDataResponse'
+    "CommentRequest",
+    "EmbeddingResponse",
+    "ClusterAssignmentResponse",
+    "SimilarCommentResponse",
+    "RoutingResponse",
+    "VisualizationDataResponse",
 ]

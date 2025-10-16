@@ -12,9 +12,7 @@ import os
 import boto3
 from boto3.dynamodb.conditions import Attr, Key
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -32,16 +30,12 @@ def get_boto_resource(service_name: str) -> boto3.resource:
         endpoint_url = os.environ.get("DYNAMODB_ENDPOINT")
 
     if endpoint_url:
-        logger.info(
-            f"Local environment detected. Connecting {service_name} to endpoint: {endpoint_url}"
-        )
+        logger.info(f"Local environment detected. Connecting {service_name} to endpoint: {endpoint_url}")
         resource_args["endpoint_url"] = endpoint_url
         resource_args["aws_access_key_id"] = os.environ.get("AWS_ACCESS_KEY_ID")
         resource_args["aws_secret_access_key"] = os.environ.get("AWS_SECRET_ACCESS_KEY")
     else:
-        logger.info(
-            f"AWS environment detected for {service_name}. Using IAM role credentials."
-        )
+        logger.info(f"AWS environment detected for {service_name}. Using IAM role credentials.")
 
     return boto3.resource(service_name, **resource_args)
 
@@ -103,9 +97,7 @@ def delete_dynamodb_data(conversation_id: str, report_id: str = None) -> int:
     for table_name, keys in query_tables.items():
         try:
             table = dynamodb.Table(table_name)
-            response = table.query(
-                KeyConditionExpression=Key(keys[0]).eq(conversation_id)
-            )
+            response = table.query(KeyConditionExpression=Key(keys[0]).eq(conversation_id))
             items = response.get("Items", [])
             while "LastEvaluatedKey" in response:
                 response = table.query(
@@ -141,9 +133,7 @@ def delete_dynamodb_data(conversation_id: str, report_id: str = None) -> int:
     for table_name, config in prefix_scan_tables.items():
         try:
             table = dynamodb.Table(table_name)
-            scan_kwargs = {
-                "FilterExpression": Key(config["keys"][0]).begins_with(config["prefix"])
-            }
+            scan_kwargs = {"FilterExpression": Key(config["keys"][0]).begins_with(config["prefix"])}
             response = table.scan(**scan_kwargs)
             items = response.get("Items", [])
             while "LastEvaluatedKey" in response:
@@ -159,18 +149,14 @@ def delete_dynamodb_data(conversation_id: str, report_id: str = None) -> int:
     if report_id:
         try:
             table = dynamodb.Table("Delphi_NarrativeReports")
-            scan_kwargs = {
-                "FilterExpression": Key("rid_section_model").begins_with(report_id)
-            }
+            scan_kwargs = {"FilterExpression": Key("rid_section_model").begins_with(report_id)}
             response = table.scan(**scan_kwargs)
             items = response.get("Items", [])
             while "LastEvaluatedKey" in response:
                 scan_kwargs["ExclusiveStartKey"] = response["LastEvaluatedKey"]
                 response = table.scan(**scan_kwargs)
                 items.extend(response.get("Items", []))
-            total_deleted_count += batch_delete_items(
-                table, items, ["rid_section_model", "timestamp"]
-            )
+            total_deleted_count += batch_delete_items(table, items, ["rid_section_model", "timestamp"])
         except Exception as e:
             if "ResourceNotFoundException" not in str(e):
                 logger.error(f"  ✗ Delphi_NarrativeReports: Scan failed - {e}")
@@ -193,11 +179,7 @@ def delete_dynamodb_data(conversation_id: str, report_id: str = None) -> int:
     try:
         table = dynamodb.Table("Delphi_CollectiveStatement")
         # Scan for items where zid_topic_jobid contains the conversation_id
-        scan_kwargs = {
-            "FilterExpression": Key("zid_topic_jobid").begins_with(
-                f"{conversation_id}#"
-            )
-        }
+        scan_kwargs = {"FilterExpression": Key("zid_topic_jobid").begins_with(f"{conversation_id}#")}
         response = table.scan(**scan_kwargs)
         items = response.get("Items", [])
         while "LastEvaluatedKey" in response:
@@ -224,15 +206,11 @@ def delete_s3_data(bucket_name: str, report_id: str) -> int:
     bucket = s3.Bucket(bucket_name)
     prefix = f"visualizations/{report_id}/"
 
-    logger.info(
-        f"\nDeleting S3/MinIO data for report {report_id} from bucket '{bucket_name}'..."
-    )
+    logger.info(f"\nDeleting S3/MinIO data for report {report_id} from bucket '{bucket_name}'...")
     logger.info(f"  - Looking for objects with prefix: {prefix}")
 
     try:
-        objects_to_delete = [
-            {"Key": obj.key} for obj in bucket.objects.filter(Prefix=prefix)
-        ]
+        objects_to_delete = [{"Key": obj.key} for obj in bucket.objects.filter(Prefix=prefix)]
 
         if not objects_to_delete:
             logger.info("  No visualization files found to delete.")
@@ -261,10 +239,7 @@ def main(zid: str, rid: str = None) -> None:
     Main function to coordinate the deletion process.
     """
     zid_str = str(zid)
-    logger.info(
-        f"\n🗑️  Starting reset for conversation zid='{zid_str}'"
-        + (f" and report rid='{rid}'" if rid else "")
-    )
+    logger.info(f"\n🗑️  Starting reset for conversation zid='{zid_str}'" + (f" and report rid='{rid}'" if rid else ""))
     print("=" * 60)
 
     dynamo_deleted_count = delete_dynamodb_data(zid_str, rid)
@@ -274,18 +249,14 @@ def main(zid: str, rid: str = None) -> None:
 
     print("=" * 60)
     logger.info("✅ Reset complete!\n")
-    logger.info(
-        f"DynamoDB: Deleted a total of {dynamo_deleted_count} items across all tables."
-    )
+    logger.info(f"DynamoDB: Deleted a total of {dynamo_deleted_count} items across all tables.")
     logger.info(f"S3/MinIO: Deleted a total of {s3_deleted_count} visualization files.")
 
     logger.info("\nThe conversation is ready for a fresh Delphi run.")
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Reset Delphi data for a conversation."
-    )
+    parser = argparse.ArgumentParser(description="Reset Delphi data for a conversation.")
     parser.add_argument(
         "--zid",
         type=int,

@@ -19,13 +19,10 @@ class Cluster:
     Represents a cluster in K-means clustering.
     """
 
-    def __init__(self,
-                center: np.ndarray,
-                members: list[int] | None = None,
-                id: int | None = None):
+    def __init__(self, center: np.ndarray, members: list[int] | None = None, id: int | None = None):
         """
         Initialize a cluster with a center and optional members.
-        
+
         Args:
             center: The center of the cluster
             members: Indices of members belonging to the cluster
@@ -38,7 +35,7 @@ class Cluster:
     def add_member(self, idx: int) -> None:
         """
         Add a member to the cluster.
-        
+
         Args:
             idx: Index of the member to add
         """
@@ -51,7 +48,7 @@ class Cluster:
     def update_center(self, data: np.ndarray, weights: np.ndarray | None = None) -> None:
         """
         Update the cluster center based on its members.
-        
+
         Args:
             data: Data matrix containing all points
             weights: Optional weights for each data point
@@ -80,11 +77,11 @@ class Cluster:
 def euclidean_distance(a: np.ndarray, b: np.ndarray) -> float:
     """
     Calculate Euclidean distance between two vectors.
-    
+
     Args:
         a: First vector
         b: Second vector
-        
+
     Returns:
         Euclidean distance
     """
@@ -94,11 +91,11 @@ def euclidean_distance(a: np.ndarray, b: np.ndarray) -> float:
 def init_clusters(data: np.ndarray, k: int) -> list[Cluster]:
     """
     Initialize k clusters with centers derived to match Clojure's behavior.
-    
+
     Args:
         data: Data matrix
         k: Number of clusters
-        
+
     Returns:
         List of initialized clusters
     """
@@ -151,17 +148,15 @@ def init_clusters(data: np.ndarray, k: int) -> list[Cluster]:
     return clusters
 
 
-def same_clustering(clusters1: list[Cluster],
-                   clusters2: list[Cluster],
-                   threshold: float = 0.01) -> bool:
+def same_clustering(clusters1: list[Cluster], clusters2: list[Cluster], threshold: float = 0.01) -> bool:
     """
     Check if two sets of clusters are essentially the same.
-    
+
     Args:
         clusters1: First set of clusters
         clusters2: Second set of clusters
         threshold: Distance threshold for considering centers equal
-        
+
     Returns:
         True if clusters are similar, False otherwise
     """
@@ -183,7 +178,7 @@ def same_clustering(clusters1: list[Cluster],
 def assign_points_to_clusters(data: np.ndarray, clusters: list[Cluster]) -> None:
     """
     Assign each data point to the nearest cluster.
-    
+
     Args:
         data: Data matrix
         clusters: List of clusters
@@ -194,7 +189,7 @@ def assign_points_to_clusters(data: np.ndarray, clusters: list[Cluster]) -> None
 
     # Assign each point to nearest cluster
     for i, point in enumerate(data):
-        min_dist = float('inf')
+        min_dist = float("inf")
         nearest_cluster = None
 
         for cluster in clusters:
@@ -207,12 +202,10 @@ def assign_points_to_clusters(data: np.ndarray, clusters: list[Cluster]) -> None
             nearest_cluster.add_member(i)
 
 
-def update_cluster_centers(data: np.ndarray,
-                          clusters: list[Cluster],
-                          weights: np.ndarray | None = None) -> None:
+def update_cluster_centers(data: np.ndarray, clusters: list[Cluster], weights: np.ndarray | None = None) -> None:
     """
     Update the centers of all clusters.
-    
+
     Args:
         data: Data matrix
         clusters: List of clusters
@@ -225,27 +218,25 @@ def update_cluster_centers(data: np.ndarray,
 def filter_empty_clusters(clusters: list[Cluster]) -> list[Cluster]:
     """
     Remove clusters with no members.
-    
+
     Args:
         clusters: List of clusters
-        
+
     Returns:
         List of non-empty clusters
     """
     return [cluster for cluster in clusters if cluster.members]
 
 
-def cluster_step(data: np.ndarray,
-                clusters: list[Cluster],
-                weights: np.ndarray | None = None) -> list[Cluster]:
+def cluster_step(data: np.ndarray, clusters: list[Cluster], weights: np.ndarray | None = None) -> list[Cluster]:
     """
     Perform one step of K-means clustering.
-    
+
     Args:
         data: Data matrix
         clusters: Current clusters
         weights: Optional weights for each data point
-        
+
     Returns:
         Updated clusters
     """
@@ -272,11 +263,11 @@ def cluster_step(data: np.ndarray,
 def most_distal(data: np.ndarray, cluster: Cluster) -> int:
     """
     Find the most distant point in a cluster.
-    
+
     Args:
         data: Data matrix
         cluster: The cluster
-        
+
     Returns:
         Index of the most distant point
     """
@@ -298,11 +289,11 @@ def most_distal(data: np.ndarray, cluster: Cluster) -> int:
 def split_cluster(data: np.ndarray, cluster: Cluster) -> tuple[Cluster, Cluster]:
     """
     Split a cluster into two using the most distant points.
-    
+
     Args:
         data: Data matrix
         cluster: Cluster to split
-        
+
     Returns:
         Tuple of two new clusters
     """
@@ -334,17 +325,15 @@ def split_cluster(data: np.ndarray, cluster: Cluster) -> tuple[Cluster, Cluster]
     return cluster1, cluster2
 
 
-def clean_start_clusters(data: np.ndarray,
-                        k: int,
-                        last_clusters: list[Cluster] | None = None) -> list[Cluster]:
+def clean_start_clusters(data: np.ndarray, k: int, last_clusters: list[Cluster] | None = None) -> list[Cluster]:
     """
     Initialize clusters with a clean start strategy.
-    
+
     Args:
         data: Data matrix
         k: Number of clusters
         last_clusters: Previous clustering result for continuity
-        
+
     Returns:
         List of initialized clusters
     """
@@ -362,8 +351,7 @@ def clean_start_clusters(data: np.ndarray,
     # If we need more clusters, split the existing ones
     while len(new_clusters) < k:
         # Find largest cluster to split
-        largest_cluster_idx = max(range(len(new_clusters)),
-                                 key=lambda i: len(new_clusters[i].members))
+        largest_cluster_idx = max(range(len(new_clusters)), key=lambda i: len(new_clusters[i].members))
         largest_cluster = new_clusters[largest_cluster_idx]
 
         # Split the cluster
@@ -376,7 +364,7 @@ def clean_start_clusters(data: np.ndarray,
     # If we need fewer clusters, merge the closest ones
     while len(new_clusters) > k:
         # Find the closest pair of clusters
-        min_dist = float('inf')
+        min_dist = float("inf")
         closest_pair = (-1, -1)
 
         for i in range(len(new_clusters)):
@@ -399,21 +387,23 @@ def clean_start_clusters(data: np.ndarray,
     return new_clusters
 
 
-def kmeans(data: np.ndarray,
-          k: int,
-          max_iters: int = 20,
-          last_clusters: list[Cluster] | None = None,
-          weights: np.ndarray | None = None) -> list[Cluster]:
+def kmeans(
+    data: np.ndarray,
+    k: int,
+    max_iters: int = 20,
+    last_clusters: list[Cluster] | None = None,
+    weights: np.ndarray | None = None,
+) -> list[Cluster]:
     """
     Perform K-means clustering on the data.
-    
+
     Args:
         data: Data matrix
         k: Number of clusters
         max_iters: Maximum number of iterations
         last_clusters: Previous clustering result for continuity
         weights: Optional weights for each data point
-        
+
     Returns:
         List of clusters
     """
@@ -441,10 +431,10 @@ def kmeans(data: np.ndarray,
 def distance_matrix(data: np.ndarray) -> np.ndarray:
     """
     Calculate the distance matrix for a set of points.
-    
+
     Args:
         data: Data matrix
-        
+
     Returns:
         Matrix of pairwise distances
     """
@@ -463,11 +453,11 @@ def distance_matrix(data: np.ndarray) -> np.ndarray:
 def silhouette(data: np.ndarray, clusters: list[Cluster]) -> float:
     """
     Calculate the silhouette coefficient for a clustering.
-    
+
     Args:
         data: Data matrix
         clusters: List of clusters
-        
+
     Returns:
         Silhouette coefficient (between -1 and 1)
     """
@@ -525,11 +515,11 @@ def silhouette(data: np.ndarray, clusters: list[Cluster]) -> float:
 def clusters_to_dict(clusters: list[Cluster], data_indices: list[Any] | None = None) -> list[dict]:
     """
     Convert clusters to a dictionary format for serialization.
-    
+
     Args:
         clusters: List of clusters
         data_indices: Optional mapping from numerical indices to original indices
-        
+
     Returns:
         List of cluster dictionaries
     """
@@ -542,25 +532,20 @@ def clusters_to_dict(clusters: list[Cluster], data_indices: list[Any] | None = N
         else:
             members = cluster.members
 
-        cluster_dict = {
-            'id': cluster.id,
-            'center': cluster.center.tolist(),
-            'members': members
-        }
+        cluster_dict = {"id": cluster.id, "center": cluster.center.tolist(), "members": members}
         result.append(cluster_dict)
 
     return result
 
 
-def clusters_from_dict(clusters_dict: list[dict],
-                      data_index_map: dict[Any, int] | None = None) -> list[Cluster]:
+def clusters_from_dict(clusters_dict: list[dict], data_index_map: dict[Any, int] | None = None) -> list[Cluster]:
     """
     Convert dictionary format back to Cluster objects.
-    
+
     Args:
         clusters_dict: List of cluster dictionaries
         data_index_map: Optional mapping from original indices to numerical indices
-        
+
     Returns:
         List of Cluster objects
     """
@@ -569,15 +554,11 @@ def clusters_from_dict(clusters_dict: list[dict],
     for cluster_dict in clusters_dict:
         # Map member indices if needed
         if data_index_map is not None:
-            members = [data_index_map.get(m, i) for i, m in enumerate(cluster_dict['members'])]
+            members = [data_index_map.get(m, i) for i, m in enumerate(cluster_dict["members"])]
         else:
-            members = cluster_dict['members']
+            members = cluster_dict["members"]
 
-        cluster = Cluster(
-            center=np.array(cluster_dict['center']),
-            members=members,
-            id=cluster_dict.get('id')
-        )
+        cluster = Cluster(center=np.array(cluster_dict["center"]), members=members, id=cluster_dict.get("id"))
         result.append(cluster)
 
     return result
@@ -587,11 +568,11 @@ def determine_k(nmat: NamedMatrix, base_k: int = 2) -> int:
     """
     Determine the optimal number of clusters based on data size.
     Uses a simple and consistent heuristic formula.
-    
+
     Args:
         nmat: NamedMatrix to analyze
         base_k: Base number of clusters (minimum)
-        
+
     Returns:
         Recommended number of clusters
     """
@@ -623,21 +604,23 @@ def determine_k(nmat: NamedMatrix, base_k: int = 2) -> int:
     return max(base_k, k)
 
 
-def cluster_named_matrix(nmat: NamedMatrix,
-                        k: int | None = None,
-                        max_iters: int = 20,
-                        last_clusters: list[dict] | None = None,
-                        weights: dict[Any, float] | None = None) -> list[dict]:
+def cluster_named_matrix(
+    nmat: NamedMatrix,
+    k: int | None = None,
+    max_iters: int = 20,
+    last_clusters: list[dict] | None = None,
+    weights: dict[Any, float] | None = None,
+) -> list[dict]:
     """
     Cluster a NamedMatrix and return the result in dictionary format.
-    
+
     Args:
         nmat: NamedMatrix to cluster
         k: Number of clusters (if None, auto-determined)
         max_iters: Maximum number of iterations
         last_clusters: Previous clustering result for continuity
         weights: Optional weights for each row (by row name)
-        
+
     Returns:
         List of cluster dictionaries
     """
@@ -668,13 +651,7 @@ def cluster_named_matrix(nmat: NamedMatrix,
     np.random.seed(42)
 
     # Perform clustering
-    clusters_result = kmeans(
-        matrix_data,
-        k,
-        max_iters,
-        last_clusters_internal,
-        weights_array
-    )
+    clusters_result = kmeans(matrix_data, k, max_iters, last_clusters_internal, weights_array)
 
     # Sort clusters by size (descending) to match Clojure behavior
     clusters_result.sort(key=lambda x: len(x.members), reverse=True)

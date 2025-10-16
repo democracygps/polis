@@ -53,16 +53,12 @@ VIZ_CONFIG = {
 try:
     from polismath_commentgraph.utils.storage import DynamoDBStorage, PostgresClient
 except ImportError:
-    logging.warning(
-        "Could not import from polismath_commentgraph - falling back to direct connections"
-    )
+    logging.warning("Could not import from polismath_commentgraph - falling back to direct connections")
 
     # Define minimal versions of the required classes if imports fail
     class DynamoDBStorage:
         def __init__(self, endpoint_url=None):
-            if (
-                endpoint_url
-            ):  # Checks if endpoint_url is a truthy value (not None, not empty string)
+            if endpoint_url:  # Checks if endpoint_url is a truthy value (not None, not empty string)
                 self.endpoint_url = endpoint_url
             else:
                 self.endpoint_url = None
@@ -110,9 +106,7 @@ def load_data_from_dynamodb(zid, layer_num=0):
     Returns:
         Dictionary with comment positions, cluster assignments, and topic names
     """
-    logger.info(
-        f"Loading UMAP positions and cluster data for conversation {zid}, layer {layer_num}"
-    )
+    logger.info(f"Loading UMAP positions and cluster data for conversation {zid}, layer {layer_num}")
 
     # Set up DynamoDB client
     endpoint_url = os.environ.get("DYNAMODB_ENDPOINT")
@@ -121,9 +115,7 @@ def load_data_from_dynamodb(zid, layer_num=0):
         endpoint_url=endpoint_url,
         region_name=os.environ.get("AWS_REGION", "us-east-1"),
         aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID", "fakeMyKeyId"),
-        aws_secret_access_key=os.environ.get(
-            "AWS_SECRET_ACCESS_KEY", "fakeSecretAccessKey"
-        ),
+        aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY", "fakeSecretAccessKey"),
     )
 
     # Results dictionary
@@ -143,9 +135,7 @@ def load_data_from_dynamodb(zid, layer_num=0):
 
         # Continue scanning if we need to paginate
         while "LastEvaluatedKey" in response:
-            response = table.scan(
-                ExclusiveStartKey=response["LastEvaluatedKey"], **scan_kwargs
-            )
+            response = table.scan(ExclusiveStartKey=response["LastEvaluatedKey"], **scan_kwargs)
             items.extend(response.get("Items", []))
 
         return items
@@ -194,9 +184,7 @@ def load_data_from_dynamodb(zid, layer_num=0):
             if cluster_column in item and item[cluster_column] is not None:
                 data["clusters"][comment_id] = int(item[cluster_column])
 
-        logger.info(
-            f'Extracted {len(data["clusters"])} cluster assignments for layer {layer_num}'
-        )
+        logger.info(f'Extracted {len(data["clusters"])} cluster assignments for layer {layer_num}')
 
     except Exception as e:
         logger.error(f"Error retrieving cluster assignments: {e}")
@@ -284,9 +272,7 @@ def load_comment_texts_and_extremity(zid, layer_num=0):
         extremity_values = group_processor.get_all_comment_extremity_values(zid)
 
         if extremity_values:
-            logger.info(
-                f"Retrieved {len(extremity_values)} extremity values from DynamoDB"
-            )
+            logger.info(f"Retrieved {len(extremity_values)} extremity values from DynamoDB")
 
             # Log some statistics
             values_list = list(extremity_values.values())
@@ -294,9 +280,7 @@ def load_comment_texts_and_extremity(zid, layer_num=0):
             max_val = max(values_list) if values_list else 0.0
             mean_val = sum(values_list) / len(values_list) if values_list else 0.0
 
-            logger.info(
-                f"Extremity statistics from DynamoDB: range {min_val:.4f}-{max_val:.4f}, mean {mean_val:.4f}"
-            )
+            logger.info(f"Extremity statistics from DynamoDB: range {min_val:.4f}-{max_val:.4f}, mean {mean_val:.4f}")
 
             # Return the values from DynamoDB
             return comment_texts, extremity_values
@@ -320,16 +304,12 @@ def load_comment_texts_and_extremity(zid, layer_num=0):
             cursor.execute("SELECT tid, txt FROM comments WHERE zid = %s", (zid,))
             comments_data = cursor.fetchall()
             comment_texts = {tid: txt for tid, txt in comments_data}
-            logger.info(
-                f"Retrieved {len(comment_texts)} comment texts in fallback mode"
-            )
+            logger.info(f"Retrieved {len(comment_texts)} comment texts in fallback mode")
 
         # 2. Try to get extremity values from math_ptptstats
         try:
             # First try math_ptptstats
-            cursor.execute(
-                "SELECT data FROM math_ptptstats WHERE zid = %s LIMIT 1", (zid,)
-            )
+            cursor.execute("SELECT data FROM math_ptptstats WHERE zid = %s LIMIT 1", (zid,))
             ptptstats = cursor.fetchone()
 
             if ptptstats and ptptstats[0]:
@@ -360,11 +340,7 @@ def load_comment_texts_and_extremity(zid, layer_num=0):
                             ptpdata = data_obj["ptptstats"]
 
                             # Standard approach - check for 'extremeness' and 'tid' fields
-                            if (
-                                isinstance(ptpdata, dict)
-                                and "extremeness" in ptpdata
-                                and "tid" in ptpdata
-                            ):
+                            if isinstance(ptpdata, dict) and "extremeness" in ptpdata and "tid" in ptpdata:
                                 extremeness = ptpdata["extremeness"]
                                 tids = ptpdata["tid"]
 
@@ -384,9 +360,7 @@ def load_comment_texts_and_extremity(zid, layer_num=0):
                             else:
                                 # The data appears to be a flattened array of values
                                 # Let's try to extract them directly - requires examining the data structure
-                                logger.info(
-                                    "Trying to extract directly from data structure"
-                                )
+                                logger.info("Trying to extract directly from data structure")
 
                                 # Based on examining sample data, it appears to be an array of values where
                                 # every N values represent information about a comment
@@ -404,22 +378,14 @@ def load_comment_texts_and_extremity(zid, layer_num=0):
                                             if isinstance(values, dict):
                                                 abs_values = []
                                                 for group, val in values.items():
-                                                    if isinstance(
-                                                        val, (int, float, Decimal)
-                                                    ):
-                                                        abs_values.append(
-                                                            abs(float(val))
-                                                        )
+                                                    if isinstance(val, (int, float, Decimal)):
+                                                        abs_values.append(abs(float(val)))
                                                 if abs_values:
-                                                    extremity_values[tid] = max(
-                                                        abs_values
-                                                    )
+                                                    extremity_values[tid] = max(abs_values)
                                         except (ValueError, TypeError):
                                             continue
 
-                                logger.info(
-                                    f"Extracted {len(extremity_values)} extremity values from repness"
-                                )
+                                logger.info(f"Extracted {len(extremity_values)} extremity values from repness")
 
                         else:
                             logger.warning("Could not find ptptstats in data")
@@ -430,9 +396,7 @@ def load_comment_texts_and_extremity(zid, layer_num=0):
             # If no values found, try math_main table
             if not extremity_values:
                 logger.info("Trying to extract extremity from math_main")
-                cursor.execute(
-                    "SELECT data FROM math_main WHERE zid = %s LIMIT 1", (zid,)
-                )
+                cursor.execute("SELECT data FROM math_main WHERE zid = %s LIMIT 1", (zid,))
                 math_main = cursor.fetchone()
 
                 if math_main and math_main[0]:
@@ -441,9 +405,7 @@ def load_comment_texts_and_extremity(zid, layer_num=0):
                     # Check if data is a string and parse it if necessary
                     if isinstance(data, str):
                         try:
-                            logger.info(
-                                "Math data is a string, attempting to parse as JSON"
-                            )
+                            logger.info("Math data is a string, attempting to parse as JSON")
                             data = json.loads(data)
                         except json.JSONDecodeError:
                             logger.error("Failed to parse data as JSON")
@@ -469,15 +431,11 @@ def load_comment_texts_and_extremity(zid, layer_num=0):
 
                                     # Use the maximum absolute repness value as the extremity
                                     if group_repness:
-                                        extremity_values[tid_int] = max(
-                                            abs(float(x)) for x in group_repness
-                                        )
+                                        extremity_values[tid_int] = max(abs(float(x)) for x in group_repness)
                                 except (ValueError, TypeError):
                                     continue
 
-                            logger.info(
-                                f"Extracted extremity values from math_main/repness: {len(extremity_values)}"
-                            )
+                            logger.info(f"Extracted extremity values from math_main/repness: {len(extremity_values)}")
 
                     # Also check 'extremity' field directly
                     elif isinstance(data, dict) and "extremity" in data:
@@ -540,20 +498,14 @@ def load_comment_texts_and_extremity(zid, layer_num=0):
                     and isinstance(tids, list)
                     and len(comment_extremity) == len(tids)
                 ):
-                    logger.info(
-                        f"Found {len(tids)} comment extremity values in PCA data"
-                    )
+                    logger.info(f"Found {len(tids)} comment extremity values in PCA data")
 
                     # First, calculate min and max to understand the data range
-                    valid_extremity_values = [
-                        float(val) for val in comment_extremity if val is not None
-                    ]
+                    valid_extremity_values = [float(val) for val in comment_extremity if val is not None]
                     if valid_extremity_values:
                         min_val = min(valid_extremity_values)
                         max_val = max(valid_extremity_values)
-                        logger.info(
-                            f"Raw extremity value range: {min_val} to {max_val}"
-                        )
+                        logger.info(f"Raw extremity value range: {min_val} to {max_val}")
 
                         # Calculate percentiles for statistically sound normalization
                         # Using 95th percentile to define the upper bound, all values above will be maxed out
@@ -567,12 +519,8 @@ def load_comment_texts_and_extremity(zid, layer_num=0):
                             f"  Raw extremity range: {min_val:.4f} to {max_val:.4f}",
                             file=sys.stderr,
                         )
-                        print(
-                            f"  95th percentile: {percentile_95:.4f}", file=sys.stderr
-                        )
-                        print(
-                            f"  99th percentile: {percentile_99:.4f}", file=sys.stderr
-                        )
+                        print(f"  95th percentile: {percentile_95:.4f}", file=sys.stderr)
+                        print(f"  99th percentile: {percentile_99:.4f}", file=sys.stderr)
                         print(
                             f"  Mean: {np.mean(valid_extremity_values):.4f}",
                             file=sys.stderr,
@@ -584,15 +532,11 @@ def load_comment_texts_and_extremity(zid, layer_num=0):
 
                         # Also log to the logger
                         logger.info("Statistical metrics:")
-                        logger.info(
-                            f"  Raw extremity range: {min_val:.4f} to {max_val:.4f}"
-                        )
+                        logger.info(f"  Raw extremity range: {min_val:.4f} to {max_val:.4f}")
                         logger.info(f"  95th percentile: {percentile_95:.4f}")
                         logger.info(f"  99th percentile: {percentile_99:.4f}")
                         logger.info(f"  Mean: {np.mean(valid_extremity_values):.4f}")
-                        logger.info(
-                            f"  Median: {np.median(valid_extremity_values):.4f}"
-                        )
+                        logger.info(f"  Median: {np.median(valid_extremity_values):.4f}")
 
                         # Choose normalization method based on data properties
                         # Use threshold if specified, otherwise use 95th percentile
@@ -600,17 +544,13 @@ def load_comment_texts_and_extremity(zid, layer_num=0):
                         if normalization_max <= 0:
                             # If threshold is not positive, use data-adaptive percentile
                             normalization_max = percentile_95
-                            logger.info(
-                                f"Using 95th percentile ({percentile_95:.4f}) for normalization"
-                            )
+                            logger.info(f"Using 95th percentile ({percentile_95:.4f}) for normalization")
                             print(
                                 f"Using 95th percentile ({percentile_95:.4f}) for normalization",
                                 file=sys.stderr,
                             )
                         else:
-                            logger.info(
-                                f"Using configured threshold ({normalization_max}) for normalization"
-                            )
+                            logger.info(f"Using configured threshold ({normalization_max}) for normalization")
                             print(
                                 f"Using configured threshold ({normalization_max}) for normalization",
                                 file=sys.stderr,
@@ -618,18 +558,13 @@ def load_comment_texts_and_extremity(zid, layer_num=0):
 
                         # Map the comment extremity values to their corresponding comment IDs
                         for i, tid in enumerate(tids):
-                            if (
-                                i < len(comment_extremity)
-                                and comment_extremity[i] is not None
-                            ):
+                            if i < len(comment_extremity) and comment_extremity[i] is not None:
                                 # Raw extremity value
                                 raw_value = float(comment_extremity[i])
 
                                 # Normalize to [0,1] based on the normalization max
                                 # Values above normalization_max will be capped at 1.0
-                                normalized_value = min(
-                                    raw_value / normalization_max, 1.0
-                                )
+                                normalized_value = min(raw_value / normalization_max, 1.0)
 
                                 # If configured to invert, flip the value (1 - normalized)
                                 if VIZ_CONFIG["invert_extremity"]:
@@ -637,9 +572,7 @@ def load_comment_texts_and_extremity(zid, layer_num=0):
 
                                 extremity_values[tid] = normalized_value
 
-                        logger.info(
-                            f"Extracted and normalized {len(extremity_values)} extremity values"
-                        )
+                        logger.info(f"Extracted and normalized {len(extremity_values)} extremity values")
                     else:
                         logger.warning("No valid extremity values found in the data")
                 else:
@@ -662,12 +595,8 @@ def load_comment_texts_and_extremity(zid, layer_num=0):
 
     # If still no extremity values, exit with error
     if not extremity_values:
-        logger.error(
-            "CRITICAL ERROR: Could not extract any extremity values. Visualization requires extremity data."
-        )
-        raise ValueError(
-            "No extremity values could be extracted from the database. Cannot generate visualization."
-        )
+        logger.error("CRITICAL ERROR: Could not extract any extremity values. Visualization requires extremity data.")
+        raise ValueError("No extremity values could be extracted from the database. Cannot generate visualization.")
 
     logger.info(f"Final extremity values count: {len(extremity_values)}")
     return comment_texts, extremity_values
@@ -685,9 +614,7 @@ def create_consensus_divisive_datamapplot(zid, layer_num=0, output_dir=None):
     Returns:
         Boolean indicating success
     """
-    logger.info(
-        f"Generating consensus/divisive datamapplot for conversation {zid}, layer {layer_num}"
-    )
+    logger.info(f"Generating consensus/divisive datamapplot for conversation {zid}, layer {layer_num}")
 
     try:
         # 1. Load data from DynamoDB
@@ -697,9 +624,7 @@ def create_consensus_divisive_datamapplot(zid, layer_num=0, output_dir=None):
         topic_names = dynamo_data["topic_names"]
 
         # 2. Load comment texts and extremity values
-        comment_texts, extremity_values = load_comment_texts_and_extremity(
-            zid, layer_num
-        )
+        comment_texts, extremity_values = load_comment_texts_and_extremity(zid, layer_num)
 
         # 3. Prepare data for visualization
         logger.info("Preparing data for visualization")
@@ -713,9 +638,7 @@ def create_consensus_divisive_datamapplot(zid, layer_num=0, output_dir=None):
         label_strings = np.array(
             [
                 (
-                    topic_names.get(
-                        clusters.get(cid, -1), f"Topic {clusters.get(cid, -1)}"
-                    )
+                    topic_names.get(clusters.get(cid, -1), f"Topic {clusters.get(cid, -1)}")
                     if clusters.get(cid, -1) >= 0
                     else "Unclustered"
                 )
@@ -726,9 +649,7 @@ def create_consensus_divisive_datamapplot(zid, layer_num=0, output_dir=None):
         # Create color values based on extremity
         # Red for divisive (high extremity), green for consensus (low extremity)
         # Values are already normalized to [0,1] during loading
-        extremity_array = np.array(
-            [extremity_values.get(cid, 0) for cid in comment_ids]
-        )
+        extremity_array = np.array([extremity_values.get(cid, 0) for cid in comment_ids])
 
         # Log statistics about the extremity distribution
         if len(extremity_array) > 0:
@@ -745,9 +666,7 @@ def create_consensus_divisive_datamapplot(zid, layer_num=0, output_dir=None):
             logger.info("Extremity statistics:")
             logger.info(f"  Range: {min_extremity:.4f} to {max_extremity:.4f}")
             logger.info(f"  Mean: {mean_extremity:.4f}, Median: {median_extremity:.4f}")
-            logger.info(
-                f"  Distribution: {low_count} low (<0.3), {mid_count} medium, {high_count} high (>=0.7)"
-            )
+            logger.info(f"  Distribution: {low_count} low (<0.3), {mid_count} medium, {high_count} high (>=0.7)")
 
             # No need to normalize again, we already have values in [0,1]
             normalized_extremity = extremity_array
@@ -764,9 +683,7 @@ def create_consensus_divisive_datamapplot(zid, layer_num=0, output_dir=None):
             os.makedirs(output_dir, exist_ok=True)
 
         # 5. Create a colormap from green (consensus) to red (divisive)
-        consensus_cmap = (
-            plt.cm.RdYlGn_r
-        )  # Red-Yellow-Green reversed (green is low values, red is high)
+        consensus_cmap = plt.cm.RdYlGn_r  # Red-Yellow-Green reversed (green is low values, red is high)
 
         # 6. Create first visualization - with cluster labels
         fig, ax = plt.subplots(figsize=(14, 12))
@@ -892,9 +809,7 @@ def create_consensus_divisive_datamapplot(zid, layer_num=0, output_dir=None):
         logger.info(f"Saved visualization to {output_file}")
 
         # 2. High-resolution PNG
-        hires_file = os.path.join(
-            vis_dir, f"{zid}_consensus_divisive_colored_map_hires.png"
-        )
+        hires_file = os.path.join(vis_dir, f"{zid}_consensus_divisive_colored_map_hires.png")
         plt.savefig(hires_file, dpi=600, bbox_inches="tight")
         logger.info(f"Saved high-resolution visualization to {hires_file}")
 
@@ -905,21 +820,15 @@ def create_consensus_divisive_datamapplot(zid, layer_num=0, output_dir=None):
 
         # Save to custom output directory if provided
         if output_dir and output_dir != vis_dir:
-            out_file = os.path.join(
-                output_dir, f"{zid}_consensus_divisive_colored_map.png"
-            )
+            out_file = os.path.join(output_dir, f"{zid}_consensus_divisive_colored_map.png")
             plt.savefig(out_file, dpi=300, bbox_inches="tight")
             logger.info(f"Saved visualization to output directory: {out_file}")
 
-            out_hires = os.path.join(
-                output_dir, f"{zid}_consensus_divisive_colored_map_hires.png"
-            )
+            out_hires = os.path.join(output_dir, f"{zid}_consensus_divisive_colored_map_hires.png")
             plt.savefig(out_hires, dpi=600, bbox_inches="tight")
             logger.info("Saved high-resolution visualization to output directory")
 
-            out_svg = os.path.join(
-                output_dir, f"{zid}_consensus_divisive_colored_map.svg"
-            )
+            out_svg = os.path.join(output_dir, f"{zid}_consensus_divisive_colored_map.svg")
             plt.savefig(out_svg, format="svg", bbox_inches="tight")
             logger.info("Saved SVG to output directory")
 
@@ -952,9 +861,7 @@ def create_consensus_divisive_datamapplot(zid, layer_num=0, output_dir=None):
             transform=ax.transAxes,
             ha="center",
             fontsize=14,
-            bbox=dict(
-                facecolor="white", alpha=0.7, edgecolor="gray", boxstyle="round,pad=0.5"
-            ),
+            bbox=dict(facecolor="white", alpha=0.7, edgecolor="gray", boxstyle="round,pad=0.5"),
         )
 
         # Remove axes
@@ -969,9 +876,7 @@ def create_consensus_divisive_datamapplot(zid, layer_num=0, output_dir=None):
         cbar = plt.colorbar(scatter, ax=ax)
         cbar.set_label("Consensus ↔ Divisiveness", fontsize=14)
         cbar.set_ticks([0, 0.25, 0.5, 0.75, 1.0])
-        cbar.set_ticklabels(
-            ["Consensus", "Mostly Agreement", "Mixed", "Some Disagreement", "Divisive"]
-        )
+        cbar.set_ticklabels(["Consensus", "Mostly Agreement", "Mixed", "Some Disagreement", "Divisive"])
 
         # Save enhanced version to both directories
         alt_file = os.path.join(vis_dir, f"{zid}_consensus_divisive_enhanced.png")
@@ -979,9 +884,7 @@ def create_consensus_divisive_datamapplot(zid, layer_num=0, output_dir=None):
         logger.info(f"Saved enhanced visualization to {alt_file}")
 
         if output_dir and output_dir != vis_dir:
-            out_enhanced = os.path.join(
-                output_dir, f"{zid}_consensus_divisive_enhanced.png"
-            )
+            out_enhanced = os.path.join(output_dir, f"{zid}_consensus_divisive_enhanced.png")
             plt.savefig(out_enhanced, dpi=300, bbox_inches="tight")
             logger.info("Saved enhanced visualization to output directory")
 
@@ -998,9 +901,7 @@ def create_consensus_divisive_datamapplot(zid, layer_num=0, output_dir=None):
 
 def main():
     """Main function to parse arguments and execute visualization generation."""
-    parser = argparse.ArgumentParser(
-        description="Generate consensus/divisive datamapplot"
-    )
+    parser = argparse.ArgumentParser(description="Generate consensus/divisive datamapplot")
     parser.add_argument("--zid", type=str, required=True, help="Conversation ID")
     parser.add_argument("--layer", type=int, default=0, help="Layer number")
     parser.add_argument("--output_dir", type=str, help="Output directory")
@@ -1020,9 +921,7 @@ def main():
     # Override config with command line arguments if provided
     if args.extremity_threshold is not None:
         VIZ_CONFIG["extremity_threshold"] = args.extremity_threshold
-        logger.info(
-            f"Using extremity threshold from command line: {VIZ_CONFIG['extremity_threshold']}"
-        )
+        logger.info(f"Using extremity threshold from command line: {VIZ_CONFIG['extremity_threshold']}")
 
     if args.invert_extremity:
         VIZ_CONFIG["invert_extremity"] = True
@@ -1030,9 +929,7 @@ def main():
 
     # Log configuration
     logger.info("Configuration:")
-    logger.info(
-        f"  Database: {DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['name']}"
-    )
+    logger.info(f"  Database: {DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['name']}")
     logger.info(f"  DynamoDB: {DYNAMODB_CONFIG['endpoint_url']}")
     logger.info(
         f"  Visualization: threshold={VIZ_CONFIG['extremity_threshold']}, invert={VIZ_CONFIG['invert_extremity']}"
@@ -1040,14 +937,10 @@ def main():
 
     # Generate visualization
     try:
-        success = create_consensus_divisive_datamapplot(
-            args.zid, args.layer, args.output_dir
-        )
+        success = create_consensus_divisive_datamapplot(args.zid, args.layer, args.output_dir)
 
         if success:
-            logger.info(
-                "Consensus/divisive datamapplot generation completed successfully"
-            )
+            logger.info("Consensus/divisive datamapplot generation completed successfully")
         else:
             logger.error("Consensus/divisive datamapplot generation failed")
             sys.exit(1)

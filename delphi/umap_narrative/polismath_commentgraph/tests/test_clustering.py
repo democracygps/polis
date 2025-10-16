@@ -13,6 +13,7 @@ def clustering_engine():
     """Create a clustering engine for testing."""
     return ClusteringEngine()
 
+
 @pytest.fixture
 def sample_embeddings():
     """Create sample embeddings for testing."""
@@ -29,6 +30,7 @@ def sample_embeddings():
 
     return embeddings
 
+
 def test_project_to_2d(clustering_engine, sample_embeddings):
     """Test projecting embeddings to 2D."""
     projection = clustering_engine.project_to_2d(sample_embeddings)
@@ -40,6 +42,7 @@ def test_project_to_2d(clustering_engine, sample_embeddings):
     # Check that the projection is not all zeros
     assert not np.allclose(projection, 0)
 
+
 def test_project_to_2d_empty(clustering_engine):
     """Test projecting empty embeddings."""
     embeddings = np.array([])
@@ -48,6 +51,7 @@ def test_project_to_2d_empty(clustering_engine):
     # Should return an empty array
     assert isinstance(projection, np.ndarray)
     assert projection.shape == (0,)
+
 
 def test_evoc_cluster(clustering_engine, sample_embeddings):
     """Test clustering embeddings."""
@@ -69,6 +73,7 @@ def test_evoc_cluster(clustering_engine, sample_embeddings):
     # Check that probabilities are between 0 and 1
     assert np.all((probabilities >= 0) & (probabilities <= 1))
 
+
 def test_evoc_cluster_empty(clustering_engine):
     """Test clustering empty embeddings."""
     embeddings = np.array([])
@@ -79,6 +84,7 @@ def test_evoc_cluster_empty(clustering_engine):
     assert isinstance(probabilities, np.ndarray)
     assert cluster_labels.shape == (0,)
     assert probabilities.shape == (0,)
+
 
 def test_fallback_clustering(clustering_engine, sample_embeddings):
     """Test fallback clustering."""
@@ -100,6 +106,7 @@ def test_fallback_clustering(clustering_engine, sample_embeddings):
     # Check that probabilities are between 0 and 1
     assert np.all((probabilities >= 0) & (probabilities <= 1))
 
+
 def test_create_clustering_layers(clustering_engine, sample_embeddings):
     """Test creating multiple clustering layers."""
     num_layers = 3
@@ -117,8 +124,9 @@ def test_create_clustering_layers(clustering_engine, sample_embeddings):
     if len(layers) > 1:
         for i in range(len(layers) - 1):
             num_clusters_current = len(np.unique(layers[i][layers[i] >= 0]))
-            num_clusters_next = len(np.unique(layers[i+1][layers[i+1] >= 0]))
+            num_clusters_next = len(np.unique(layers[i + 1][layers[i + 1] >= 0]))
             assert num_clusters_current >= num_clusters_next
+
 
 def test_analyze_cluster(clustering_engine, sample_embeddings):
     """Test analyzing a cluster."""

@@ -17,17 +17,17 @@ from polismath.utils.general import agree, disagree
 
 # Statistical constants
 Z_90 = 1.645  # Z-score for 90% confidence
-Z_95 = 1.96   # Z-score for 95% confidence
+Z_95 = 1.96  # Z-score for 95% confidence
 PSEUDO_COUNT = 1.5  # Pseudocount for Bayesian smoothing
 
 
 def z_score_sig_90(z: float) -> bool:
     """
     Check if z-score is significant at 90% confidence level.
-    
+
     Args:
         z: Z-score to check
-        
+
     Returns:
         True if significant at 90% confidence
     """
@@ -37,10 +37,10 @@ def z_score_sig_90(z: float) -> bool:
 def z_score_sig_95(z: float) -> bool:
     """
     Check if z-score is significant at 95% confidence level.
-    
+
     Args:
         z: Z-score to check
-        
+
     Returns:
         True if significant at 95% confidence
     """
@@ -50,12 +50,12 @@ def z_score_sig_95(z: float) -> bool:
 def prop_test(p: float, n: int, p0: float) -> float:
     """
     One-proportion z-test.
-    
+
     Args:
         p: Observed proportion
         n: Number of observations
         p0: Expected proportion under null hypothesis
-        
+
     Returns:
         Z-score
     """
@@ -75,13 +75,13 @@ def prop_test(p: float, n: int, p0: float) -> float:
 def two_prop_test(p1: float, n1: int, p2: float, n2: int) -> float:
     """
     Two-proportion z-test.
-    
+
     Args:
         p1: First proportion
         n1: Number of observations for first proportion
         p2: Second proportion
         n2: Number of observations for second proportion
-        
+
     Returns:
         Z-score
     """
@@ -92,7 +92,7 @@ def two_prop_test(p1: float, n1: int, p2: float, n2: int) -> float:
     p = (p1 * n1 + p2 * n2) / (n1 + n2)
 
     # Standard error
-    se = math.sqrt(p * (1 - p) * (1/n1 + 1/n2))
+    se = math.sqrt(p * (1 - p) * (1 / n1 + 1 / n2))
 
     # Z-score calculation
     if se == 0:
@@ -104,11 +104,11 @@ def two_prop_test(p1: float, n1: int, p2: float, n2: int) -> float:
 def comment_stats(votes: np.ndarray, group_members: list[int]) -> dict[str, Any]:
     """
     Calculate basic stats for a comment within a group.
-    
+
     Args:
         votes: Array of votes (-1, 0, 1, or None) for the comment
         group_members: Indices of group members
-        
+
     Returns:
         Dictionary of statistics
     """
@@ -121,8 +121,8 @@ def comment_stats(votes: np.ndarray, group_members: list[int]) -> dict[str, Any]
     n_votes = n_agree + n_disagree
 
     # Calculate probabilities with pseudocounts (Bayesian smoothing)
-    p_agree = (n_agree + PSEUDO_COUNT/2) / (n_votes + PSEUDO_COUNT) if n_votes > 0 else 0.5
-    p_disagree = (n_disagree + PSEUDO_COUNT/2) / (n_votes + PSEUDO_COUNT) if n_votes > 0 else 0.5
+    p_agree = (n_agree + PSEUDO_COUNT / 2) / (n_votes + PSEUDO_COUNT) if n_votes > 0 else 0.5
+    p_disagree = (n_disagree + PSEUDO_COUNT / 2) / (n_votes + PSEUDO_COUNT) if n_votes > 0 else 0.5
 
     # Calculate significance tests
     p_agree_test = prop_test(p_agree, n_votes, 0.5) if n_votes > 0 else 0.0
@@ -130,44 +130,37 @@ def comment_stats(votes: np.ndarray, group_members: list[int]) -> dict[str, Any]
 
     # Return stats
     return {
-        'na': n_agree,
-        'nd': n_disagree,
-        'ns': n_votes,
-        'pa': p_agree,
-        'pd': p_disagree,
-        'pat': p_agree_test,
-        'pdt': p_disagree_test
+        "na": n_agree,
+        "nd": n_disagree,
+        "ns": n_votes,
+        "pa": p_agree,
+        "pd": p_disagree,
+        "pat": p_agree_test,
+        "pdt": p_disagree_test,
     }
 
 
-def add_comparative_stats(comment_stats: dict[str, Any],
-                         other_stats: dict[str, Any]) -> dict[str, Any]:
+def add_comparative_stats(comment_stats: dict[str, Any], other_stats: dict[str, Any]) -> dict[str, Any]:
     """
     Add comparative statistics between a group and others.
-    
+
     Args:
         comment_stats: Statistics for the group
         other_stats: Statistics for other groups combined
-        
+
     Returns:
         Enhanced statistics with comparative measures
     """
     result = deepcopy(comment_stats)
 
     # Calculate representativeness ratios
-    result['ra'] = result['pa'] / other_stats['pa'] if other_stats['pa'] > 0 else 1.0
-    result['rd'] = result['pd'] / other_stats['pd'] if other_stats['pd'] > 0 else 1.0
+    result["ra"] = result["pa"] / other_stats["pa"] if other_stats["pa"] > 0 else 1.0
+    result["rd"] = result["pd"] / other_stats["pd"] if other_stats["pd"] > 0 else 1.0
 
     # Calculate representativeness tests
-    result['rat'] = two_prop_test(
-        result['pa'], result['ns'],
-        other_stats['pa'], other_stats['ns']
-    )
+    result["rat"] = two_prop_test(result["pa"], result["ns"], other_stats["pa"], other_stats["ns"])
 
-    result['rdt'] = two_prop_test(
-        result['pd'], result['ns'],
-        other_stats['pd'], other_stats['ns']
-    )
+    result["rdt"] = two_prop_test(result["pd"], result["ns"], other_stats["pd"], other_stats["ns"])
 
     return result
 
@@ -175,22 +168,22 @@ def add_comparative_stats(comment_stats: dict[str, Any],
 def repness_metric(stats: dict[str, Any], key_prefix: str) -> float:
     """
     Calculate a representativeness metric for ranking.
-    
+
     Args:
         stats: Statistics for a comment/group
         key_prefix: 'a' for agreement, 'd' for disagreement
-        
+
     Returns:
         Composite representativeness score
     """
     # Get the relevant probability and test values
-    p = stats[f'p{key_prefix}']
-    p_test = stats[f'p{key_prefix}t']
-    r = stats[f'r{key_prefix}']
-    r_test = stats[f'r{key_prefix}t']
+    p = stats[f"p{key_prefix}"]
+    p_test = stats[f"p{key_prefix}t"]
+    r = stats[f"r{key_prefix}"]
+    r_test = stats[f"r{key_prefix}t"]
 
     # Take probability into account
-    p_factor = p if key_prefix == 'a' else (1 - p)
+    p_factor = p if key_prefix == "a" else (1 - p)
 
     # Calculate composite score
     return p_factor * (abs(p_test) + abs(r_test))
@@ -199,31 +192,31 @@ def repness_metric(stats: dict[str, Any], key_prefix: str) -> float:
 def finalize_cmt_stats(stats: dict[str, Any]) -> dict[str, Any]:
     """
     Finalize comment statistics and determine if agree or disagree is more representative.
-    
+
     Args:
         stats: Statistics for a comment/group
-        
+
     Returns:
         Finalized statistics with best representativeness
     """
     result = deepcopy(stats)
 
     # Calculate agree and disagree metrics
-    result['agree_metric'] = repness_metric(stats, 'a')
-    result['disagree_metric'] = repness_metric(stats, 'd')
+    result["agree_metric"] = repness_metric(stats, "a")
+    result["disagree_metric"] = repness_metric(stats, "d")
 
     # Determine whether agree or disagree is more representative
-    if result['pa'] > 0.5 and result['ra'] > 1.0:
+    if result["pa"] > 0.5 and result["ra"] > 1.0:
         # More agree than disagree, and more than other groups
-        result['repful'] = 'agree'
-    elif result['pd'] > 0.5 and result['rd'] > 1.0:
+        result["repful"] = "agree"
+    elif result["pd"] > 0.5 and result["rd"] > 1.0:
         # More disagree than agree, and more than other groups
-        result['repful'] = 'disagree'
+        result["repful"] = "disagree"
     # Use the higher metric
-    elif result['agree_metric'] >= result['disagree_metric']:
-        result['repful'] = 'agree'
+    elif result["agree_metric"] >= result["disagree_metric"]:
+        result["repful"] = "agree"
     else:
-        result['repful'] = 'disagree'
+        result["repful"] = "disagree"
 
     return result
 
@@ -231,19 +224,19 @@ def finalize_cmt_stats(stats: dict[str, Any]) -> dict[str, Any]:
 def passes_by_test(stats: dict[str, Any], repful: str, p_thresh: float = 0.5) -> bool:
     """
     Check if comment passes significance tests.
-    
+
     Args:
         stats: Statistics for a comment/group
         repful: 'agree' or 'disagree'
         p_thresh: Probability threshold
-        
+
     Returns:
         True if passes significance tests
     """
-    key_prefix = 'a' if repful == 'agree' else 'd'
-    p = stats[f'p{key_prefix}']
-    p_test = stats[f'p{key_prefix}t']
-    r_test = stats[f'r{key_prefix}t']
+    key_prefix = "a" if repful == "agree" else "d"
+    p = stats[f"p{key_prefix}"]
+    p_test = stats[f"p{key_prefix}t"]
+    r_test = stats[f"r{key_prefix}t"]
 
     # Check if proportion is high enough
     if p < p_thresh:
@@ -256,18 +249,18 @@ def passes_by_test(stats: dict[str, Any], repful: str, p_thresh: float = 0.5) ->
 def best_agree(all_stats: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """
     Filter for best agreement comments.
-    
+
     Args:
         all_stats: List of comment statistics
-        
+
     Returns:
         Filtered list of comments that are best representatives by agreement
     """
     # Filter to comments more agreed with than disagreed with
-    agree_stats = [s for s in all_stats if s['pa'] > s['pd']]
+    agree_stats = [s for s in all_stats if s["pa"] > s["pd"]]
 
     # Filter to comments that pass significance tests
-    passing = [s for s in agree_stats if passes_by_test(s, 'agree')]
+    passing = [s for s in agree_stats if passes_by_test(s, "agree")]
 
     if passing:
         return passing
@@ -278,18 +271,18 @@ def best_agree(all_stats: list[dict[str, Any]]) -> list[dict[str, Any]]:
 def best_disagree(all_stats: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """
     Filter for best disagreement comments.
-    
+
     Args:
         all_stats: List of comment statistics
-        
+
     Returns:
         Filtered list of comments that are best representatives by disagreement
     """
     # Filter to comments more disagreed with than agreed with
-    disagree_stats = [s for s in all_stats if s['pd'] > s['pa']]
+    disagree_stats = [s for s in all_stats if s["pd"] > s["pa"]]
 
     # Filter to comments that pass significance tests
-    passing = [s for s in disagree_stats if passes_by_test(s, 'disagree')]
+    passing = [s for s in disagree_stats if passes_by_test(s, "disagree")]
 
     if passing:
         return passing
@@ -297,17 +290,17 @@ def best_disagree(all_stats: list[dict[str, Any]]) -> list[dict[str, Any]]:
         return disagree_stats
 
 
-def select_rep_comments(all_stats: list[dict[str, Any]],
-                       agree_count: int = 3,
-                       disagree_count: int = 2) -> list[dict[str, Any]]:
+def select_rep_comments(
+    all_stats: list[dict[str, Any]], agree_count: int = 3, disagree_count: int = 2
+) -> list[dict[str, Any]]:
     """
     Select representative comments for a group.
-    
+
     Args:
         all_stats: List of comment statistics
         agree_count: Number of agreement comments to select
         disagree_count: Number of disagreement comments to select
-        
+
     Returns:
         List of selected representative comments
     """
@@ -318,21 +311,13 @@ def select_rep_comments(all_stats: list[dict[str, Any]],
     agree_comments = best_agree(all_stats)
 
     # Sort by agreement metric
-    agree_comments = sorted(
-        agree_comments,
-        key=lambda s: s['agree_metric'],
-        reverse=True
-    )
+    agree_comments = sorted(agree_comments, key=lambda s: s["agree_metric"], reverse=True)
 
     # Start with best disagreement comments
     disagree_comments = best_disagree(all_stats)
 
     # Sort by disagreement metric
-    disagree_comments = sorted(
-        disagree_comments,
-        key=lambda s: s['disagree_metric'],
-        reverse=True
-    )
+    disagree_comments = sorted(disagree_comments, key=lambda s: s["disagree_metric"], reverse=True)
 
     # Select top comments
     selected = []
@@ -341,14 +326,14 @@ def select_rep_comments(all_stats: list[dict[str, Any]],
     for i, cmt in enumerate(agree_comments):
         if i < agree_count:
             cmt_copy = deepcopy(cmt)
-            cmt_copy['repful'] = 'agree'
+            cmt_copy["repful"] = "agree"
             selected.append(cmt_copy)
 
     # Add disagreement comments
     for i, cmt in enumerate(disagree_comments):
         if i < disagree_count:
             cmt_copy = deepcopy(cmt)
-            cmt_copy['repful'] = 'disagree'
+            cmt_copy["repful"] = "disagree"
             selected.append(cmt_copy)
 
     # If we couldn't find enough, try to add more from the other category
@@ -357,21 +342,21 @@ def select_rep_comments(all_stats: list[dict[str, Any]],
         if len(selected) < agree_count + disagree_count and len(agree_comments) > agree_count:
             for i in range(agree_count, min(len(agree_comments), agree_count + disagree_count)):
                 cmt_copy = deepcopy(agree_comments[i])
-                cmt_copy['repful'] = 'agree'
+                cmt_copy["repful"] = "agree"
                 selected.append(cmt_copy)
 
         # Add more disagreement comments if needed
         if len(selected) < agree_count + disagree_count and len(disagree_comments) > disagree_count:
             for i in range(disagree_count, min(len(disagree_comments), agree_count + disagree_count)):
                 cmt_copy = deepcopy(disagree_comments[i])
-                cmt_copy['repful'] = 'disagree'
+                cmt_copy["repful"] = "disagree"
                 selected.append(cmt_copy)
 
     # If still not enough, at least ensure one comment
     if not selected and all_stats:
         # Just take the first one
         cmt_copy = deepcopy(all_stats[0])
-        cmt_copy['repful'] = cmt_copy.get('repful', 'agree')
+        cmt_copy["repful"] = cmt_copy.get("repful", "agree")
         selected.append(cmt_copy)
 
     return selected
@@ -380,11 +365,11 @@ def select_rep_comments(all_stats: list[dict[str, Any]],
 def calculate_kl_divergence(p: np.ndarray, q: np.ndarray) -> float:
     """
     Calculate Kullback-Leibler divergence between two probability distributions.
-    
+
     Args:
         p: First probability distribution
         q: Second probability distribution
-        
+
     Returns:
         KL divergence
     """
@@ -398,17 +383,17 @@ def calculate_kl_divergence(p: np.ndarray, q: np.ndarray) -> float:
 def select_consensus_comments(all_stats: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """
     Select comments with broad consensus.
-    
+
     Args:
         all_stats: List of comment statistics for all groups
-        
+
     Returns:
         List of consensus comments
     """
     # Group by comment
     by_comment = {}
     for stat in all_stats:
-        cid = stat['comment_id']
+        cid = stat["comment_id"]
         if cid not in by_comment:
             by_comment[cid] = []
         by_comment[cid].append(stat)
@@ -418,22 +403,19 @@ def select_consensus_comments(all_stats: list[dict[str, Any]]) -> list[dict[str,
 
     for cid, stats in by_comment.items():
         # Check if all groups mostly agree
-        all_agree = all(s['pa'] > 0.6 for s in stats)
+        all_agree = all(s["pa"] > 0.6 for s in stats)
 
         if all_agree:
             # Calculate average agreement
-            avg_agree = sum(s['pa'] for s in stats) / len(stats)
+            avg_agree = sum(s["pa"] for s in stats) / len(stats)
 
             # Add as consensus candidate
-            consensus_candidates.append({
-                'comment_id': cid,
-                'avg_agree': avg_agree,
-                'repful': 'consensus',
-                'stats': stats
-            })
+            consensus_candidates.append(
+                {"comment_id": cid, "avg_agree": avg_agree, "repful": "consensus", "stats": stats}
+            )
 
     # Sort by average agreement
-    consensus_candidates.sort(key=lambda x: x['avg_agree'], reverse=True)
+    consensus_candidates.sort(key=lambda x: x["avg_agree"], reverse=True)
 
     # Take top 2
     return consensus_candidates[:2]
@@ -442,11 +424,11 @@ def select_consensus_comments(all_stats: list[dict[str, Any]]) -> list[dict[str,
 def conv_repness(vote_matrix: NamedMatrix, group_clusters: list[dict[str, Any]]) -> dict[str, Any]:
     """
     Calculate representativeness for all comments and groups.
-    
+
     Args:
         vote_matrix: NamedMatrix of votes
         group_clusters: List of group clusters
-        
+
     Returns:
         Dictionary with representativeness data for each group
     """
@@ -474,10 +456,10 @@ def conv_repness(vote_matrix: NamedMatrix, group_clusters: list[dict[str, Any]])
 
     # Create empty-result structure in case we need to return early
     empty_result = {
-        'comment_ids': vote_matrix.colnames(),
-        'group_repness': {group['id']: [] for group in group_clusters},
-        'consensus_comments': [],
-        'comment_repness': []  # Add a list for all comment repness data
+        "comment_ids": vote_matrix.colnames(),
+        "group_repness": {group["id"]: [] for group in group_clusters},
+        "consensus_comments": [],
+        "comment_repness": [],  # Add a list for all comment repness data
     }
 
     # Check if we have enough data
@@ -486,20 +468,20 @@ def conv_repness(vote_matrix: NamedMatrix, group_clusters: list[dict[str, Any]])
 
     # Result will hold repness data for each group
     result = {
-        'comment_ids': vote_matrix.colnames(),
-        'group_repness': {},
-        'comment_repness': []  # Add a list for all comment repness data
+        "comment_ids": vote_matrix.colnames(),
+        "group_repness": {},
+        "comment_repness": [],  # Add a list for all comment repness data
     }
 
     # For each group, calculate representativeness
     all_stats = []
 
     for group in group_clusters:
-        group_id = group['id']
+        group_id = group["id"]
 
         # Convert member IDs to indices with error handling
         group_members = []
-        for m in group['members']:
+        for m in group["members"]:
             try:
                 if m in vote_matrix.rownames():
                     idx = vote_matrix.rownames().index(m)
@@ -510,7 +492,7 @@ def conv_repness(vote_matrix: NamedMatrix, group_clusters: list[dict[str, Any]])
 
         if not group_members:
             # Skip empty groups
-            result['group_repness'][group_id] = []
+            result["group_repness"][group_id] = []
             continue
 
         # Calculate other members (all participants not in this group)
@@ -544,21 +526,25 @@ def conv_repness(vote_matrix: NamedMatrix, group_clusters: list[dict[str, Any]])
                 stats = finalize_cmt_stats(stats)
 
                 # Add metadata
-                stats['comment_id'] = comment_id
-                stats['group_id'] = group_id
+                stats["comment_id"] = comment_id
+                stats["group_id"] = group_id
 
                 group_stats.append(stats)
                 all_stats.append(stats)
 
                 # Also add to the comment_repness list
                 repness = {
-                    'tid': comment_id,
-                    'gid': group_id,
-                    'repness': stats.get('agree_metric', 0) if stats.get('repful') == 'agree' else stats.get('disagree_metric', 0),
-                    'pa': stats.get('pa', 0),
-                    'pd': stats.get('pd', 0)
+                    "tid": comment_id,
+                    "gid": group_id,
+                    "repness": (
+                        stats.get("agree_metric", 0)
+                        if stats.get("repful") == "agree"
+                        else stats.get("disagree_metric", 0)
+                    ),
+                    "pa": stats.get("pa", 0),
+                    "pd": stats.get("pd", 0),
                 }
-                result['comment_repness'].append(repness)
+                result["comment_repness"].append(repness)
             except Exception as e:
                 print(f"Error calculating stats for comment {comment_id} in group {group_id}: {e}")
                 continue
@@ -568,20 +554,20 @@ def conv_repness(vote_matrix: NamedMatrix, group_clusters: list[dict[str, Any]])
             rep_comments = select_rep_comments(group_stats)
 
             # Store in result
-            result['group_repness'][group_id] = rep_comments
+            result["group_repness"][group_id] = rep_comments
         except Exception as e:
             print(f"Error selecting representative comments for group {group_id}: {e}")
-            result['group_repness'][group_id] = []
+            result["group_repness"][group_id] = []
 
     # Add consensus comments if there are multiple groups
     try:
         if len(group_clusters) > 1 and all_stats:
-            result['consensus_comments'] = select_consensus_comments(all_stats)
+            result["consensus_comments"] = select_consensus_comments(all_stats)
         else:
-            result['consensus_comments'] = []
+            result["consensus_comments"] = []
     except Exception as e:
         print(f"Error selecting consensus comments: {e}")
-        result['consensus_comments'] = []
+        result["consensus_comments"] = []
 
     return result
 
@@ -589,11 +575,11 @@ def conv_repness(vote_matrix: NamedMatrix, group_clusters: list[dict[str, Any]])
 def participant_stats(vote_matrix: NamedMatrix, group_clusters: list[dict[str, Any]]) -> dict[str, Any]:
     """
     Calculate statistics about participants.
-    
+
     Args:
         vote_matrix: NamedMatrix of votes
         group_clusters: List of group clusters
-        
+
     Returns:
         Dictionary with participant statistics
     """
@@ -622,10 +608,7 @@ def participant_stats(vote_matrix: NamedMatrix, group_clusters: list[dict[str, A
     matrix_values = np.nan_to_num(matrix_values, nan=0.0)
 
     # Create result structure
-    result = {
-        'participant_ids': vote_matrix.rownames(),
-        'stats': {}
-    }
+    result = {"participant_ids": vote_matrix.rownames(), "stats": {}}
 
     # For each participant, calculate statistics
     for p_idx, participant_id in enumerate(vote_matrix.rownames()):
@@ -647,20 +630,20 @@ def participant_stats(vote_matrix: NamedMatrix, group_clusters: list[dict[str, A
         # Find participant's group
         participant_group = None
         for group in group_clusters:
-            if participant_id in group['members']:
-                participant_group = group['id']
+            if participant_id in group["members"]:
+                participant_group = group["id"]
                 break
 
         # Calculate agreement with each group
         group_agreements = {}
 
         for group in group_clusters:
-            group_id = group['id']
+            group_id = group["id"]
 
             try:
                 # Get group member indices
                 group_members = []
-                for m in group['members']:
+                for m in group["members"]:
                     if m in vote_matrix.rownames():
                         idx = vote_matrix.rownames().index(m)
                         if 0 <= idx < matrix_values.shape[0]:
@@ -704,13 +687,13 @@ def participant_stats(vote_matrix: NamedMatrix, group_clusters: list[dict[str, A
                 group_agreements[group_id] = 0.0
 
         # Store participant stats
-        result['stats'][participant_id] = {
-            'n_agree': int(n_agree),
-            'n_disagree': int(n_disagree),
-            'n_pass': int(n_pass),
-            'n_votes': int(n_votes),
-            'group': participant_group,
-            'group_correlations': group_agreements
+        result["stats"][participant_id] = {
+            "n_agree": int(n_agree),
+            "n_disagree": int(n_disagree),
+            "n_pass": int(n_pass),
+            "n_votes": int(n_votes),
+            "group": participant_group,
+            "group_correlations": group_agreements,
         }
 
     return result

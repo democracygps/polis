@@ -25,13 +25,13 @@ logger = logging.getLogger(__name__)
 # Set up better logging if not already configured
 if not logger.handlers:
     handler = logging.StreamHandler(sys.stdout)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
 
     # Also set up the NamedMatrix logger
-    matrix_logger = logging.getLogger('polismath.math.named_matrix')
+    matrix_logger = logging.getLogger("polismath.math.named_matrix")
     matrix_logger.addHandler(handler)
     matrix_logger.setLevel(logging.INFO)
 
@@ -41,13 +41,10 @@ class Conversation:
     Manages the state and computation for a Pol.is conversation.
     """
 
-    def __init__(self,
-                conversation_id: str,
-                last_updated: int | None = None,
-                votes: dict[str, Any] | None = None):
+    def __init__(self, conversation_id: str, last_updated: int | None = None, votes: dict[str, Any] | None = None):
         """
         Initialize a conversation.
-        
+
         Args:
             conversation_id: Unique identifier for the conversation
             last_updated: Timestamp of last update (milliseconds since epoch)
@@ -58,16 +55,16 @@ class Conversation:
 
         # Initialize empty state
         self.raw_rating_mat = NamedMatrix()  # All votes
-        self.rating_mat = NamedMatrix()      # Filtered for moderation
+        self.rating_mat = NamedMatrix()  # Filtered for moderation
 
         # Participant and comment info
         self.participant_count = 0
         self.comment_count = 0
 
         # Moderation state
-        self.mod_out_tids = set()   # Excluded comments
-        self.mod_in_tids = set()    # Featured comments
-        self.meta_tids = set()      # Meta comments
+        self.mod_out_tids = set()  # Excluded comments
+        self.mod_in_tids = set()  # Featured comments
+        self.meta_tids = set()  # Meta comments
         self.mod_out_ptpts = set()  # Excluded participants
 
         # Clustering and projection state
@@ -86,16 +83,14 @@ class Conversation:
         if votes:
             self.update_votes(votes)
 
-    def update_votes(self,
-                    votes: dict[str, Any],
-                    recompute: bool = True) -> 'Conversation':
+    def update_votes(self, votes: dict[str, Any], recompute: bool = True) -> "Conversation":
         """
         Update the conversation with new votes.
-        
+
         Args:
             votes: Dictionary of votes
             recompute: Whether to recompute the clustering
-            
+
         Returns:
             Updated conversation
         """
@@ -103,8 +98,8 @@ class Conversation:
         result = deepcopy(self)
 
         # Extract vote data
-        vote_data = votes.get('votes', [])
-        last_vote_timestamp = votes.get('lastVoteTimestamp', self.last_updated)
+        vote_data = votes.get("votes", [])
+        last_vote_timestamp = votes.get("lastVoteTimestamp", self.last_updated)
 
         if not vote_data:
             return result
@@ -127,13 +122,15 @@ class Conversation:
                 progress_pct = (i / total_votes) * 100
                 elapsed = time.time() - start_time
                 remaining = (elapsed / i) * (total_votes - i) if i > 0 else 0
-                logger.info(f"[{elapsed:.2f}s] Processed {i}/{total_votes} votes ({progress_pct:.1f}%) - Est. remaining: {remaining:.2f}s")
+                logger.info(
+                    f"[{elapsed:.2f}s] Processed {i}/{total_votes} votes ({progress_pct:.1f}%) - Est. remaining: {remaining:.2f}s"
+                )
 
             try:
-                ptpt_id = str(vote.get('pid'))  # Ensure string
-                comment_id = str(vote.get('tid'))  # Ensure string
-                vote_value = vote.get('vote')
-                created = vote.get('created', last_vote_timestamp)
+                ptpt_id = str(vote.get("pid"))  # Ensure string
+                comment_id = str(vote.get("tid"))  # Ensure string
+                vote_value = vote.get("vote")
+                created = vote.get("created", last_vote_timestamp)
 
                 # Skip invalid votes
                 if ptpt_id is None or comment_id is None or vote_value is None:
@@ -145,11 +142,11 @@ class Conversation:
                     # Handle string values
                     if isinstance(vote_value, str):
                         vote_value = vote_value.lower()
-                        if vote_value == 'agree':
+                        if vote_value == "agree":
                             vote_value = 1.0
-                        elif vote_value == 'disagree':
+                        elif vote_value == "disagree":
                             vote_value = -1.0
-                        elif vote_value == 'pass':
+                        elif vote_value == "pass":
                             vote_value = None
                         else:
                             # Try to convert numeric string
@@ -195,7 +192,9 @@ class Conversation:
                 continue
 
         # Log validation results
-        logger.info(f"[{time.time() - start_time:.2f}s] Vote processing summary: {len(vote_updates)} valid, {invalid_count} invalid, {null_count} null")
+        logger.info(
+            f"[{time.time() - start_time:.2f}s] Vote processing summary: {len(vote_updates)} valid, {invalid_count} invalid, {null_count} null"
+        )
 
         # Apply all updates in a single batch operation for better performance
         if vote_updates:
@@ -205,10 +204,7 @@ class Conversation:
             logger.info(f"[{time.time() - start_time:.2f}s] Batch update completed in {time.time() - batch_start:.2f}s")
 
         # Update last updated timestamp
-        result.last_updated = max(
-            last_vote_timestamp,
-            result.last_updated
-        )
+        result.last_updated = max(last_vote_timestamp, result.last_updated)
 
         # Update count stats
         result.participant_count = len(result.raw_rating_mat.rownames())
@@ -255,12 +251,12 @@ class Conversation:
 
         # Initialize stats
         self.vote_stats = {
-            'n_votes': 0,
-            'n_agree': 0,
-            'n_disagree': 0,
-            'n_pass': 0,
-            'comment_stats': {},
-            'participant_stats': {}
+            "n_votes": 0,
+            "n_agree": 0,
+            "n_disagree": 0,
+            "n_pass": 0,
+            "comment_stats": {},
+            "participant_stats": {},
         }
 
         # Get matrix values and ensure they are numeric
@@ -276,17 +272,17 @@ class Conversation:
                 agree_mask = np.abs(values - 1.0) < 0.001  # Close to 1
                 disagree_mask = np.abs(values + 1.0) < 0.001  # Close to -1
 
-                self.vote_stats['n_votes'] = int(np.sum(non_null_mask))
-                self.vote_stats['n_agree'] = int(np.sum(agree_mask))
-                self.vote_stats['n_disagree'] = int(np.sum(disagree_mask))
-                self.vote_stats['n_pass'] = int(np.sum(np.isnan(values)))
+                self.vote_stats["n_votes"] = int(np.sum(non_null_mask))
+                self.vote_stats["n_agree"] = int(np.sum(agree_mask))
+                self.vote_stats["n_disagree"] = int(np.sum(disagree_mask))
+                self.vote_stats["n_pass"] = int(np.sum(np.isnan(values)))
             except Exception as e:
                 print(f"Error counting votes: {e}")
                 # Set defaults if counting fails
-                self.vote_stats['n_votes'] = 0
-                self.vote_stats['n_agree'] = 0
-                self.vote_stats['n_disagree'] = 0
-                self.vote_stats['n_pass'] = 0
+                self.vote_stats["n_votes"] = 0
+                self.vote_stats["n_agree"] = 0
+                self.vote_stats["n_disagree"] = 0
+                self.vote_stats["n_pass"] = 0
 
             # Compute comment stats
             for i, cid in enumerate(clean_mat.colnames()):
@@ -299,19 +295,19 @@ class Conversation:
                     n_agree = np.sum(np.abs(col - 1.0) < 0.001)
                     n_disagree = np.sum(np.abs(col + 1.0) < 0.001)
 
-                    self.vote_stats['comment_stats'][cid] = {
-                        'n_votes': int(n_votes),
-                        'n_agree': int(n_agree),
-                        'n_disagree': int(n_disagree),
-                        'agree_ratio': float(n_agree / max(n_votes, 1))
+                    self.vote_stats["comment_stats"][cid] = {
+                        "n_votes": int(n_votes),
+                        "n_agree": int(n_agree),
+                        "n_disagree": int(n_disagree),
+                        "agree_ratio": float(n_agree / max(n_votes, 1)),
                     }
                 except Exception as e:
                     print(f"Error computing stats for comment {cid}: {e}")
-                    self.vote_stats['comment_stats'][cid] = {
-                        'n_votes': 0,
-                        'n_agree': 0,
-                        'n_disagree': 0,
-                        'agree_ratio': 0.0
+                    self.vote_stats["comment_stats"][cid] = {
+                        "n_votes": 0,
+                        "n_agree": 0,
+                        "n_disagree": 0,
+                        "agree_ratio": 0.0,
                     }
 
             # Compute participant stats
@@ -325,42 +321,40 @@ class Conversation:
                     n_agree = np.sum(np.abs(row - 1.0) < 0.001)
                     n_disagree = np.sum(np.abs(row + 1.0) < 0.001)
 
-                    self.vote_stats['participant_stats'][pid] = {
-                        'n_votes': int(n_votes),
-                        'n_agree': int(n_agree),
-                        'n_disagree': int(n_disagree),
-                        'agree_ratio': float(n_agree / max(n_votes, 1))
+                    self.vote_stats["participant_stats"][pid] = {
+                        "n_votes": int(n_votes),
+                        "n_agree": int(n_agree),
+                        "n_disagree": int(n_disagree),
+                        "agree_ratio": float(n_agree / max(n_votes, 1)),
                     }
                 except Exception as e:
                     print(f"Error computing stats for participant {pid}: {e}")
-                    self.vote_stats['participant_stats'][pid] = {
-                        'n_votes': 0,
-                        'n_agree': 0,
-                        'n_disagree': 0,
-                        'agree_ratio': 0.0
+                    self.vote_stats["participant_stats"][pid] = {
+                        "n_votes": 0,
+                        "n_agree": 0,
+                        "n_disagree": 0,
+                        "agree_ratio": 0.0,
                     }
         except Exception as e:
             print(f"Error in vote stats computation: {e}")
             # Initialize with empty stats if computation fails
             self.vote_stats = {
-                'n_votes': 0,
-                'n_agree': 0,
-                'n_disagree': 0,
-                'n_pass': 0,
-                'comment_stats': {},
-                'participant_stats': {}
+                "n_votes": 0,
+                "n_agree": 0,
+                "n_disagree": 0,
+                "n_pass": 0,
+                "comment_stats": {},
+                "participant_stats": {},
             }
 
-    def update_moderation(self,
-                         moderation: dict[str, Any],
-                         recompute: bool = True) -> 'Conversation':
+    def update_moderation(self, moderation: dict[str, Any], recompute: bool = True) -> "Conversation":
         """
         Update moderation settings.
-        
+
         Args:
             moderation: Dictionary of moderation settings
             recompute: Whether to recompute the clustering
-            
+
         Returns:
             Updated conversation
         """
@@ -368,10 +362,10 @@ class Conversation:
         result = deepcopy(self)
 
         # Extract moderation data
-        mod_out_tids = moderation.get('mod_out_tids', [])
-        mod_in_tids = moderation.get('mod_in_tids', [])
-        meta_tids = moderation.get('meta_tids', [])
-        mod_out_ptpts = moderation.get('mod_out_ptpts', [])
+        mod_out_tids = moderation.get("mod_out_tids", [])
+        mod_in_tids = moderation.get("mod_in_tids", [])
+        meta_tids = moderation.get("meta_tids", [])
+        mod_out_ptpts = moderation.get("mod_out_ptpts", [])
 
         # Update moderation sets
         if mod_out_tids:
@@ -401,7 +395,7 @@ class Conversation:
     def _compute_pca(self, n_components: int = 2) -> None:
         """
         Compute PCA on the vote matrix.
-        
+
         Args:
             n_components: Number of principal components
         """
@@ -412,10 +406,7 @@ class Conversation:
         if self.rating_mat.values.shape[0] < 2 or self.rating_mat.values.shape[1] < 2:
             # Not enough data for PCA, create minimal results
             cols = max(self.rating_mat.values.shape[1], 1)
-            self.pca = {
-                'center': np.zeros(cols),
-                'comps': np.zeros((min(n_components, 2), cols))
-            }
+            self.pca = {"center": np.zeros(cols), "comps": np.zeros((min(n_components, 2), cols))}
             self.proj = {pid: np.zeros(2) for pid in self.rating_mat.rownames()}
             return
 
@@ -436,16 +427,13 @@ class Conversation:
             import numpy as np
 
             cols = self.rating_mat.values.shape[1]
-            self.pca = {
-                'center': np.zeros(cols),
-                'comps': np.zeros((min(n_components, 2), cols))
-            }
+            self.pca = {"center": np.zeros(cols), "comps": np.zeros((min(n_components, 2), cols))}
             self.proj = {pid: np.zeros(2) for pid in self.rating_mat.rownames()}
 
     def _get_clean_matrix(self) -> NamedMatrix:
         """
         Get a clean copy of the rating matrix with proper numeric values.
-        
+
         Returns:
             Clean NamedMatrix
         """
@@ -470,14 +458,12 @@ class Conversation:
 
         # Create a DataFrame with proper indexing
         import pandas as pd
-        df = pd.DataFrame(
-            matrix_values,
-            index=self.rating_mat.rownames(),
-            columns=self.rating_mat.colnames()
-        )
+
+        df = pd.DataFrame(matrix_values, index=self.rating_mat.rownames(), columns=self.rating_mat.colnames())
 
         # Create a new NamedMatrix
         from polismath.pca_kmeans_rep.named_matrix import NamedMatrix
+
         return NamedMatrix(df)
 
     def _compute_clusters(self) -> None:
@@ -499,11 +485,7 @@ class Conversation:
         proj_values = np.array([self.proj[pid] for pid in ptpt_ids])
 
         # Create projection matrix
-        proj_matrix = NamedMatrix(
-            matrix=proj_values,
-            rownames=ptpt_ids,
-            colnames=['x', 'y']
-        )
+        proj_matrix = NamedMatrix(matrix=proj_values, rownames=ptpt_ids, colnames=["x", "y"])
 
         # Use auto-determination of k based on data size
         # The determine_k function will handle this appropriately
@@ -533,28 +515,27 @@ class Conversation:
 
         # Check if we have groups
         if not self.group_clusters:
-            self.repness = {
-                'comment_ids': self.rating_mat.colnames(),
-                'group_repness': {},
-                'consensus_comments': []
-            }
+            self.repness = {"comment_ids": self.rating_mat.colnames(), "group_repness": {}, "consensus_comments": []}
             return
 
         # Compute representativeness
         self.repness = conv_repness(self.rating_mat, self.group_clusters)
 
-    def _compute_participant_info_optimized(self, vote_matrix: NamedMatrix, group_clusters: list[dict[str, Any]]) -> dict[str, Any]:
+    def _compute_participant_info_optimized(
+        self, vote_matrix: NamedMatrix, group_clusters: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """
         Optimized version of the participant info computation.
-        
+
         Args:
             vote_matrix: The vote matrix containing participant votes
             group_clusters: The group clusters from clustering
-            
+
         Returns:
             Dictionary with participant information including group correlations
         """
         import time
+
         start_time = time.time()
 
         if not group_clusters:
@@ -582,10 +563,7 @@ class Conversation:
         matrix_values = np.nan_to_num(matrix_values, nan=0.0)
 
         # Create result structure
-        result = {
-            'participant_ids': vote_matrix.rownames(),
-            'stats': {}
-        }
+        result = {"participant_ids": vote_matrix.rownames(), "stats": {}}
 
         prep_time = time.time() - start_time
         logger.info(f"Participant stats prep time: {prep_time:.2f}s")
@@ -602,17 +580,17 @@ class Conversation:
         # Precompute group membership lookups
         ptpt_group_map = {}
         for group in group_clusters:
-            for member in group.get('members', []):
-                ptpt_group_map[member] = group.get('id', 0)
+            for member in group.get("members", []):
+                ptpt_group_map[member] = group.get("id", 0)
 
         # OPTIMIZATION 2: Precompute group data
 
         # Precompute group member indices for each group
         group_member_indices = {}
         for group in group_clusters:
-            group_id = group.get('id', 0)
+            group_id = group.get("id", 0)
             member_indices = []
-            for member in group.get('members', []):
+            for member in group.get("members", []):
                 if member in ptpt_idx_map:
                     idx = ptpt_idx_map[member]
                     if 0 <= idx < matrix_values.shape[0]:
@@ -654,8 +632,10 @@ class Conversation:
                 batch_time = now - batch_start
                 batch_start = now
                 percent = (p_idx / participant_count) * 100
-                logger.info(f"Processed {p_idx}/{participant_count} participants ({percent:.1f}%) - " +
-                           f"Elapsed: {elapsed:.2f}s, Batch: {batch_time:.4f}s")
+                logger.info(
+                    f"Processed {p_idx}/{participant_count} participants ({percent:.1f}%) - "
+                    + f"Elapsed: {elapsed:.2f}s, Batch: {batch_time:.4f}s"
+                )
 
             # Get participant votes
             participant_votes = matrix_values[p_idx, :]
@@ -715,18 +695,20 @@ class Conversation:
                     group_agreements[group_id] = 0.0
 
             # Store participant stats
-            result['stats'][participant_id] = {
-                'n_agree': int(n_agree),
-                'n_disagree': int(n_disagree),
-                'n_pass': int(n_pass),
-                'n_votes': int(n_votes),
-                'group': participant_group,
-                'group_correlations': group_agreements
+            result["stats"][participant_id] = {
+                "n_agree": int(n_agree),
+                "n_disagree": int(n_disagree),
+                "n_pass": int(n_pass),
+                "n_votes": int(n_votes),
+                "group": participant_group,
+                "group_correlations": group_agreements,
             }
 
         total_time = time.time() - start_time
         process_time = time.time() - process_start
-        logger.info(f"Participant stats completed in {total_time:.2f}s (preparation: {prep_time:.2f}s, processing: {process_time:.2f}s)")
+        logger.info(
+            f"Participant stats completed in {total_time:.2f}s (preparation: {prep_time:.2f}s, processing: {process_time:.2f}s)"
+        )
         logger.info(f"Processed {len(result['stats'])} participants with {len(group_clusters)} groups")
 
         return result
@@ -749,15 +731,14 @@ class Conversation:
         ptpt_stats = self._compute_participant_info_optimized(self.rating_mat, self.group_clusters)
 
         # Store results
-        self.participant_info = ptpt_stats.get('stats', {})
+        self.participant_info = ptpt_stats.get("stats", {})
 
         logger.info(f"Participant info computation completed in {time.time() - start_time:.2f}s")
 
-
-    def recompute(self) -> 'Conversation':
+    def recompute(self) -> "Conversation":
         """
         Recompute all derived data.
-        
+
         Returns:
             Updated conversation
         """
@@ -788,53 +769,56 @@ class Conversation:
     def get_summary(self) -> dict[str, Any]:
         """
         Get a summary of the conversation.
-        
+
         Returns:
             Dictionary with conversation summary
         """
         return {
-            'conversation_id': self.conversation_id,
-            'last_updated': self.last_updated,
-            'participant_count': self.participant_count,
-            'comment_count': self.comment_count,
-            'vote_count': self.vote_stats.get('n_votes', 0),
-            'group_count': len(self.group_clusters),
+            "conversation_id": self.conversation_id,
+            "last_updated": self.last_updated,
+            "participant_count": self.participant_count,
+            "comment_count": self.comment_count,
+            "vote_count": self.vote_stats.get("n_votes", 0),
+            "group_count": len(self.group_clusters),
         }
 
     def get_full_data(self) -> dict[str, Any]:
         """
         Get the full conversation data.
-        
+
         Returns:
             Dictionary with all conversation data
         """
         import time
+
         start_time = time.time()
         logger.info("Starting get_full_data conversion")
 
         # Base data
         base_start = time.time()
         result = {
-            'conversation_id': self.conversation_id,
-            'last_updated': self.last_updated,
-            'participant_count': self.participant_count,
-            'comment_count': self.comment_count,
-            'vote_stats': self.vote_stats,
-            'moderation': {
-                'mod_out_tids': list(self.mod_out_tids),
-                'mod_in_tids': list(self.mod_in_tids),
-                'meta_tids': list(self.meta_tids),
-                'mod_out_ptpts': list(self.mod_out_ptpts)
-            }
+            "conversation_id": self.conversation_id,
+            "last_updated": self.last_updated,
+            "participant_count": self.participant_count,
+            "comment_count": self.comment_count,
+            "vote_stats": self.vote_stats,
+            "moderation": {
+                "mod_out_tids": list(self.mod_out_tids),
+                "mod_in_tids": list(self.mod_in_tids),
+                "meta_tids": list(self.meta_tids),
+                "mod_out_ptpts": list(self.mod_out_ptpts),
+            },
         }
         logger.info(f"Base data setup: {time.time() - base_start:.4f}s")
 
         # Add PCA data
         pca_start = time.time()
         if self.pca:
-            result['pca'] = {
-                'center': self.pca['center'].tolist() if isinstance(self.pca['center'], np.ndarray) else self.pca['center'],
-                'comps': [comp.tolist() if isinstance(comp, np.ndarray) else comp for comp in self.pca['comps']]
+            result["pca"] = {
+                "center": (
+                    self.pca["center"].tolist() if isinstance(self.pca["center"], np.ndarray) else self.pca["center"]
+                ),
+                "comps": [comp.tolist() if isinstance(comp, np.ndarray) else comp for comp in self.pca["comps"]],
             }
         logger.info(f"PCA data conversion: {time.time() - pca_start:.4f}s")
 
@@ -846,7 +830,7 @@ class Conversation:
 
             # Use chunking for large projection sets
             if proj_size > 5000:
-                result['proj'] = {}
+                result["proj"] = {}
                 chunk_size = 1000
                 chunks_processed = 0
 
@@ -854,42 +838,45 @@ class Conversation:
                 keys = list(self.proj.keys())
                 for i in range(0, proj_size, chunk_size):
                     chunk_start = time.time()
-                    chunk_keys = keys[i:i+chunk_size]
+                    chunk_keys = keys[i : i + chunk_size]
 
                     # Process this chunk
                     for pid in chunk_keys:
                         proj = self.proj[pid]
-                        result['proj'][pid] = proj.tolist() if isinstance(proj, np.ndarray) else proj
+                        result["proj"][pid] = proj.tolist() if isinstance(proj, np.ndarray) else proj
 
                     chunks_processed += 1
-                    logger.info(f"Processed projection chunk {chunks_processed}: {time.time() - chunk_start:.4f}s for {len(chunk_keys)} participants")
+                    logger.info(
+                        f"Processed projection chunk {chunks_processed}: {time.time() - chunk_start:.4f}s for {len(chunk_keys)} participants"
+                    )
             else:
                 # Process all at once for smaller datasets
-                result['proj'] = {pid: proj.tolist() if isinstance(proj, np.ndarray) else proj
-                                for pid, proj in self.proj.items()}
+                result["proj"] = {
+                    pid: proj.tolist() if isinstance(proj, np.ndarray) else proj for pid, proj in self.proj.items()
+                }
         logger.info(f"Projection data conversion: {time.time() - proj_start:.4f}s")
 
         # Add cluster data
         clusters_start = time.time()
-        result['group_clusters'] = self.group_clusters
+        result["group_clusters"] = self.group_clusters
         logger.info(f"Clusters data: {time.time() - clusters_start:.4f}s")
 
         # Add representativeness data
         repness_start = time.time()
         if self.repness:
-            result['repness'] = self.repness
+            result["repness"] = self.repness
         logger.info(f"Repness data: {time.time() - repness_start:.4f}s")
 
         # Add participant info
         ptpt_info_start = time.time()
         if self.participant_info:
-            result['participant_info'] = self.participant_info
+            result["participant_info"] = self.participant_info
         logger.info(f"Participant info: {time.time() - ptpt_info_start:.4f}s")
 
         # Add comment priorities if available (matching Clojure format)
         priorities_start = time.time()
-        if hasattr(self, 'comment_priorities') and self.comment_priorities:
-            result['comment_priorities'] = self.comment_priorities
+        if hasattr(self, "comment_priorities") and self.comment_priorities:
+            result["comment_priorities"] = self.comment_priorities
         logger.info(f"Comment priorities: {time.time() - priorities_start:.4f}s")
 
         logger.info(f"Total get_full_data time: {time.time() - start_time:.4f}s")
@@ -899,7 +886,7 @@ class Conversation:
         """
         Compute votes base structure which maps each comment ID to aggregated vote counts.
         This matches the Clojure conversation.clj votes-base implementation.
-        
+
         Returns:
             Dictionary mapping comment IDs to vote statistics
         """
@@ -932,14 +919,10 @@ class Conversation:
                 total_votes = np.sum(is_number(votes))
 
                 # Store in format matching Clojure
-                votes_base[tid] = {
-                    'A': int(agree_votes),
-                    'D': int(disagree_votes),
-                    'S': int(total_votes)
-                }
+                votes_base[tid] = {"A": int(agree_votes), "D": int(disagree_votes), "S": int(total_votes)}
             except (ValueError, IndexError):
                 # If comment not found, use empty counts
-                votes_base[tid] = {'A': 0, 'D': 0, 'S': 0}
+                votes_base[tid] = {"A": 0, "D": 0, "S": 0}
 
         return votes_base
 
@@ -947,7 +930,7 @@ class Conversation:
         """
         Compute group votes structure which maps group IDs to vote statistics by comment.
         This matches the Clojure conversation.clj group-votes implementation.
-        
+
         Returns:
             Dictionary mapping group IDs to vote statistics
         """
@@ -959,12 +942,12 @@ class Conversation:
 
         # Helper to count votes of a specific type for a group
         def count_votes_for_group(group_id, comment_id, vote_type):
-            group = next((g for g in self.group_clusters if g.get('id') == group_id), None)
+            group = next((g for g in self.group_clusters if g.get("id") == group_id), None)
             if not group:
                 return 0
 
             # Get members of this group
-            members = group.get('members', [])
+            members = group.get("members", [])
 
             # If members list is empty, return 0
             if not members:
@@ -990,51 +973,49 @@ class Conversation:
             # Count votes of specified type
             votes = self.rating_mat.values[row_indices, col_idx]
 
-            if vote_type == 'A':  # Agree
+            if vote_type == "A":  # Agree
                 return int(np.sum(np.abs(votes - 1.0) < 0.001))
-            elif vote_type == 'D':  # Disagree
+            elif vote_type == "D":  # Disagree
                 return int(np.sum(np.abs(votes + 1.0) < 0.001))
-            elif vote_type == 'S':  # Total votes
+            elif vote_type == "S":  # Total votes
                 return int(np.sum(~np.isnan(votes)))
             else:
                 return 0
 
         # For each group, compute vote stats
         for group in self.group_clusters:
-            group_id = group.get('id')
+            group_id = group.get("id")
 
             # Skip groups without ID
             if group_id is None:
                 continue
 
             # Count members in this group
-            n_members = len(group.get('members', []))
+            n_members = len(group.get("members", []))
 
             # Get vote counts for each comment
             votes = {}
             for comment_id in self.rating_mat.colnames():
                 votes[comment_id] = {
-                    'A': count_votes_for_group(group_id, comment_id, 'A'),
-                    'D': count_votes_for_group(group_id, comment_id, 'D'),
-                    'S': count_votes_for_group(group_id, comment_id, 'S')
+                    "A": count_votes_for_group(group_id, comment_id, "A"),
+                    "D": count_votes_for_group(group_id, comment_id, "D"),
+                    "S": count_votes_for_group(group_id, comment_id, "S"),
                 }
 
             # Store results
-            group_votes[str(group_id)] = {
-                'n-members': n_members,
-                'votes': votes
-            }
+            group_votes[str(group_id)] = {"n-members": n_members, "votes": votes}
 
         return group_votes
 
     def _compute_user_vote_counts(self) -> dict[str, int]:
         """
         Compute the number of votes per participant.
-        
+
         Returns:
             Dictionary mapping participant IDs to vote counts
         """
         import time
+
         start_time = time.time()
         logger.info(f"Starting _compute_user_vote_counts for {len(self.rating_mat.rownames())} participants")
 
@@ -1056,7 +1037,9 @@ class Conversation:
                     # Fallback if dimensions don't match
                     vote_counts[pid] = 0
 
-            logger.info(f"Computed vote counts for {len(vote_counts)} participants using vectorized approach in {time.time() - start_time:.4f}s")
+            logger.info(
+                f"Computed vote counts for {len(vote_counts)} participants using vectorized approach in {time.time() - start_time:.4f}s"
+            )
         else:
             # Original approach for smaller datasets
             for i, pid in enumerate(self.rating_mat.rownames()):
@@ -1069,7 +1052,9 @@ class Conversation:
                 # Store count
                 vote_counts[pid] = int(count)
 
-            logger.info(f"Computed vote counts for {len(vote_counts)} participants using original approach in {time.time() - start_time:.4f}s")
+            logger.info(
+                f"Computed vote counts for {len(vote_counts)} participants using original approach in {time.time() - start_time:.4f}s"
+            )
 
         return vote_counts
 
@@ -1077,12 +1062,12 @@ class Conversation:
         """
         Compute group-aware consensus values for each comment.
         Based on the Clojure implementation in conversation.clj.
-        
+
         Returns:
             Dictionary mapping comment IDs to consensus values
         """
         # If we don't have group votes or comments, return empty dict
-        if not hasattr(self, 'group_clusters') or not self.group_clusters:
+        if not hasattr(self, "group_clusters") or not self.group_clusters:
             return {}
 
         # Get group votes structure
@@ -1096,13 +1081,13 @@ class Conversation:
 
         # First reduce: iterate through each group
         for gid, gid_stats in group_votes.items():
-            votes_data = gid_stats.get('votes', {})
+            votes_data = gid_stats.get("votes", {})
 
             # Second reduce: iterate through each comment's votes in this group
             for tid, vote_stats in votes_data.items():
                 # Get vote counts with defaults
-                agree_count = vote_stats.get('A', 0)
-                total_count = vote_stats.get('S', 0)
+                agree_count = vote_stats.get("A", 0)
+                total_count = vote_stats.get("S", 0)
 
                 # Calculate probability with Laplace smoothing
                 prob = (agree_count + 1.0) / (total_count + 2.0)
@@ -1137,7 +1122,7 @@ class Conversation:
         """
         Convert the conversation to a dictionary for serialization.
         Optimized version that handles large datasets efficiently.
-        
+
         Returns:
             Dictionary representation of the conversation
         """
@@ -1152,19 +1137,19 @@ class Conversation:
         # Initialize with basic attributes - build directly rather than using get_full_data
         base_start = time.time()
         result = {
-            'conversation_id': self.conversation_id,
-            'last_updated': self.last_updated,
-            'participant_count': self.participant_count,
-            'comment_count': self.comment_count,
-            'vote_stats': self.vote_stats
+            "conversation_id": self.conversation_id,
+            "last_updated": self.last_updated,
+            "participant_count": self.participant_count,
+            "comment_count": self.comment_count,
+            "vote_stats": self.vote_stats,
         }
 
         # Add moderation data
-        result['moderation'] = {
-            'mod_out_tids': list(self.mod_out_tids),
-            'mod_in_tids': list(self.mod_in_tids),
-            'meta_tids': list(self.meta_tids),
-            'mod_out_ptpts': list(self.mod_out_ptpts)
+        result["moderation"] = {
+            "mod_out_tids": list(self.mod_out_tids),
+            "mod_in_tids": list(self.mod_in_tids),
+            "meta_tids": list(self.meta_tids),
+            "mod_out_ptpts": list(self.mod_out_ptpts),
         }
 
         # Add PCA data efficiently
@@ -1177,10 +1162,7 @@ class Conversation:
                     return [numpy_to_list(x) for x in arr]
                 return arr
 
-            result['pca'] = {
-                'center': numpy_to_list(self.pca['center']),
-                'comps': numpy_to_list(self.pca['comps'])
-            }
+            result["pca"] = {"center": numpy_to_list(self.pca["center"]), "comps": numpy_to_list(self.pca["comps"])}
 
         # Add projection data efficiently (chunked for large datasets)
         if self.proj:
@@ -1188,7 +1170,7 @@ class Conversation:
             proj_size = len(self.proj)
             logger.info(f"Converting projections for {proj_size} participants")
 
-            result['proj'] = {}
+            result["proj"] = {}
 
             # Use chunking for large projection sets
             if proj_size > 5000:
@@ -1197,38 +1179,39 @@ class Conversation:
 
                 for i in range(0, proj_size, chunk_size):
                     chunk_start = time.time()
-                    chunk_keys = keys[i:i+chunk_size]
+                    chunk_keys = keys[i : i + chunk_size]
 
                     # Process this chunk using dictionary comprehension
-                    result['proj'].update({
-                        pid: proj.tolist() if isinstance(proj, np.ndarray) else proj
-                        for pid, proj in ((pid, self.proj[pid]) for pid in chunk_keys)
-                    })
+                    result["proj"].update(
+                        {
+                            pid: proj.tolist() if isinstance(proj, np.ndarray) else proj
+                            for pid, proj in ((pid, self.proj[pid]) for pid in chunk_keys)
+                        }
+                    )
 
                     logger.info(f"Processed projection chunk {i//chunk_size + 1}: {time.time() - chunk_start:.4f}s")
             else:
                 # Process all at once for smaller datasets
-                result['proj'] = {
-                    pid: proj.tolist() if isinstance(proj, np.ndarray) else proj
-                    for pid, proj in self.proj.items()
+                result["proj"] = {
+                    pid: proj.tolist() if isinstance(proj, np.ndarray) else proj for pid, proj in self.proj.items()
                 }
 
             logger.info(f"Projection data conversion: {time.time() - proj_start:.4f}s")
 
         # Add clusters data
-        result['group_clusters'] = self.group_clusters
+        result["group_clusters"] = self.group_clusters
 
         # Add representativeness data
         if self.repness:
-            result['repness'] = self.repness
+            result["repness"] = self.repness
 
         # Add participant info
         if self.participant_info:
-            result['participant_info'] = self.participant_info
+            result["participant_info"] = self.participant_info
 
         # Add comment priorities if available
-        if hasattr(self, 'comment_priorities') and self.comment_priorities:
-            result['comment_priorities'] = self.comment_priorities
+        if hasattr(self, "comment_priorities") and self.comment_priorities:
+            result["comment_priorities"] = self.comment_priorities
 
         logger.info(f"Base data setup: {time.time() - base_start:.4f}s")
 
@@ -1236,20 +1219,17 @@ class Conversation:
         clojure_start = time.time()
 
         # Rename conversation_id to zid and add timestamps
-        result['zid'] = result.pop('conversation_id')
-        result['lastVoteTimestamp'] = self.last_updated
-        result['lastModTimestamp'] = self.last_updated
+        result["zid"] = result.pop("conversation_id")
+        result["lastVoteTimestamp"] = self.last_updated
+        result["lastModTimestamp"] = self.last_updated
 
         # Convert and add tids (comment IDs) efficiently
         # Using a list comprehension with try/except inline for performance
-        result['tids'] = [
-            int(tid) if tid.isdigit() else tid
-            for tid in self.rating_mat.colnames()
-        ]
+        result["tids"] = [int(tid) if tid.isdigit() else tid for tid in self.rating_mat.colnames()]
 
         # Add count values with Clojure naming
-        result['n'] = self.participant_count
-        result['n-cmts'] = self.comment_count
+        result["n"] = self.participant_count
+        result["n-cmts"] = self.comment_count
 
         # Add user vote counts with vectorized operations
         vote_counts_start = time.time()
@@ -1270,7 +1250,7 @@ class Conversation:
                     except (ValueError, TypeError):
                         user_vote_counts[pid] = int(row_sums[i])
 
-        result['user-vote-counts'] = user_vote_counts
+        result["user-vote-counts"] = user_vote_counts
         logger.info(f"User vote counts: {time.time() - vote_counts_start:.4f}s")
 
         # Calculate votes-base efficiently with vectorized operations
@@ -1294,11 +1274,11 @@ class Conversation:
 
             # Try to convert tid to int for Clojure compatibility
             try:
-                votes_base[int(tid)] = {'A': int(col_agree), 'D': int(col_disagree), 'S': int(col_total)}
+                votes_base[int(tid)] = {"A": int(col_agree), "D": int(col_disagree), "S": int(col_total)}
             except (ValueError, TypeError):
-                votes_base[tid] = {'A': int(col_agree), 'D': int(col_disagree), 'S': int(col_total)}
+                votes_base[tid] = {"A": int(col_agree), "D": int(col_disagree), "S": int(col_total)}
 
-        result['votes-base'] = votes_base
+        result["votes-base"] = votes_base
         logger.info(f"Votes base: {time.time() - votes_base_start:.4f}s")
 
         # Compute group votes with optimized approach
@@ -1313,13 +1293,13 @@ class Conversation:
 
             # Process each group
             for group in self.group_clusters:
-                group_id = group.get('id')
+                group_id = group.get("id")
                 if group_id is None:
                     continue
 
                 # Get indices for all members of this group
                 member_indices = []
-                for member in group.get('members', []):
+                for member in group.get("members", []):
                     idx = ptpt_indices.get(member)
                     if idx is not None and idx < self.rating_mat.values.shape[0]:
                         member_indices.append(idx)
@@ -1350,23 +1330,20 @@ class Conversation:
                         cid = comment_id
 
                     # Store in result with Clojure-compatible format
-                    votes[cid] = {'A': int(agree_votes), 'D': int(disagree_votes), 'S': int(total_votes)}
+                    votes[cid] = {"A": int(agree_votes), "D": int(disagree_votes), "S": int(total_votes)}
 
                 # Store this group's data
-                group_votes[str(group_id)] = {
-                    'n-members': len(member_indices),
-                    'votes': votes
-                }
+                group_votes[str(group_id)] = {"n-members": len(member_indices), "votes": votes}
 
-        result['group-votes'] = group_votes
+        result["group-votes"] = group_votes
         logger.info(f"Group votes: {time.time() - group_votes_start:.4f}s")
 
         # Add empty subgroup structures
-        result['subgroup-votes'] = {}
-        result['subgroup-repness'] = {}
+        result["subgroup-votes"] = {}
+        result["subgroup-repness"] = {}
 
         # Initialize group_votes if missing to avoid errors
-        if not hasattr(self, 'group_votes'):
+        if not hasattr(self, "group_votes"):
             logger.info("Adding empty group_votes attribute")
             self.group_votes = {}
 
@@ -1375,7 +1352,7 @@ class Conversation:
         group_consensus = {}
 
         # Compute in one pass using existing structure
-        if 'group-votes' in result:
+        if "group-votes" in result:
             # Store consensus values per comment ID
             for tid in self.rating_mat.colnames():
                 # Try converting to integer for consistent keys
@@ -1389,13 +1366,13 @@ class Conversation:
                 has_data = False
 
                 # Multiply probabilities from all groups (same as reduce * in Clojure)
-                for gid, gid_data in result['group-votes'].items():
-                    votes_data = gid_data.get('votes', {})
+                for gid, gid_data in result["group-votes"].items():
+                    votes_data = gid_data.get("votes", {})
 
                     if tid_key in votes_data:
                         vote_stats = votes_data[tid_key]
-                        agree_count = vote_stats.get('A', 0)
-                        total_count = vote_stats.get('S', 0)
+                        agree_count = vote_stats.get("A", 0)
+                        total_count = vote_stats.get("S", 0)
 
                         # Calculate probability with Laplace smoothing
                         if total_count > 0:
@@ -1407,7 +1384,7 @@ class Conversation:
                 if has_data:
                     group_consensus[tid_key] = consensus_value
 
-        result['group-aware-consensus'] = group_consensus
+        result["group-aware-consensus"] = group_consensus
         logger.info(f"Group consensus: {time.time() - consensus_start:.4f}s")
 
         # Calculate in-conv participants
@@ -1417,43 +1394,30 @@ class Conversation:
         in_conv = []
         min_votes = min(7, self.comment_count)
 
-        for pid, count in result['user-vote-counts'].items():
+        for pid, count in result["user-vote-counts"].items():
             if count >= min_votes:
                 in_conv.append(pid)  # pid is already converted to int where possible
 
-        result['in-conv'] = in_conv
+        result["in-conv"] = in_conv
         logger.info(f"In-conv: {time.time() - in_conv_start:.4f}s")
 
         # Convert moderation IDs to integers when possible
         mod_start = time.time()
 
         # Convert moderation lists with list comprehensions for performance
-        result['mod-out'] = [
-            int(tid) if isinstance(tid, str) and tid.isdigit() else tid
-            for tid in self.mod_out_tids
-        ]
+        result["mod-out"] = [int(tid) if isinstance(tid, str) and tid.isdigit() else tid for tid in self.mod_out_tids]
 
-        result['mod-in'] = [
-            int(tid) if isinstance(tid, str) and tid.isdigit() else tid
-            for tid in self.mod_in_tids
-        ]
+        result["mod-in"] = [int(tid) if isinstance(tid, str) and tid.isdigit() else tid for tid in self.mod_in_tids]
 
-        result['meta-tids'] = [
-            int(tid) if isinstance(tid, str) and tid.isdigit() else tid
-            for tid in self.meta_tids
-        ]
+        result["meta-tids"] = [int(tid) if isinstance(tid, str) and tid.isdigit() else tid for tid in self.meta_tids]
 
         logger.info(f"Moderation data: {time.time() - mod_start:.4f}s")
 
         # Add base clusters (same as group clusters)
-        result['base-clusters'] = self.group_clusters
+        result["base-clusters"] = self.group_clusters
 
         # Add empty consensus structure for compatibility
-        result['consensus'] = {
-            'agree': [],
-            'disagree': [],
-            'comment-stats': {}
-        }
+        result["consensus"] = {"agree": [], "disagree": [], "comment-stats": {}}
 
         # Add math_tick value
         current_time = int(time.time())
@@ -1462,7 +1426,7 @@ class Conversation:
         logger.info(f"Clojure format setup: {time.time() - clojure_start:.4f}s")
 
         # Add math_tick value and return
-        result['math_tick'] = math_tick_value
+        result["math_tick"] = math_tick_value
         logger.info(f"Total to_dict time: {time.time() - overall_start_time:.4f}s")
         return result
 
@@ -1470,10 +1434,10 @@ class Conversation:
         """
         Optimized conversion of nested data structures for Clojure compatibility.
         Much faster than the full recursive conversion.
-        
+
         Args:
             data: The data structure to convert
-            
+
         Returns:
             Converted data structure
         """
@@ -1496,7 +1460,7 @@ class Conversation:
             result = {}
             for k, v in data.items():
                 # Convert key if it's a string
-                new_key = k.replace('_', '-') if isinstance(k, str) else k
+                new_key = k.replace("_", "-") if isinstance(k, str) else k
 
                 # Convert value
                 result[new_key] = self._convert_structure(v)
@@ -1513,29 +1477,22 @@ class Conversation:
     def _convert_to_clojure_format(data: Any) -> Any:
         """
         Recursively convert all keys in a nested data structure from underscore format to hyphenated format.
-        
+
         Args:
             data: Any Python data structure (dict, list, or primitive value)
-            
+
         Returns:
             Converted data structure with hyphenated keys
         """
         import time
+
         detail_start = time.time()
 
         # Count objects processed for debugging
-        processed_count = {
-            'dict': 0,
-            'list': 0,
-            'tuple': 0,
-            'primitive': 0,
-            'numpy': 0,
-            'cache_hit': 0,
-            'total': 0
-        }
+        processed_count = {"dict": 0, "list": 0, "tuple": 0, "primitive": 0, "numpy": 0, "cache_hit": 0, "total": 0}
 
         def _convert_inner(data, depth=0):
-            processed_count['total'] += 1
+            processed_count["total"] += 1
 
             # For immutable types, use memoization to avoid re-processing
             if isinstance(data, (str, int, float, bool, tuple)) or data is None:
@@ -1543,18 +1500,18 @@ class Conversation:
                 cache_key = (id(data), str(type(data))) if isinstance(data, tuple) else data
 
                 if cache_key in Conversation._conversion_cache:
-                    processed_count['cache_hit'] += 1
+                    processed_count["cache_hit"] += 1
                     return Conversation._conversion_cache[cache_key]
 
             # Base cases: primitive types
             if data is None or isinstance(data, (str, int, float, bool)):
-                processed_count['primitive'] += 1
+                processed_count["primitive"] += 1
                 Conversation._conversion_cache[data] = data
                 return data
 
             # Handle numpy arrays and convert to lists
-            if hasattr(data, 'tolist') and callable(data.tolist):
-                processed_count['numpy'] += 1
+            if hasattr(data, "tolist") and callable(data.tolist):
+                processed_count["numpy"] += 1
                 result = data.tolist()
                 return result
 
@@ -1566,18 +1523,20 @@ class Conversation:
 
             # Recursive case: dictionaries
             if isinstance(data, dict):
-                processed_count['dict'] += 1
+                processed_count["dict"] += 1
                 dict_start = time.time()
 
                 # Special optimization for large dictionaries:
                 # Pre-process all string keys at once to avoid repeated string replacements
                 keys_map_start = time.time()
-                keys_map = {k: k.replace('_', '-') if isinstance(k, str) else k for k in data.keys()}
+                keys_map = {k: k.replace("_", "-") if isinstance(k, str) else k for k in data.keys()}
                 keys_map_time = time.time() - keys_map_start
 
                 # Debug for large dictionaries
                 if len(data) > 1000 and depth == 0:
-                    logger.info(f"Processing large dictionary with {len(data)} keys, keys_map time: {keys_map_time:.4f}s")
+                    logger.info(
+                        f"Processing large dictionary with {len(data)} keys, keys_map time: {keys_map_time:.4f}s"
+                    )
 
                 converted_dict = {}
                 special_cases_time = 0
@@ -1585,7 +1544,7 @@ class Conversation:
 
                 for key, value in data.items():
                     # Handle special cases where we need to try converting string keys to integers
-                    if key in ('proj', 'comment-priorities'):
+                    if key in ("proj", "comment-priorities"):
                         special_start = time.time()
                         if isinstance(value, dict):
                             # Process this special dictionary more efficiently
@@ -1594,32 +1553,34 @@ class Conversation:
                                 try:
                                     # Try to convert key to integer
                                     int_k = int(k)
-                                    int_keyed_dict[int_k] = _convert_inner(v, depth+1)
+                                    int_keyed_dict[int_k] = _convert_inner(v, depth + 1)
                                 except (ValueError, TypeError):
                                     # Keep as is if conversion fails
-                                    int_keyed_dict[k] = _convert_inner(v, depth+1)
+                                    int_keyed_dict[k] = _convert_inner(v, depth + 1)
                             converted_dict[keys_map[key]] = int_keyed_dict
                             special_cases_time += time.time() - special_start
                             continue
 
                     # For regular keys, use the pre-computed hyphenated key
                     regular_start = time.time()
-                    converted_dict[keys_map[key]] = _convert_inner(value, depth+1)
+                    converted_dict[keys_map[key]] = _convert_inner(value, depth + 1)
                     regular_cases_time += time.time() - regular_start
 
                 # Debug for large dictionaries or projection data (which is typically the largest)
-                if (len(data) > 1000 or key == 'proj') and depth == 0:
+                if (len(data) > 1000 or key == "proj") and depth == 0:
                     total_dict_time = time.time() - dict_start
-                    logger.info(f"Dictionary processing: total={total_dict_time:.4f}s, special={special_cases_time:.4f}s, regular={regular_cases_time:.4f}s")
+                    logger.info(
+                        f"Dictionary processing: total={total_dict_time:.4f}s, special={special_cases_time:.4f}s, regular={regular_cases_time:.4f}s"
+                    )
 
                 return converted_dict
 
             # Recursive case: lists or tuples
             if isinstance(data, (list, tuple)):
                 if isinstance(data, list):
-                    processed_count['list'] += 1
+                    processed_count["list"] += 1
                 else:
-                    processed_count['tuple'] += 1
+                    processed_count["tuple"] += 1
 
                 # Debug for large lists
                 list_start = time.time()
@@ -1627,7 +1588,7 @@ class Conversation:
                     logger.info(f"Processing large list with {len(data)} items")
 
                 # For tuples, we'll cache the result
-                result = [_convert_inner(item, depth+1) for item in data]
+                result = [_convert_inner(item, depth + 1) for item in data]
 
                 # Debug for large lists
                 if len(data) > 1000 and depth == 0:
@@ -1648,7 +1609,7 @@ class Conversation:
 
         # Log summary statistics
         detail_time = time.time() - detail_start
-        if processed_count['total'] > 1000:
+        if processed_count["total"] > 1000:
             logger.info(f"Conversion stats: processed {processed_count['total']} objects in {detail_time:.4f}s")
             logger.info(f"    - Dictionaries: {processed_count['dict']}")
             logger.info(f"    - Lists: {processed_count['list']}")
@@ -1657,7 +1618,7 @@ class Conversation:
             logger.info(f"    - NumPy arrays: {processed_count['numpy']}")
             logger.info(f"    - Cache hits: {processed_count['cache_hit']}")
 
-            if processed_count['dict'] > 0:
+            if processed_count["dict"] > 0:
                 logger.info(f"    - Average time per object: {(detail_time/processed_count['total'])*1000:.4f}ms")
 
             cache_size = len(Conversation._conversion_cache)
@@ -1672,59 +1633,56 @@ class Conversation:
         Conversation._conversion_cache = {}
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> 'Conversation':
+    def from_dict(cls, data: dict[str, Any]) -> "Conversation":
         """
         Create a conversation from a dictionary.
-        
+
         Args:
            data: Dictionary representation of a conversation
-            
+
         Returns:
             Conversation instance
         """
         # Create empty conversation
-        conv = cls(data.get('conversation_id', ''))
+        conv = cls(data.get("conversation_id", ""))
 
         # Restore basic attributes
-        conv.last_updated = data.get('last_updated', int(time.time() * 1000))
-        conv.participant_count = data.get('participant_count', 0)
-        conv.comment_count = data.get('comment_count', 0)
+        conv.last_updated = data.get("last_updated", int(time.time() * 1000))
+        conv.participant_count = data.get("participant_count", 0)
+        conv.comment_count = data.get("comment_count", 0)
 
         # Restore vote stats
-        conv.vote_stats = data.get('vote_stats', {})
+        conv.vote_stats = data.get("vote_stats", {})
 
         # Restore moderation state
-        moderation = data.get('moderation', {})
-        conv.mod_out_tids = set(moderation.get('mod_out_tids', []))
-        conv.mod_in_tids = set(moderation.get('mod_in_tids', []))
-        conv.meta_tids = set(moderation.get('meta_tids', []))
-        conv.mod_out_ptpts = set(moderation.get('mod_out_ptpts', []))
+        moderation = data.get("moderation", {})
+        conv.mod_out_tids = set(moderation.get("mod_out_tids", []))
+        conv.mod_in_tids = set(moderation.get("mod_in_tids", []))
+        conv.meta_tids = set(moderation.get("meta_tids", []))
+        conv.mod_out_ptpts = set(moderation.get("mod_out_ptpts", []))
 
         # Restore PCA data
-        pca_data = data.get('pca')
+        pca_data = data.get("pca")
         if pca_data:
-            conv.pca = {
-                'center': np.array(pca_data['center']),
-                'comps': np.array(pca_data['comps'])
-            }
+            conv.pca = {"center": np.array(pca_data["center"]), "comps": np.array(pca_data["comps"])}
 
         # Restore projection data
-        proj_data = data.get('proj')
+        proj_data = data.get("proj")
         if proj_data:
             conv.proj = {pid: np.array(proj) for pid, proj in proj_data.items()}
 
         # Restore cluster data
-        conv.group_clusters = data.get('group_clusters', [])
+        conv.group_clusters = data.get("group_clusters", [])
 
         # Restore representativeness data
-        conv.repness = data.get('repness')
+        conv.repness = data.get("repness")
 
         # Restore participant info
-        conv.participant_info = data.get('participant_info', {})
+        conv.participant_info = data.get("participant_info", {})
 
         # Restore comment priorities if available
-        if 'comment_priorities' in data:
-            conv.comment_priorities = data.get('comment_priorities', {})
+        if "comment_priorities" in data:
+            conv.comment_priorities = data.get("comment_priorities", {})
 
         return conv
 
@@ -1733,7 +1691,7 @@ class Conversation:
         Convert the conversation to a dictionary optimized for DynamoDB export.
         This method is specifically optimized for performance with large datasets
         and uses Python-native naming conventions (underscores instead of hyphens).
-        
+
         Returns:
             Dictionary representation optimized for DynamoDB
         """
@@ -1748,13 +1706,13 @@ class Conversation:
 
         # Initialize result with basic attributes
         result = {
-            'zid': self.conversation_id,
-            'last_updated': self.last_updated,
-            'last_vote_timestamp': self.last_updated,
-            'last_mod_timestamp': self.last_updated,
-            'participant_count': self.participant_count,
-            'comment_count': self.comment_count,
-            'group_count': len(self.group_clusters) if hasattr(self, 'group_clusters') else 0
+            "zid": self.conversation_id,
+            "last_updated": self.last_updated,
+            "last_vote_timestamp": self.last_updated,
+            "last_mod_timestamp": self.last_updated,
+            "participant_count": self.participant_count,
+            "comment_count": self.comment_count,
+            "group_count": len(self.group_clusters) if hasattr(self, "group_clusters") else 0,
         }
 
         # Function to convert numpy arrays to lists
@@ -1789,30 +1747,30 @@ class Conversation:
                 tid_integers.append(int(tid))
             except (ValueError, TypeError):
                 tid_integers.append(tid)
-        result['comment_ids'] = tid_integers
+        result["comment_ids"] = tid_integers
 
         # Add moderation data with integer conversion where possible
         logger.info(f"[{time.time() - start_time:.2f}s] Processing moderation data...")
-        result['moderated_out'] = []
+        result["moderated_out"] = []
         for tid in self.mod_out_tids:
             try:
-                result['moderated_out'].append(int(tid))
+                result["moderated_out"].append(int(tid))
             except (ValueError, TypeError):
-                result['moderated_out'].append(tid)
+                result["moderated_out"].append(tid)
 
-        result['moderated_in'] = []
+        result["moderated_in"] = []
         for tid in self.mod_in_tids:
             try:
-                result['moderated_in'].append(int(tid))
+                result["moderated_in"].append(int(tid))
             except (ValueError, TypeError):
-                result['moderated_in'].append(tid)
+                result["moderated_in"].append(tid)
 
-        result['meta_comments'] = []
+        result["meta_comments"] = []
         for tid in self.meta_tids:
             try:
-                result['meta_comments'].append(int(tid))
+                result["meta_comments"].append(int(tid))
             except (ValueError, TypeError):
-                result['meta_comments'].append(tid)
+                result["meta_comments"].append(tid)
 
         # Add user vote counts (more efficient approach)
         logger.info(f"[{time.time() - start_time:.2f}s] Computing user vote counts...")
@@ -1832,7 +1790,7 @@ class Conversation:
             except (ValueError, TypeError):
                 user_vote_counts[pid] = count
 
-        result['user_vote_counts'] = user_vote_counts
+        result["user_vote_counts"] = user_vote_counts
 
         # Calculate included participants (meeting vote threshold)
         logger.info(f"[{time.time() - start_time:.2f}s] Computing included participants...")
@@ -1843,7 +1801,7 @@ class Conversation:
             if count >= min_votes:
                 included_participants.append(pid)  # Already converted above
 
-        result['included_participants'] = included_participants
+        result["included_participants"] = included_participants
 
         # Add votes base structure (optimized batch conversion)
         logger.info(f"[{time.time() - start_time:.2f}s] Computing votes base structure...")
@@ -1869,22 +1827,26 @@ class Conversation:
 
                 # Try to convert tid to int for compatibility
                 try:
-                    votes_base[int(tid)] = {'agree': int(col_agree), 'disagree': int(col_disagree), 'total': int(col_total)}
+                    votes_base[int(tid)] = {
+                        "agree": int(col_agree),
+                        "disagree": int(col_disagree),
+                        "total": int(col_total),
+                    }
                 except (ValueError, TypeError):
-                    votes_base[tid] = {'agree': int(col_agree), 'disagree': int(col_disagree), 'total': int(col_total)}
+                    votes_base[tid] = {"agree": int(col_agree), "disagree": int(col_disagree), "total": int(col_total)}
             except (IndexError, ValueError, TypeError):
                 # Handle any errors gracefully
                 continue
 
         logger.info(f"[{time.time() - start_time:.2f}s] votes_base computed in {time.time() - votes_base_start:.2f}s")
-        result['votes_base'] = votes_base
+        result["votes_base"] = votes_base
 
         # Compute group votes structure with optimized approach
         logger.info(f"[{time.time() - start_time:.2f}s] Computing group votes structure...")
         group_votes_start = time.time()
 
         # Initialize with empty structure
-        result['group_votes'] = {}
+        result["group_votes"] = {}
 
         # Process groups only if they exist
         if self.group_clusters:
@@ -1895,13 +1857,13 @@ class Conversation:
 
             # Process each group
             for group in self.group_clusters:
-                group_id = group.get('id')
+                group_id = group.get("id")
                 if group_id is None:
                     continue
 
                 # Get indices for group members
                 member_indices = []
-                for member in group.get('members', []):
+                for member in group.get("members", []):
                     idx = ptpt_indices.get(member)
                     if idx is not None and idx < self.rating_mat.values.shape[0]:
                         member_indices.append(idx)
@@ -1935,31 +1897,28 @@ class Conversation:
 
                     # Store in result
                     group_votes[cid] = {
-                        'agree': int(agree_votes),
-                        'disagree': int(disagree_votes),
-                        'total': int(total_votes)
+                        "agree": int(agree_votes),
+                        "disagree": int(disagree_votes),
+                        "total": int(total_votes),
                     }
 
                 # Add this group's data to result
-                result['group_votes'][str(group_id)] = {
-                    'member_count': len(member_indices),
-                    'votes': group_votes
-                }
+                result["group_votes"][str(group_id)] = {"member_count": len(member_indices), "votes": group_votes}
 
         logger.info(f"[{time.time() - start_time:.2f}s] group_votes computed in {time.time() - group_votes_start:.2f}s")
 
         # Add empty subgroup structures (to be implemented if needed)
-        result['subgroup_votes'] = {}
-        result['subgroup_repness'] = {}
+        result["subgroup_votes"] = {}
+        result["subgroup_repness"] = {}
 
         # Add group-aware consensus
         logger.info(f"[{time.time() - start_time:.2f}s] Computing group consensus values...")
         consensus_start = time.time()
 
         # Simplified implementation
-        result['group_consensus'] = {}
-        if self.group_clusters and 'group_votes' in result:
-            group_votes = result['group_votes']
+        result["group_consensus"] = {}
+        if self.group_clusters and "group_votes" in result:
+            group_votes = result["group_votes"]
 
             # Process each comment across all groups
             for tid in self.rating_mat.colnames():
@@ -1974,12 +1933,12 @@ class Conversation:
 
                 # Collect probabilities for all groups
                 for gid, gid_stats in group_votes.items():
-                    votes_data = gid_stats.get('votes', {})
+                    votes_data = gid_stats.get("votes", {})
                     if tid_key in votes_data:
                         vote_stats = votes_data[tid_key]
                         # Get vote counts with defaults
-                        agree_count = vote_stats.get('agree', 0)
-                        total_count = vote_stats.get('total', 0)
+                        agree_count = vote_stats.get("agree", 0)
+                        total_count = vote_stats.get("total", 0)
 
                         # Calculate probability with Laplace smoothing
                         prob = (agree_count + 1.0) / (total_count + 2.0)
@@ -1991,9 +1950,11 @@ class Conversation:
                         consensus_value *= prob
 
                     # Store result with decimal conversion for DynamoDB
-                    result['group_consensus'][tid_key] = decimal.Decimal(str(consensus_value))
+                    result["group_consensus"][tid_key] = decimal.Decimal(str(consensus_value))
 
-        logger.info(f"[{time.time() - start_time:.2f}s] group_consensus computed in {time.time() - consensus_start:.2f}s")
+        logger.info(
+            f"[{time.time() - start_time:.2f}s] group_consensus computed in {time.time() - consensus_start:.2f}s"
+        )
 
         # Add base-clusters and PCA data
         logger.info(f"[{time.time() - start_time:.2f}s] Processing PCA and cluster data...")
@@ -2003,38 +1964,34 @@ class Conversation:
         for cluster in self.group_clusters:
             # Convert to a dict without numpy arrays
             clean_cluster = {
-                'id': cluster.get('id'),
-                'members': cluster.get('members', []),
-                'center': numpy_to_list(cluster.get('center', [])),
+                "id": cluster.get("id"),
+                "members": cluster.get("members", []),
+                "center": numpy_to_list(cluster.get("center", [])),
             }
             base_clusters.append(clean_cluster)
 
         # Convert to decimals for DynamoDB
-        result['base_clusters'] = float_to_decimal(base_clusters)
-        result['group_clusters'] = result['base_clusters']  # Same data
+        result["base_clusters"] = float_to_decimal(base_clusters)
+        result["group_clusters"] = result["base_clusters"]  # Same data
 
         # Process PCA data
         if self.pca:
             pca_data = {
-                'center': numpy_to_list(self.pca.get('center', [])),
-                'components': numpy_to_list(self.pca.get('comps', []))
+                "center": numpy_to_list(self.pca.get("center", [])),
+                "components": numpy_to_list(self.pca.get("comps", [])),
             }
-            result['pca'] = float_to_decimal(pca_data)
+            result["pca"] = float_to_decimal(pca_data)
 
         # Add consensus structure
-        result['consensus'] = {
-            'agree': [],
-            'disagree': [],
-            'comment_stats': {}
-        }
+        result["consensus"] = {"agree": [], "disagree": [], "comment_stats": {}}
 
         # Add math_tick value
         current_time = int(time.time())
         math_tick = 25000 + (current_time % 10000)
-        result['math_tick'] = math_tick
+        result["math_tick"] = math_tick
 
         # Process comment priorities
-        if hasattr(self, 'comment_priorities') and self.comment_priorities:
+        if hasattr(self, "comment_priorities") and self.comment_priorities:
             logger.info(f"[{time.time() - start_time:.2f}s] Processing comment priorities...")
             priorities = {}
             for cid, priority in self.comment_priorities.items():
@@ -2042,21 +1999,21 @@ class Conversation:
                     priorities[int(cid)] = int(priority)
                 except (ValueError, TypeError):
                     priorities[cid] = int(priority)
-            result['comment_priorities'] = priorities
+            result["comment_priorities"] = priorities
 
         # Process repness data efficiently
-        if self.repness and 'comment_repness' in self.repness:
+        if self.repness and "comment_repness" in self.repness:
             logger.info(f"[{time.time() - start_time:.2f}s] Processing representativeness data...")
             repness_start = time.time()
 
             # Process in batch to be more efficient
             repness_data = []
-            for item in self.repness['comment_repness']:
+            for item in self.repness["comment_repness"]:
                 # Convert using try/except to handle mixed formats
                 try:
-                    gid = item.get('gid', 0)
-                    tid = item.get('tid', '')
-                    rep_value = item.get('repness', 0)
+                    gid = item.get("gid", 0)
+                    tid = item.get("tid", "")
+                    rep_value = item.get("repness", 0)
 
                     # Try to convert tid to integer
                     try:
@@ -2065,20 +2022,18 @@ class Conversation:
                         pass
 
                     # Add to results with Decimal conversion for DynamoDB
-                    repness_data.append({
-                        'group_id': gid,
-                        'comment_id': tid,
-                        'repness': decimal.Decimal(str(rep_value))
-                    })
+                    repness_data.append(
+                        {"group_id": gid, "comment_id": tid, "repness": decimal.Decimal(str(rep_value))}
+                    )
                 except Exception as e:
                     logger.warning(f"Error processing repness item: {e}")
 
             # Add to result
-            result['repness'] = {
-                'comment_repness': repness_data
-            }
+            result["repness"] = {"comment_repness": repness_data}
 
-            logger.info(f"[{time.time() - start_time:.2f}s] Representativeness data processed in {time.time() - repness_start:.2f}s")
+            logger.info(
+                f"[{time.time() - start_time:.2f}s] Representativeness data processed in {time.time() - repness_start:.2f}s"
+            )
 
         # The proj attribute (participant projections) is handled separately by the DynamoDB client
         # for efficiency with large datasets
@@ -2089,10 +2044,10 @@ class Conversation:
     def export_to_dynamodb(self, dynamodb_client) -> bool:
         """
         Export conversation data directly to DynamoDB.
-        
+
         Args:
             dynamodb_client: An initialized DynamoDBClient instance
-            
+
         Returns:
             Success status
         """
@@ -2108,5 +2063,6 @@ class Conversation:
         except Exception as e:
             logger.error(f"Exception during export to DynamoDB: {e}")
             import traceback
+
             logger.error(f"Traceback: {traceback.format_exc()}")
             return False

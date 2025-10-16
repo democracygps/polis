@@ -15,15 +15,15 @@ import boto3
 
 # Set up DynamoDB
 dynamodb = boto3.resource(
-    'dynamodb',
-    endpoint_url='http://localhost:8000',
-    region_name='us-west-2',
-    aws_access_key_id='fakeMyKeyId',
-    aws_secret_access_key='fakeSecretAccessKey'
+    "dynamodb",
+    endpoint_url="http://localhost:8000",
+    region_name="us-west-2",
+    aws_access_key_id="fakeMyKeyId",
+    aws_secret_access_key="fakeSecretAccessKey",
 )
 
 # Job queue table
-job_table = dynamodb.Table('Delphi_JobQueue')
+job_table = dynamodb.Table("Delphi_JobQueue")
 
 # Generate a job ID
 job_id = f"test_batch_job_{int(time.time())}_{uuid.uuid4().hex[:8]}"
@@ -34,17 +34,17 @@ fake_batch_id = "msgbatch_01HkcTjaV5uDC8jWR4ZsDV8d"  # From Anthropic docs
 current_time = datetime.now().isoformat()
 
 job_item = {
-    'job_id': job_id,
-    'conversation_id': '19305',
-    'status': 'PROCESSING',
-    'job_type': 'NARRATIVE_BATCH',
-    'created_at': current_time,
-    'updated_at': current_time,
-    'batch_id': fake_batch_id,  # This is the key field we're testing
-    'batch_status': 'processing',
-    'priority': 10,
-    'version': 1,
-    'logs': json.dumps({'entries': []})
+    "job_id": job_id,
+    "conversation_id": "19305",
+    "status": "PROCESSING",
+    "job_type": "NARRATIVE_BATCH",
+    "created_at": current_time,
+    "updated_at": current_time,
+    "batch_id": fake_batch_id,  # This is the key field we're testing
+    "batch_status": "processing",
+    "priority": 10,
+    "version": 1,
+    "logs": json.dumps({"entries": []}),
 }
 
 # Store the job
@@ -55,11 +55,11 @@ print(f"Job created with response: {response}")
 time.sleep(1)
 
 # Retrieve the job to verify the batch_id is stored correctly
-get_response = job_table.get_item(Key={'job_id': job_id})
-if 'Item' in get_response:
-    job = get_response['Item']
+get_response = job_table.get_item(Key={"job_id": job_id})
+if "Item" in get_response:
+    job = get_response["Item"]
     print(f"Retrieved job fields: {list(job.keys())}")
-    if 'batch_id' in job:
+    if "batch_id" in job:
         print(f"VERIFICATION SUCCESS: batch_id is present: {job['batch_id']}")
     else:
         print("VERIFICATION FAILED: batch_id not found in job!")
@@ -69,14 +69,14 @@ else:
 # Test the query that the poller uses to find jobs with batch_id
 print("\nTesting poller's scan for finding batch jobs...")
 scan_response = job_table.scan(
-    FilterExpression='attribute_exists(batch_id) AND (attribute_not_exists(status) OR status <> :completed_status)',
-    ExpressionAttributeValues={':completed_status': 'COMPLETED'}
+    FilterExpression="attribute_exists(batch_id) AND (attribute_not_exists(status) OR status <> :completed_status)",
+    ExpressionAttributeValues={":completed_status": "COMPLETED"},
 )
 
-items = scan_response.get('Items', [])
+items = scan_response.get("Items", [])
 found = False
 for item in items:
-    if item.get('job_id') == job_id:
+    if item.get("job_id") == job_id:
         found = True
         print("SCAN SUCCESS: Job found by scan with batch_id!")
         print(f"Fields present: {list(item.keys())}")
@@ -86,12 +86,9 @@ if not found:
     print("SCAN FAILED: Job not found by scan looking for batch_id attribute!")
 
     # Try a simpler scan to see if the job exists
-    simple_scan = job_table.scan(
-        FilterExpression='job_id = :job_id',
-        ExpressionAttributeValues={':job_id': job_id}
-    )
+    simple_scan = job_table.scan(FilterExpression="job_id = :job_id", ExpressionAttributeValues={":job_id": job_id})
 
-    if simple_scan.get('Items'):
+    if simple_scan.get("Items"):
         print("Job exists but not matched by batch_id attribute scan")
     else:
         print("Job not found at all in simple scan")

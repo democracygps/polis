@@ -22,13 +22,12 @@ def run_unit_tests():
     print("=====================\n")
 
     # Run pytest on the tests directory
-    test_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tests')
+    test_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tests")
 
     # Skip real data tests, comparison tests, and fixture-dependent tests
-    result = pytest.main([
-        '-v', test_dir,
-        '-k', 'not test_real_data and not test_comparison and not test_pca_projection'
-    ])
+    result = pytest.main(
+        ["-v", test_dir, "-k", "not test_real_data and not test_comparison and not test_pca_projection"]
+    )
 
     return result == 0  # Return True if all tests passed
 
@@ -111,8 +110,8 @@ def run_simplified_tests():
                 script_content = f.read()
             # Prepare globals with __name__ = "__main__" to simulate running as main
             script_globals = {
-                '__name__': '__main__',
-                '__file__': script_path,
+                "__name__": "__main__",
+                "__file__": script_path,
             }
             # Execute the script
             exec(script_content, script_globals)
@@ -121,12 +120,13 @@ def run_simplified_tests():
         except Exception as e:
             print(f"{script_name} failed with error: {e}")
             import traceback
+
             traceback.print_exc()
             return False
 
     # Run both simplified test scripts
-    pca_test_success = run_script('simplified_test.py')
-    repness_test_success = run_script('simplified_repness_test.py')
+    pca_test_success = run_script("simplified_test.py")
+    repness_test_success = run_script("simplified_repness_test.py")
 
     # Return True only if both tests passed
     return pca_test_success and repness_test_success
@@ -134,11 +134,11 @@ def run_simplified_tests():
 
 def main():
     """Main function to run all tests."""
-    parser = argparse.ArgumentParser(description='Run tests for Polis math Python conversion')
-    parser.add_argument('--unit', action='store_true', help='Run unit tests only')
-    parser.add_argument('--real', action='store_true', help='Run real data test only')
-    parser.add_argument('--demo', action='store_true', help='Run demo scripts only')
-    parser.add_argument('--simplified', action='store_true', help='Run simplified test scripts only')
+    parser = argparse.ArgumentParser(description="Run tests for Polis math Python conversion")
+    parser.add_argument("--unit", action="store_true", help="Run unit tests only")
+    parser.add_argument("--real", action="store_true", help="Run real data test only")
+    parser.add_argument("--demo", action="store_true", help="Run demo scripts only")
+    parser.add_argument("--simplified", action="store_true", help="Run simplified test scripts only")
     args = parser.parse_args()
 
     # Start time
@@ -150,17 +150,17 @@ def main():
 
     # Run selected tests or all tests if no specific test is selected
     if args.unit or not (args.unit or args.real or args.demo or args.simplified):
-        results['unit_tests'] = run_unit_tests()
+        results["unit_tests"] = run_unit_tests()
 
     if args.real or not (args.unit or args.real or args.demo or args.simplified):
-        results['real_data_test'] = run_real_data_test()
+        results["real_data_test"] = run_real_data_test()
 
     if args.demo or not (args.unit or args.real or args.demo or args.simplified):
-        results['simple_demo'] = run_simple_demo()
-        results['final_demo'] = run_final_demo()
+        results["simple_demo"] = run_simple_demo()
+        results["final_demo"] = run_final_demo()
 
     if args.simplified or not (args.unit or args.real or args.demo or args.simplified):
-        results['simplified_tests'] = run_simplified_tests()
+        results["simplified_tests"] = run_simplified_tests()
 
     # End time
     end_time = datetime.now()

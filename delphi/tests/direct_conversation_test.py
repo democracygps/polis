@@ -19,18 +19,18 @@ from polismath.pca_kmeans_rep.named_matrix import NamedMatrix
 def create_test_conversation(dataset_name: str) -> Conversation:
     """
     Create a test conversation with real data.
-    
+
     Args:
         dataset_name: 'biodiversity' or 'vw'
-        
+
     Returns:
         Conversation with the dataset loaded
     """
     # Set paths based on dataset
-    if dataset_name == 'biodiversity':
-        votes_path = os.path.join('real_data/biodiversity', '2025-03-18-2000-3atycmhmer-votes.csv')
-    elif dataset_name == 'vw':
-        votes_path = os.path.join('real_data/vw', '2025-03-18-1954-4anfsauat2-votes.csv')
+    if dataset_name == "biodiversity":
+        votes_path = os.path.join("real_data/biodiversity", "2025-03-18-2000-3atycmhmer-votes.csv")
+    elif dataset_name == "vw":
+        votes_path = os.path.join("real_data/vw", "2025-03-18-1954-4anfsauat2-votes.csv")
     else:
         raise ValueError(f"Unknown dataset: {dataset_name}")
 
@@ -38,8 +38,8 @@ def create_test_conversation(dataset_name: str) -> Conversation:
     df = pd.read_csv(votes_path)
 
     # Get unique participant and comment IDs
-    ptpt_ids = sorted(df['voter-id'].unique())
-    cmt_ids = sorted(df['comment-id'].unique())
+    ptpt_ids = sorted(df["voter-id"].unique())
+    cmt_ids = sorted(df["comment-id"].unique())
 
     # Create a matrix of NaNs
     vote_matrix = np.full((len(ptpt_ids), len(cmt_ids)), np.nan)
@@ -50,12 +50,12 @@ def create_test_conversation(dataset_name: str) -> Conversation:
 
     # Fill the matrix with votes
     for _, row in df.iterrows():
-        pid = row['voter-id']
-        cid = row['comment-id']
+        pid = row["voter-id"]
+        cid = row["comment-id"]
 
         # Convert vote to numeric value
         try:
-            vote_val = float(row['vote'])
+            vote_val = float(row["vote"])
             # Normalize to ensure only -1, 0, or 1
             if vote_val > 0:
                 vote_val = 1.0
@@ -65,10 +65,10 @@ def create_test_conversation(dataset_name: str) -> Conversation:
                 vote_val = 0.0
         except ValueError:
             # Handle text values
-            vote_text = str(row['vote']).lower()
-            if vote_text == 'agree':
+            vote_text = str(row["vote"]).lower()
+            if vote_text == "agree":
                 vote_val = 1.0
-            elif vote_text == 'disagree':
+            elif vote_text == "disagree":
                 vote_val = -1.0
             else:
                 vote_val = 0.0  # Pass or unknown
@@ -79,11 +79,7 @@ def create_test_conversation(dataset_name: str) -> Conversation:
         vote_matrix[r_idx, c_idx] = vote_val
 
     # Convert to DataFrame
-    df_matrix = pd.DataFrame(
-        vote_matrix,
-        index=[str(pid) for pid in ptpt_ids],
-        columns=[str(cid) for cid in cmt_ids]
-    )
+    df_matrix = pd.DataFrame(vote_matrix, index=[str(pid) for pid in ptpt_ids], columns=[str(cid) for cid in cmt_ids])
 
     # Create a NamedMatrix
     named_matrix = NamedMatrix(df_matrix, enforce_numeric=True)
@@ -99,10 +95,11 @@ def create_test_conversation(dataset_name: str) -> Conversation:
 
     return conv
 
+
 def test_conversation(dataset_name: str) -> None:
     """
     Test the Conversation class with a real dataset.
-    
+
     Args:
         dataset_name: 'biodiversity' or 'vw'
     """
@@ -139,11 +136,13 @@ def test_conversation(dataset_name: str) -> None:
     except Exception as e:
         print(f"Error during conversation processing: {e}")
         import traceback
+
         traceback.print_exc()
         print("Conversation recompute FAILED!")
 
+
 if __name__ == "__main__":
     # Test on both datasets
-    test_conversation('biodiversity')
-    print("\n" + "="*50 + "\n")
-    test_conversation('vw')
+    test_conversation("biodiversity")
+    print("\n" + "=" * 50 + "\n")
+    test_conversation("vw")

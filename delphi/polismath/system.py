@@ -29,7 +29,7 @@ class System:
     def __init__(self, config: Config | None = None):
         """
         Initialize the system.
-        
+
         Args:
             config: Configuration for the system
         """
@@ -59,7 +59,7 @@ class System:
         self.db = PostgresManager.get_client()
 
         # Initialize conversation manager
-        data_dir = self.config.get('data_dir')
+        data_dir = self.config.get("data_dir")
         self.conversation_manager = ConversationManager(data_dir)
 
         # Initialize poller
@@ -140,7 +140,7 @@ class System:
     def _signal_handler(self, signum: int, frame: Any) -> None:
         """
         Handle signals.
-        
+
         Args:
             signum: Signal number
             frame: Current stack frame
@@ -167,10 +167,10 @@ class SystemManager:
     def get_system(cls, config: Config | None = None) -> System:
         """
         Get the system instance.
-        
+
         Args:
             config: Configuration for the system
-            
+
         Returns:
             System instance
         """
@@ -184,10 +184,10 @@ class SystemManager:
     def start(cls, config: Config | None = None) -> System:
         """
         Start the system.
-        
+
         Args:
             config: Configuration for the system
-            
+
         Returns:
             System instance
         """

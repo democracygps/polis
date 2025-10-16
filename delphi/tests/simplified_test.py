@@ -13,6 +13,7 @@ import pandas as pd
 
 # Define simplified versions of the core math functions
 
+
 def normalize_vector(v: np.ndarray) -> np.ndarray:
     """Normalize a vector to unit length."""
     norm = np.linalg.norm(v)
@@ -20,9 +21,11 @@ def normalize_vector(v: np.ndarray) -> np.ndarray:
         return v
     return v / norm
 
+
 def xtxr(data: np.ndarray, vec: np.ndarray) -> np.ndarray:
     """Calculate X^T * X * r where X is data and r is vec."""
     return data.T @ (data @ vec)
+
 
 def power_iteration(data: np.ndarray, iters: int = 100) -> np.ndarray:
     """Find the first eigenvector of data using power iteration."""
@@ -53,6 +56,7 @@ def power_iteration(data: np.ndarray, iters: int = 100) -> np.ndarray:
 
     return vector
 
+
 def pca_simple(data: np.ndarray, n_comps: int = 2) -> dict[str, np.ndarray]:
     """Simple PCA implementation."""
     # Center the data
@@ -75,15 +79,14 @@ def pca_simple(data: np.ndarray, n_comps: int = 2) -> dict[str, np.ndarray]:
             # Remove projection
             factored_data = factored_data - proj
 
-    return {
-        'center': center,
-        'comps': np.array(components)
-    }
+    return {"center": center, "comps": np.array(components)}
+
 
 def project_data(data: np.ndarray, pca_results: dict[str, np.ndarray]) -> np.ndarray:
     """Project data onto principal components."""
-    centered = data - pca_results['center']
-    return centered @ pca_results['comps'].T
+    centered = data - pca_results["center"]
+    return centered @ pca_results["comps"].T
+
 
 def kmeans_clustering(projections: np.ndarray, n_clusters: int = 3) -> list[dict[str, Any]]:
     """Simple k-means clustering."""
@@ -97,21 +100,18 @@ def kmeans_clustering(projections: np.ndarray, n_clusters: int = 3) -> list[dict
     clusters = []
     for i in range(n_clusters):
         members = np.where(labels == i)[0].tolist()
-        clusters.append({
-            'id': i,
-            'members': members,
-            'center': centers[i]
-        })
+        clusters.append({"id": i, "members": members, "center": centers[i]})
 
     return clusters
+
 
 def load_votes(dataset_name: str) -> tuple:
     """Load votes from a dataset."""
     # Set paths based on dataset
-    if dataset_name == 'biodiversity':
-        votes_path = os.path.join('real_data/biodiversity', '2025-03-18-2000-3atycmhmer-votes.csv')
-    elif dataset_name == 'vw':
-        votes_path = os.path.join('real_data/vw', '2025-03-18-1954-4anfsauat2-votes.csv')
+    if dataset_name == "biodiversity":
+        votes_path = os.path.join("real_data/biodiversity", "2025-03-18-2000-3atycmhmer-votes.csv")
+    elif dataset_name == "vw":
+        votes_path = os.path.join("real_data/vw", "2025-03-18-1954-4anfsauat2-votes.csv")
     else:
         raise ValueError(f"Unknown dataset: {dataset_name}")
 
@@ -119,8 +119,8 @@ def load_votes(dataset_name: str) -> tuple:
     df = pd.read_csv(votes_path)
 
     # Get unique participant and comment IDs
-    ptpt_ids = sorted(df['voter-id'].unique())
-    cmt_ids = sorted(df['comment-id'].unique())
+    ptpt_ids = sorted(df["voter-id"].unique())
+    cmt_ids = sorted(df["comment-id"].unique())
 
     # Create a matrix of NaNs
     vote_matrix = np.full((len(ptpt_ids), len(cmt_ids)), np.nan)
@@ -131,12 +131,12 @@ def load_votes(dataset_name: str) -> tuple:
 
     # Fill the matrix with votes
     for _, row in df.iterrows():
-        pid = row['voter-id']
-        cid = row['comment-id']
+        pid = row["voter-id"]
+        cid = row["comment-id"]
 
         # Convert vote to numeric value
         try:
-            vote_val = float(row['vote'])
+            vote_val = float(row["vote"])
             # Normalize to ensure only -1, 0, or 1
             if vote_val > 0:
                 vote_val = 1.0
@@ -146,10 +146,10 @@ def load_votes(dataset_name: str) -> tuple:
                 vote_val = 0.0
         except ValueError:
             # Handle text values
-            vote_text = str(row['vote']).lower()
-            if vote_text == 'agree':
+            vote_text = str(row["vote"]).lower()
+            if vote_text == "agree":
                 vote_val = 1.0
-            elif vote_text == 'disagree':
+            elif vote_text == "disagree":
                 vote_val = -1.0
             else:
                 vote_val = 0.0  # Pass or unknown
@@ -160,6 +160,7 @@ def load_votes(dataset_name: str) -> tuple:
         vote_matrix[r_idx, c_idx] = vote_val
 
     return vote_matrix, ptpt_ids, cmt_ids
+
 
 def run_test(dataset_name: str) -> None:
     """Run a test on a dataset."""
@@ -213,6 +214,6 @@ def run_test(dataset_name: str) -> None:
 
 if __name__ == "__main__":
     # Run tests on both datasets
-    run_test('biodiversity')
-    print("\n" + "="*70)
-    run_test('vw')
+    run_test("biodiversity")
+    print("\n" + "=" * 70)
+    run_test("vw")

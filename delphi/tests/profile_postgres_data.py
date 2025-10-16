@@ -14,7 +14,7 @@ import psycopg2
 from psycopg2 import extras
 
 # Add the parent directory to the path to import the module
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import the profiler before any other polismath imports
 from tests.conversation_profiler import instrument_conversation_class, print_profiling_summary, restore_original_methods
@@ -29,27 +29,23 @@ from polismath.conversation.conversation import Conversation
 def connect_to_db():
     """Connect to PostgreSQL database."""
     try:
-        conn = psycopg2.connect(
-            dbname="polis_subset",
-            user="christian",
-            password="christian",
-            host="localhost"
-        )
+        conn = psycopg2.connect(dbname="polis_subset", user="christian", password="christian", host="localhost")
         print("Connected to database successfully")
         return conn
     except Exception as e:
         print(f"Error connecting to database: {e}")
         return None
 
+
 def fetch_votes(conn, conversation_id, limit=1000):
     """
     Fetch votes for a specific conversation from PostgreSQL.
-    
+
     Args:
         conn: PostgreSQL connection
         conversation_id: Conversation ID (zid)
         limit: Optional limit on number of votes (use for profiling)
-        
+
     Returns:
         Dictionary containing votes in the format expected by Conversation
     """
@@ -79,7 +75,7 @@ def fetch_votes(conn, conversation_id, limit=1000):
     except Exception as e:
         print(f"Error fetching votes: {e}")
         cursor.close()
-        return {'votes': []}
+        return {"votes": []}
 
     # Convert to the format expected by the Conversation class
     print("Converting votes to required format...")
@@ -87,25 +83,26 @@ def fetch_votes(conn, conversation_id, limit=1000):
 
     for vote in votes:
         # Handle timestamp (already a string in Unix timestamp format)
-        if vote['timestamp']:
+        if vote["timestamp"]:
             try:
-                created_time = int(float(vote['timestamp']) * 1000)
+                created_time = int(float(vote["timestamp"]) * 1000)
             except (ValueError, TypeError):
                 created_time = None
         else:
             created_time = None
 
-        votes_list.append({
-            'pid': str(vote['voter_id']),
-            'tid': str(vote['comment_id']),
-            'vote': float(vote['vote']),
-            'created': created_time
-        })
+        votes_list.append(
+            {
+                "pid": str(vote["voter_id"]),
+                "tid": str(vote["comment_id"]),
+                "vote": float(vote["vote"]),
+                "created": created_time,
+            }
+        )
 
     # Pack into the expected votes format
-    return {
-        'votes': votes_list
-    }
+    return {"votes": votes_list}
+
 
 def get_specific_conversation(conn, zid=None):
     """Get a specific conversation or the most popular one."""
@@ -144,14 +141,15 @@ def get_specific_conversation(conn, zid=None):
     cursor.close()
 
     if result:
-        return result['zid'], result['vote_count']
+        return result["zid"], result["vote_count"]
     else:
         return None, 0
+
 
 def profile_conversation(conn, zid=None, vote_limit=1000):
     """
     Profile the Conversation class with PostgreSQL data.
-    
+
     Args:
         conn: PostgreSQL connection
         zid: Optional specific conversation ID
@@ -190,7 +188,7 @@ def profile_conversation(conn, zid=None, vote_limit=1000):
     # Print cProfile results
     print("\ncProfile Results (top 30 functions by cumulative time):")
     s = StringIO()
-    ps = pstats.Stats(profiler, stream=s).sort_stats('cumtime')
+    ps = pstats.Stats(profiler, stream=s).sort_stats("cumtime")
     ps.print_stats(30)
     print(s.getvalue())
 
@@ -200,13 +198,14 @@ def profile_conversation(conn, zid=None, vote_limit=1000):
     # Return the conv object for further analysis if needed
     return conv
 
+
 def main():
     """Main function to run the profiling."""
     import argparse
 
-    parser = argparse.ArgumentParser(description='Profile Conversation class with PostgreSQL data.')
-    parser.add_argument('--zid', type=int, help='Specific conversation ID to profile')
-    parser.add_argument('--limit', type=int, default=1000, help='Maximum number of votes to process')
+    parser = argparse.ArgumentParser(description="Profile Conversation class with PostgreSQL data.")
+    parser.add_argument("--zid", type=int, help="Specific conversation ID to profile")
+    parser.add_argument("--limit", type=int, default=1000, help="Maximum number of votes to process")
     args = parser.parse_args()
 
     try:
@@ -221,6 +220,7 @@ def main():
     finally:
         # Restore original methods
         restore_original_methods()
+
 
 if __name__ == "__main__":
     main()

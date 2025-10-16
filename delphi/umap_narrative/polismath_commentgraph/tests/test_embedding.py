@@ -13,6 +13,7 @@ def embedding_engine():
     """Create an embedding engine for testing."""
     return EmbeddingEngine()
 
+
 def test_embed_text(embedding_engine):
     """Test embedding a single text."""
     text = "This is a test comment."
@@ -25,13 +26,10 @@ def test_embed_text(embedding_engine):
     # Check that the embedding is not all zeros
     assert not np.allclose(embedding, 0)
 
+
 def test_embed_batch(embedding_engine):
     """Test embedding a batch of texts."""
-    texts = [
-        "This is the first comment.",
-        "This is the second comment.",
-        "This is the third comment."
-    ]
+    texts = ["This is the first comment.", "This is the second comment.", "This is the third comment."]
     embeddings = embedding_engine.embed_batch(texts)
 
     # Check shape and type
@@ -41,6 +39,7 @@ def test_embed_batch(embedding_engine):
     # Check that embeddings are not all zeros
     assert not np.allclose(embeddings, 0)
 
+
 def test_embed_empty_text(embedding_engine):
     """Test embedding an empty text."""
     text = ""
@@ -48,6 +47,7 @@ def test_embed_empty_text(embedding_engine):
 
     # Should return a zero vector
     assert np.allclose(embedding, 0)
+
 
 def test_embed_empty_batch(embedding_engine):
     """Test embedding an empty batch."""
@@ -57,6 +57,7 @@ def test_embed_empty_batch(embedding_engine):
     # Should return an empty array
     assert isinstance(embeddings, np.ndarray)
     assert embeddings.shape == (0,)
+
 
 def test_calculate_similarity(embedding_engine):
     """Test calculating similarity between embeddings."""
@@ -83,6 +84,7 @@ def test_calculate_similarity(embedding_engine):
     assert -1.0 <= similarity_similar <= 1.0
     assert -1.0 <= similarity_dissimilar <= 1.0
 
+
 def test_find_nearest_neighbors(embedding_engine):
     """Test finding nearest neighbors."""
     # Create a set of embeddings
@@ -91,7 +93,7 @@ def test_find_nearest_neighbors(embedding_engine):
         "I love dogs as pets.",
         "Cats make great companions.",
         "Economic policy affects inflation rates.",
-        "Inflation is a measure of price increases."
+        "Inflation is a measure of price increases.",
     ]
 
     embeddings = embedding_engine.embed_batch(texts)
@@ -108,8 +110,8 @@ def test_find_nearest_neighbors(embedding_engine):
 
     # The SentenceTransformer can vary, so don't check exact indices,
     # just verify that the distances are sorted
-    assert all(nearest["distances"][i] <= nearest["distances"][i+1]
-               for i in range(len(nearest["distances"])-1))
+    assert all(nearest["distances"][i] <= nearest["distances"][i + 1] for i in range(len(nearest["distances"]) - 1))
+
 
 def test_find_nearest_neighbors_empty(embedding_engine):
     """Test finding nearest neighbors with empty embeddings."""

@@ -8,7 +8,7 @@ import sys
 import numpy as np
 
 # Add the parent directory to the path to import the module
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from polismath.pca_kmeans_rep.named_matrix import NamedMatrix
 from polismath.pca_kmeans_rep.pca import (
@@ -62,11 +62,7 @@ class TestPCAUtils:
 
     def test_factor_matrix(self):
         """Test factoring out a vector from a matrix."""
-        data = np.array([
-            [1.0, 2.0],
-            [3.0, 4.0],
-            [5.0, 6.0]
-        ])
+        data = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
         xs = np.array([1.0, 0.0])
 
         # After factoring out [1, 0], all vectors should have 0 in first component
@@ -86,10 +82,7 @@ class TestPowerIteration:
     def test_power_iteration_simple(self):
         """Test power iteration on a simple matrix."""
         # Simple matrix with dominant eigenvector [0, 1]
-        data = np.array([
-            [1.0, 2.0],
-            [2.0, 4.0]
-        ])
+        data = np.array([[1.0, 2.0], [2.0, 4.0]])
 
         # Run power iteration
         result = power_iteration(data, iters=100)
@@ -113,10 +106,7 @@ class TestPowerIteration:
 
     def test_power_iteration_start_vector(self):
         """Test power iteration with a custom start vector."""
-        data = np.array([
-            [4.0, 1.0],
-            [1.0, 4.0]
-        ])
+        data = np.array([[4.0, 1.0], [1.0, 4.0]])
 
         # Start with [1, 0] which is close to an eigenvector
         result = power_iteration(data, iters=100, start_vector=np.array([1.0, 0.0]))
@@ -166,17 +156,17 @@ class TestWrappedPCA:
         result = wrapped_pca(data, n_comps=2)
 
         # Check results format
-        assert 'center' in result
-        assert 'comps' in result
-        assert result['center'].shape == (n_features,)
-        assert result['comps'].shape == (2, n_features)
+        assert "center" in result
+        assert "comps" in result
+        assert result["center"].shape == (n_features,)
+        assert result["comps"].shape == (2, n_features)
 
         # Check that components are unit length
-        assert np.isclose(np.linalg.norm(result['comps'][0]), 1.0)
-        assert np.isclose(np.linalg.norm(result['comps'][1]), 1.0)
+        assert np.isclose(np.linalg.norm(result["comps"][0]), 1.0)
+        assert np.isclose(np.linalg.norm(result["comps"][1]), 1.0)
 
         # Check that components are orthogonal
-        assert np.isclose(np.dot(result['comps'][0], result['comps'][1]), 0.0, atol=1e-10)
+        assert np.isclose(np.dot(result["comps"][0], result["comps"][1]), 0.0, atol=1e-10)
 
     def test_wrapped_pca_edge_cases(self):
         """Test PCA on edge cases."""
@@ -184,16 +174,16 @@ class TestWrappedPCA:
         data_1row = np.array([[1.0, 2.0, 3.0]])
         result_1row = wrapped_pca(data_1row, n_comps=2)
 
-        assert result_1row['comps'].shape == (2, 3)
-        assert np.isclose(np.linalg.norm(result_1row['comps'][0]), 1.0)
-        assert np.all(result_1row['comps'][1] == 0.0)
+        assert result_1row["comps"].shape == (2, 3)
+        assert np.isclose(np.linalg.norm(result_1row["comps"][0]), 1.0)
+        assert np.all(result_1row["comps"][1] == 0.0)
 
         # Test with 1 column
         data_1col = np.array([[1.0], [2.0], [3.0]])
         result_1col = wrapped_pca(data_1col, n_comps=1)
 
-        assert result_1col['comps'].shape == (1, 1)
-        assert result_1col['comps'][0, 0] == 1.0
+        assert result_1col["comps"].shape == (1, 1)
+        assert result_1col["comps"][0, 0] == 1.0
 
 
 class TestProjection:
@@ -203,11 +193,13 @@ class TestProjection:
         """Test projecting a single participant with missing votes."""
         # Create a simple PCA result
         center = np.array([0.0, 0.0, 0.0])
-        comps = np.array([
-            [1.0, 0.0, 0.0],  # First component along first dimension
-            [0.0, 1.0, 0.0]   # Second component along second dimension
-        ])
-        pca_results = {'center': center, 'comps': comps}
+        comps = np.array(
+            [
+                [1.0, 0.0, 0.0],  # First component along first dimension
+                [0.0, 1.0, 0.0],  # Second component along second dimension
+            ]
+        )
+        pca_results = {"center": center, "comps": comps}
 
         # Test with complete votes
         votes = [1.0, 2.0, 3.0]
@@ -223,25 +215,20 @@ class TestProjection:
 
         assert proj_sparse.shape == (2,)
         # The scaling factor should be sqrt(3/2) for 2 out of 3 votes
-        scaling = np.sqrt(3.0/2.0)
+        scaling = np.sqrt(3.0 / 2.0)
         assert np.isclose(proj_sparse[0], 1.0 * scaling)
 
     def test_sparsity_aware_project_ptpts(self):
         """Test projecting multiple participants."""
         # Create a simple PCA result
         center = np.array([0.0, 0.0])
-        comps = np.array([
-            [1.0, 0.0],  # First component along first dimension
-            [0.0, 1.0]   # Second component along second dimension
-        ])
-        pca_results = {'center': center, 'comps': comps}
+        comps = np.array(
+            [[1.0, 0.0], [0.0, 1.0]]  # First component along first dimension  # Second component along second dimension
+        )
+        pca_results = {"center": center, "comps": comps}
 
         # Test with multiple participants
-        vote_matrix = np.array([
-            [1.0, 2.0],
-            [3.0, 4.0],
-            [5.0, 6.0]
-        ])
+        vote_matrix = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
 
         projections = sparsity_aware_project_ptpts(vote_matrix, pca_results)
 
@@ -253,13 +240,9 @@ class TestProjection:
     def test_pca_project_named_matrix(self):
         """Test PCA projection of a NamedMatrix."""
         # Create a named matrix
-        data = np.array([
-            [1.0, 2.0, 3.0],
-            [4.0, 5.0, 6.0],
-            [7.0, 8.0, 9.0]
-        ])
-        rownames = ['p1', 'p2', 'p3']
-        colnames = ['c1', 'c2', 'c3']
+        data = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]])
+        rownames = ["p1", "p2", "p3"]
+        colnames = ["c1", "c2", "c3"]
 
         nmat = NamedMatrix(data, rownames, colnames)
 
@@ -267,10 +250,10 @@ class TestProjection:
         pca_results, proj_dict = pca_project_named_matrix(nmat)
 
         # Check results
-        assert 'center' in pca_results
-        assert 'comps' in pca_results
-        assert pca_results['center'].shape == (3,)
-        assert pca_results['comps'].shape == (2, 3)
+        assert "center" in pca_results
+        assert "comps" in pca_results
+        assert pca_results["center"].shape == (3,)
+        assert pca_results["comps"].shape == (2, 3)
 
         # Check projections dict
         assert set(proj_dict.keys()) == set(rownames)

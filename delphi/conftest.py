@@ -31,9 +31,7 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "slow: marks tests as slow running")
     config.addinivalue_line("markers", "integration: marks tests as integration tests")
     config.addinivalue_line("markers", "unit: marks tests as unit tests")
-    config.addinivalue_line(
-        "markers", "real_data: marks tests that use real conversation data"
-    )
+    config.addinivalue_line("markers", "real_data: marks tests that use real conversation data")
 
 
 def pytest_collection_modifyitems(config, items):
@@ -45,16 +43,12 @@ def pytest_collection_modifyitems(config, items):
 
         # Mark slow tests
         if "slow" in item.nodeid or any(
-            keyword in item.nodeid.lower()
-            for keyword in ["full_pipeline", "system", "integration"]
+            keyword in item.nodeid.lower() for keyword in ["full_pipeline", "system", "integration"]
         ):
             item.add_marker(pytest.mark.slow)
 
         # Mark integration tests
-        if any(
-            keyword in item.nodeid.lower()
-            for keyword in ["integration", "system", "full_pipeline"]
-        ):
+        if any(keyword in item.nodeid.lower() for keyword in ["integration", "system", "full_pipeline"]):
             item.add_marker(pytest.mark.integration)
         else:
             item.add_marker(pytest.mark.unit)
@@ -114,9 +108,7 @@ def temp_dir():
 @mock_dynamodb
 def mock_dynamodb_resource():
     """Create a mocked DynamoDB resource for testing."""
-    dynamodb = boto3.resource(
-        "dynamodb", region_name="us-east-1", endpoint_url="http://localhost:8000"
-    )
+    dynamodb = boto3.resource("dynamodb", region_name="us-east-1", endpoint_url="http://localhost:8000")
     yield dynamodb
 
 
@@ -128,9 +120,7 @@ def dynamodb_tables(mock_dynamodb_resource):
     # Define table schemas (simplified versions of production tables)
     table_schemas = {
         "Delphi_PCAConversationConfig": {
-            "AttributeDefinitions": [
-                {"AttributeName": "conversation_id", "AttributeType": "S"}
-            ],
+            "AttributeDefinitions": [{"AttributeName": "conversation_id", "AttributeType": "S"}],
             "KeySchema": [{"AttributeName": "conversation_id", "KeyType": "HASH"}],
             "BillingMode": "PAY_PER_REQUEST",
         },

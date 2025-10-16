@@ -11,7 +11,7 @@ import pytest
 from scipy import stats as scipy_stats
 
 # Add the parent directory to the path to import the module
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from polismath.pca_kmeans_rep.stats import (
     bayesian_ci_95,
@@ -47,8 +47,8 @@ class TestProportionTests:
         assert z3 < 0
 
         # Test with extreme values
-        assert prop_test(0, 0) != float('inf')  # Should handle edge cases
-        assert prop_test(1, 1) != float('inf')
+        assert prop_test(0, 0) != float("inf")  # Should handle edge cases
+        assert prop_test(1, 1) != float("inf")
 
     def test_two_prop_test(self):
         """Test the two-proportion test function."""
@@ -65,8 +65,8 @@ class TestProportionTests:
         assert z3 < 0
 
         # Test with extreme values
-        assert two_prop_test(0, 0, 50, 100) != float('inf')  # Should handle edge cases
-        assert two_prop_test(100, 100, 100, 100) != float('inf')
+        assert two_prop_test(0, 0, 50, 100) != float("inf")  # Should handle edge cases
+        assert two_prop_test(100, 100, 100, 100) != float("inf")
 
     def test_significance_functions(self):
         """Test the significance testing functions."""
@@ -107,7 +107,7 @@ class TestProportionTests:
         p1 = (70 + 1) / (100 + 2)
         p2 = (50 + 1) / (100 + 2)
         pooled_p = ((70 + 1) + (50 + 1)) / ((100 + 2) + (100 + 2))
-        scipy_z = (p1 - p2) / math.sqrt(pooled_p * (1 - pooled_p) * (1/(100+2) + 1/(100+2)))
+        scipy_z = (p1 - p2) / math.sqrt(pooled_p * (1 - pooled_p) * (1 / (100 + 2) + 1 / (100 + 2)))
 
         # Should be close
         assert abs(our_z - scipy_z) < 0.01
@@ -141,7 +141,7 @@ class TestInformationTheory:
 
         # Perfect inequality has Gini = 1 - 1/n
         unequal = np.array([0, 0, 0, 10])
-        expected_gini = 1 - 1/4
+        expected_gini = 1 - 1 / 4
         assert np.isclose(gini_coefficient(unequal), expected_gini, atol=0.01)
 
         # Some inequality
@@ -174,7 +174,7 @@ class TestDescriptiveStatistics:
         # Manually calculate weighted standard deviation
         normalized_weights = weights / np.sum(weights)
         weighted_mean = np.sum(values * normalized_weights)
-        weighted_variance = np.sum(normalized_weights * (values - weighted_mean)**2)
+        weighted_variance = np.sum(normalized_weights * (values - weighted_mean) ** 2)
         manual_weighted_std = np.sqrt(weighted_variance)
 
         assert np.isclose(std_weighted, manual_weighted_std)
@@ -236,10 +236,9 @@ class TestConfidenceIntervals:
         """Test bootstrap 95% confidence interval."""
         # Generate non-normal data
         np.random.seed(42)
-        values = np.concatenate([
-            np.random.normal(100, 10, 900),  # Normal part
-            np.random.normal(150, 20, 100)   # Outliers
-        ])
+        values = np.concatenate(
+            [np.random.normal(100, 10, 900), np.random.normal(150, 20, 100)]  # Normal part  # Outliers
+        )
 
         # Calculate bootstrap CI for mean
         lower, upper = bootstrap_ci_95(values)
@@ -300,10 +299,7 @@ class TestStatisticalTests:
     def test_fisher_exact_test(self):
         """Test Fisher's exact test."""
         # Create a 2x2 contingency table
-        table = np.array([
-            [12, 5],
-            [7, 25]
-        ])
+        table = np.array([[12, 5], [7, 25]])
 
         # Calculate using our function
         odds_ratio, p_value = fisher_exact_test(table)
@@ -319,10 +315,7 @@ class TestStatisticalTests:
         assert p_value < 0.05  # This table should show significance
 
         # Test with a non-significant table
-        balanced_table = np.array([
-            [10, 10],
-            [10, 10]
-        ])
+        balanced_table = np.array([[10, 10], [10, 10]])
 
         _, p_value2 = fisher_exact_test(balanced_table)
         assert p_value2 > 0.05  # This table should not show significance

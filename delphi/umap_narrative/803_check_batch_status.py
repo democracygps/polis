@@ -21,9 +21,7 @@ import boto3
 from botocore.exceptions import ClientError
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # Anthropic Batch API Statuses
@@ -43,15 +41,9 @@ TERMINAL_BATCH_STATES = [
 NON_TERMINAL_BATCH_STATES = [ANTHROPIC_BATCH_PREPARING, ANTHROPIC_BATCH_IN_PROGRESS]
 
 # Script Exit Codes (when --job-id is used)
-EXIT_CODE_TERMINAL_STATE = (
-    0  # Batch is done (completed/failed/cancelled), script handled it.
-)
-EXIT_CODE_SCRIPT_ERROR = (
-    1  # The script itself had an issue processing the specified job.
-)
-EXIT_CODE_PROCESSING_CONTINUES = (
-    3  # Batch is still processing, poller should wait and re-check.
-)
+EXIT_CODE_TERMINAL_STATE = 0  # Batch is done (completed/failed/cancelled), script handled it.
+EXIT_CODE_SCRIPT_ERROR = 1  # The script itself had an issue processing the specified job.
+EXIT_CODE_PROCESSING_CONTINUES = 3  # Batch is still processing, poller should wait and re-check.
 
 
 class BatchStatusChecker:
@@ -99,9 +91,7 @@ class BatchStatusChecker:
 
             batch_id = job_item.get("batch_id")
             if not batch_id:
-                logger.error(
-                    f"Job {job_id} is missing a 'batch_id'. Cannot check status."
-                )
+                logger.error(f"Job {job_id} is missing a 'batch_id'. Cannot check status.")
                 self.job_table.update_item(
                     Key={"job_id": job_id},
                     UpdateExpression="SET #s = :s",
@@ -111,14 +101,10 @@ class BatchStatusChecker:
                 return EXIT_CODE_TERMINAL_STATE
 
             # 2. Check the status on the Anthropic API
-            logger.info(
-                f"Checking status for Anthropic batch {batch_id} (from job {job_id})..."
-            )
+            logger.info(f"Checking status for Anthropic batch {batch_id} (from job {job_id})...")
             batch = self.anthropic.beta.messages.batches.retrieve(batch_id)
             status = batch.processing_status
-            logger.info(
-                f"Anthropic API returned status '{status}' for batch {batch_id}."
-            )
+            logger.info(f"Anthropic API returned status '{status}' for batch {batch_id}.")
 
             # 3. Decide what to do based on the status
             if status in ["completed", "ended"]:
@@ -126,9 +112,7 @@ class BatchStatusChecker:
                 return EXIT_CODE_TERMINAL_STATE
 
             elif status in ["failed", "cancelled"]:
-                logger.error(
-                    f"Batch {batch_id} for job {job_id} is in a terminal failure state: {status}"
-                )
+                logger.error(f"Batch {batch_id} for job {job_id} is in a terminal failure state: {status}")
                 self.job_table.update_item(
                     Key={"job_id": job_id},
                     UpdateExpression="SET #s = :s, error_message = :e",
@@ -141,15 +125,11 @@ class BatchStatusChecker:
                 return EXIT_CODE_TERMINAL_STATE
 
             elif status in ["in_progress", "preparing"]:
-                logger.info(
-                    f"Batch {batch_id} is still {status}. Will check again later."
-                )
+                logger.info(f"Batch {batch_id} is still {status}. Will check again later.")
                 return EXIT_CODE_PROCESSING_CONTINUES
 
             else:
-                logger.error(
-                    f"Unrecognized batch status '{status}' for batch {batch_id}."
-                )
+                logger.error(f"Unrecognized batch status '{status}' for batch {batch_id}.")
                 return EXIT_CODE_SCRIPT_ERROR
 
         except ClientError as e:
@@ -162,9 +142,7 @@ class BatchStatusChecker:
                 )
             return EXIT_CODE_SCRIPT_ERROR
         except Exception as e:
-            logger.error(
-                f"A critical error occurred processing job {job_id}: {e}", exc_info=True
-            )
+            logger.error(f"A critical error occurred processing job {job_id}: {e}", exc_info=True)
             return EXIT_CODE_SCRIPT_ERROR
 
     async def process_batch_results(self, job_item: dict) -> bool:
@@ -180,9 +158,7 @@ class BatchStatusChecker:
             return False
 
         try:
-            logger.info(
-                f"Job {job_id}: Retrieving results for completed batch {batch_id}..."
-            )
+            logger.info(f"Job {job_id}: Retrieving results for completed batch {batch_id}...")
             # Anthropic's SDK can stream results which is memory efficient
             results_stream = self.anthropic.beta.messages.batches.results(batch_id)
 
@@ -194,18 +170,12 @@ class BatchStatusChecker:
                     custom_id = entry.custom_id
                     response_message = entry.result.message
                     model = response_message.model
-                    content = (
-                        response_message.content[0].text
-                        if response_message.content
-                        else "{}"
-                    )
+                    content = response_message.content[0].text if response_message.content else "{}"
 
                     # Reconstruct the section name from the custom_id
                     parts = custom_id.split("_", 1)
                     if len(parts) < 2:
-                        logger.error(
-                            f"Job {job_id}: Invalid custom_id format '{custom_id}'. Skipping result."
-                        )
+                        logger.error(f"Job {job_id}: Invalid custom_id format '{custom_id}'. Skipping result.")
                         failed_count += 1
                         continue
                     section_name = parts[1]
@@ -224,9 +194,7 @@ class BatchStatusChecker:
                             "batch_id": batch_id,
                         }
                     )
-                    logger.info(
-                        f"Job {job_id}: Successfully stored report for section '{section_name}'."
-                    )
+                    logger.info(f"Job {job_id}: Successfully stored report for section '{section_name}'.")
                     processed_count += 1
 
                 elif entry.result.type == "failed":
@@ -278,16 +246,12 @@ class BatchStatusChecker:
             )
             return False
 
-    async def check_and_process_jobs(
-        self, specific_job_id: str | None = None
-    ) -> int | None:
+    async def check_and_process_jobs(self, specific_job_id: str | None = None) -> int | None:
         jobs_to_check = self.find_pending_jobs(specific_job_id)
 
         if not jobs_to_check:
             if specific_job_id:
-                logger.error(
-                    f"Job {specific_job_id} not found or no longer in a processable state."
-                )
+                logger.error(f"Job {specific_job_id} not found or no longer in a processable state.")
                 return self.EXIT_CODE_TERMINAL_STATE
             logger.info("No pending batch jobs found in this polling cycle.")
             return None
@@ -302,9 +266,7 @@ class BatchStatusChecker:
             new_expiry_iso = (datetime.now(UTC) + timedelta(minutes=15)).isoformat()
 
             try:
-                logger.info(
-                    f"Attempting to lock job {job_id} (current status: {current_status})..."
-                )
+                logger.info(f"Attempting to lock job {job_id} (current status: {current_status})...")
                 condition_expr = "(#s = :processing_status) OR (#s = :locked_status AND lock_expires_at < :now)"
                 self.job_table.update_item(
                     Key={"job_id": job_id},
@@ -319,15 +281,11 @@ class BatchStatusChecker:
                         ":new_expiry": new_expiry_iso,
                     },
                 )
-                logger.info(
-                    f"Successfully locked job {job_id}. Lock expires at {new_expiry_iso}."
-                )
+                logger.info(f"Successfully locked job {job_id}. Lock expires at {new_expiry_iso}.")
 
             except ClientError as e:
                 if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
-                    logger.warning(
-                        f"Job {job_id} was locked or processed by another worker. Skipping."
-                    )
+                    logger.warning(f"Job {job_id} was locked or processed by another worker. Skipping.")
                     continue
                 else:
                     logger.error(f"Error locking job {job_id}: {e}")
@@ -362,15 +320,11 @@ class BatchStatusChecker:
                     current_job_processing_signal = self.EXIT_CODE_TERMINAL_STATE
 
                 elif batch_api_status in NON_TERMINAL_BATCH_STATES:
-                    logger.info(
-                        f"Job {job_id}: Batch still {batch_api_status}. Lock will time out if worker fails."
-                    )
+                    logger.info(f"Job {job_id}: Batch still {batch_api_status}. Lock will time out if worker fails.")
                     current_job_processing_signal = self.EXIT_CODE_PROCESSING_CONTINUES
 
                 else:
-                    logger.error(
-                        f"Job {job_id}: Could not determine batch status. Lock will time out."
-                    )
+                    logger.error(f"Job {job_id}: Could not determine batch status. Lock will time out.")
                     current_job_processing_signal = self.EXIT_CODE_SCRIPT_ERROR
 
             except Exception as processing_error:
@@ -389,9 +343,7 @@ class BatchStatusChecker:
                         },
                     )
                 except Exception as final_error:
-                    logger.critical(
-                        f"FATAL: Could not mark job {job_id} as FAILED. It is now a zombie: {final_error}"
-                    )
+                    logger.critical(f"FATAL: Could not mark job {job_id} as FAILED. It is now a zombie: {final_error}")
                 current_job_processing_signal = self.EXIT_CODE_SCRIPT_ERROR
 
             if specific_job_id:
@@ -402,9 +354,7 @@ class BatchStatusChecker:
 
 async def main() -> None:
     """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Check a single Anthropic Batch Job status."
-    )
+    parser = argparse.ArgumentParser(description="Check a single Anthropic Batch Job status.")
     parser.add_argument(
         "--job-id",
         type=str,
@@ -416,9 +366,7 @@ async def main() -> None:
     checker = BatchStatusChecker()
     exit_signal = await checker.check_and_process_job(args.job_id)
 
-    logger.info(
-        f"Script finished for job {args.job_id} with exit signal: {exit_signal}"
-    )
+    logger.info(f"Script finished for job {args.job_id} with exit signal: {exit_signal}")
     sys.exit(exit_signal)
 
 

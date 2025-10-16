@@ -5,7 +5,6 @@ This module provides a custom implementation of PCA using power iteration,
 with special handling for sparse matrices.
 """
 
-
 import numpy as np
 import pandas as pd
 
@@ -15,10 +14,10 @@ from polismath.pca_kmeans_rep.named_matrix import NamedMatrix
 def normalize_vector(v: np.ndarray) -> np.ndarray:
     """
     Normalize a vector to unit length.
-    
+
     Args:
         v: Vector to normalize
-        
+
     Returns:
         Normalized vector
     """
@@ -31,10 +30,10 @@ def normalize_vector(v: np.ndarray) -> np.ndarray:
 def vector_length(v: np.ndarray) -> float:
     """
     Calculate the length (norm) of a vector.
-    
+
     Args:
         v: Vector
-        
+
     Returns:
         Vector length
     """
@@ -44,11 +43,11 @@ def vector_length(v: np.ndarray) -> float:
 def proj_vec(u: np.ndarray, v: np.ndarray) -> np.ndarray:
     """
     Project vector v onto vector u.
-    
+
     Args:
         u: Vector to project onto
         v: Vector to project
-        
+
     Returns:
         Projection of v onto u
     """
@@ -60,14 +59,14 @@ def proj_vec(u: np.ndarray, v: np.ndarray) -> np.ndarray:
 def factor_matrix(data: np.ndarray, xs: np.ndarray) -> np.ndarray:
     """
     Factor out the vector xs from all vectors in data.
-    
+
     This is similar to the Gram-Schmidt process, removing the variance
     in the xs direction from the data.
-    
+
     Args:
         data: Matrix of data
         xs: Vector to factor out
-        
+
     Returns:
         Matrix with xs factored out
     """
@@ -80,13 +79,13 @@ def factor_matrix(data: np.ndarray, xs: np.ndarray) -> np.ndarray:
 def xtxr(data: np.ndarray, vec: np.ndarray) -> np.ndarray:
     """
     Calculate X^T * X * r where X is data and r is vec.
-    
+
     This is an optimization used in power iteration.
-    
+
     Args:
         data: Data matrix X
         vec: Vector r
-        
+
     Returns:
         Result of X^T * X * r
     """
@@ -97,10 +96,10 @@ def xtxr(data: np.ndarray, vec: np.ndarray) -> np.ndarray:
 def rand_starting_vec(data: np.ndarray) -> np.ndarray:
     """
     Generate a random starting vector for power iteration.
-    
+
     Args:
         data: Data matrix
-        
+
     Returns:
         Random starting vector
     """
@@ -108,19 +107,18 @@ def rand_starting_vec(data: np.ndarray) -> np.ndarray:
     return np.random.randn(n_cols)
 
 
-def power_iteration(data: np.ndarray,
-                   iters: int = 100,
-                   start_vector: np.ndarray | None = None,
-                   convergence_threshold: float = 1e-10) -> np.ndarray:
+def power_iteration(
+    data: np.ndarray, iters: int = 100, start_vector: np.ndarray | None = None, convergence_threshold: float = 1e-10
+) -> np.ndarray:
     """
     Find the first eigenvector of data using the power iteration method.
-    
+
     Args:
         data: Data matrix
         iters: Maximum number of iterations
         start_vector: Initial vector (defaults to random)
         convergence_threshold: Threshold for convergence checking
-        
+
     Returns:
         Dominant eigenvector
     """
@@ -135,7 +133,7 @@ def power_iteration(data: np.ndarray,
         # Pad with random values if needed
         rng = np.random.RandomState(42)
         padded = rng.rand(n_cols)
-        padded[:len(start_vector)] = start_vector
+        padded[: len(start_vector)] = start_vector
         start_vector = padded
 
     # Ensure start_vector is not all zeros
@@ -211,19 +209,18 @@ def power_iteration(data: np.ndarray,
     return best_vector
 
 
-def powerit_pca(data: np.ndarray,
-               n_comps: int,
-               iters: int = 100,
-               start_vectors: list[np.ndarray] | None = None) -> dict[str, np.ndarray]:
+def powerit_pca(
+    data: np.ndarray, n_comps: int, iters: int = 100, start_vectors: list[np.ndarray] | None = None
+) -> dict[str, np.ndarray]:
     """
     Find the first n_comps principal components of the data matrix.
-    
+
     Args:
         data: Data matrix
         n_comps: Number of components to find
         iters: Maximum number of iterations for power_iteration
         start_vectors: Initial vectors for warm start
-        
+
     Returns:
         Dictionary with 'center' and 'comps' keys
     """
@@ -262,10 +259,7 @@ def powerit_pca(data: np.ndarray,
         comps = np.zeros((n_comps, data.shape[1]))
         for i in range(min(n_comps, data.shape[1])):
             comps[i, i] = 1.0
-        return {
-            'center': center,
-            'comps': comps
-        }
+        return {"center": center, "comps": comps}
 
     # Iteratively find principal components
     pcs = []
@@ -316,25 +310,21 @@ def powerit_pca(data: np.ndarray,
         fallback[i % data.shape[1]] = 1.0
         pcs.append(fallback)
 
-    return {
-        'center': center,
-        'comps': np.array(pcs)
-    }
+    return {"center": center, "comps": np.array(pcs)}
 
 
-def wrapped_pca(data: np.ndarray,
-               n_comps: int,
-               iters: int = 100,
-               start_vectors: list[np.ndarray] | None = None) -> dict[str, np.ndarray]:
+def wrapped_pca(
+    data: np.ndarray, n_comps: int, iters: int = 100, start_vectors: list[np.ndarray] | None = None
+) -> dict[str, np.ndarray]:
     """
     Wrapper for PCA that handles edge cases.
-    
+
     Args:
         data: Data matrix
         n_comps: Number of components to find
         iters: Maximum number of iterations
         start_vectors: Initial vectors for warm start
-        
+
     Returns:
         Dictionary with 'center' and 'comps' keys
     """
@@ -343,16 +333,13 @@ def wrapped_pca(data: np.ndarray,
     # Handle edge case: 1 row
     if n_rows == 1:
         return {
-            'center': np.zeros(n_comps),
-            'comps': np.vstack([normalize_vector(data[0])] + [np.zeros(n_cols)] * (n_comps - 1))
+            "center": np.zeros(n_comps),
+            "comps": np.vstack([normalize_vector(data[0])] + [np.zeros(n_cols)] * (n_comps - 1)),
         }
 
     # Handle edge case: 1 column
     if n_cols == 1:
-        return {
-            'center': np.array([0]),
-            'comps': np.array([[1]])
-        }
+        return {"center": np.array([0]), "comps": np.array([[1]])}
 
     # Filter out zero vectors from start_vectors
     if start_vectors is not None:
@@ -362,20 +349,21 @@ def wrapped_pca(data: np.ndarray,
     return powerit_pca(data, n_comps, iters, start_vectors)
 
 
-def sparsity_aware_project_ptpt(votes: list[float | None] | np.ndarray,
-                              pca_results: dict[str, np.ndarray]) -> np.ndarray:
+def sparsity_aware_project_ptpt(
+    votes: list[float | None] | np.ndarray, pca_results: dict[str, np.ndarray]
+) -> np.ndarray:
     """
     Project a participant's votes into PCA space, handling missing votes.
-    
+
     Args:
         votes: List or array of votes (can contain None or NaN for missing votes)
         pca_results: Dictionary with 'center' and 'comps' from PCA
-        
+
     Returns:
         2D projection coordinates
     """
-    comps = pca_results['comps']
-    center = pca_results['center']
+    comps = pca_results["comps"]
+    center = pca_results["center"]
 
     # If comps is empty (fallback case), return zeros
     if len(comps) == 0:
@@ -428,15 +416,14 @@ def sparsity_aware_project_ptpt(votes: list[float | None] | np.ndarray,
     return np.array([p1, p2]) * scale
 
 
-def sparsity_aware_project_ptpts(vote_matrix: np.ndarray,
-                                pca_results: dict[str, np.ndarray]) -> np.ndarray:
+def sparsity_aware_project_ptpts(vote_matrix: np.ndarray, pca_results: dict[str, np.ndarray]) -> np.ndarray:
     """
     Project multiple participants' votes into PCA space.
-    
+
     Args:
         vote_matrix: Matrix of votes (participants x comments)
         pca_results: Dictionary with 'center' and 'comps' from PCA
-        
+
     Returns:
         Array of 2D projections
     """
@@ -478,23 +465,23 @@ def sparsity_aware_project_ptpts(vote_matrix: np.ndarray,
 def align_with_clojure(pca_results: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
     """
     Modify PCA components and eigenvectors to align with Clojure's conventions.
-    
+
     The Clojure implementation has specific conventions for the signs of eigenvectors:
     1. The direction of eigenvectors can be flipped (multiplied by -1)
     2. Components may be oriented differently
-    
+
     This function ensures our results align with Clojure's expected orientation.
-    
+
     Args:
         pca_results: Dictionary with 'center' and 'comps' from PCA
-        
+
     Returns:
         Modified PCA results for better Clojure alignment
     """
     # Make a copy to avoid modifying the original
     result = {k: v.copy() if isinstance(v, np.ndarray) else v for k, v in pca_results.items()}
 
-    if 'comps' not in result or len(result['comps']) == 0:
+    if "comps" not in result or len(result["comps"]) == 0:
         return result
 
     # Force orientations to match the typical Clojure output
@@ -502,8 +489,8 @@ def align_with_clojure(pca_results: dict[str, np.ndarray]) -> dict[str, np.ndarr
     # with real data benchmarks
 
     # For component 1 (x-axis)
-    if len(result['comps']) > 0:
-        comp = result['comps'][0]
+    if len(result["comps"]) > 0:
+        comp = result["comps"][0]
 
         # Determine the quadrant with most variance
         pos_sum = np.sum(comp[comp > 0])
@@ -513,14 +500,14 @@ def align_with_clojure(pca_results: dict[str, np.ndarray]) -> dict[str, np.ndarr
         if comp.shape[0] > 300:  # Biodiversity has 314 comments
             # Biodiversity: First component should have more positive weight
             if pos_sum < neg_sum:
-                result['comps'][0] = -comp
+                result["comps"][0] = -comp
         # VW: First component should have more negative weight
         elif pos_sum > neg_sum:
-            result['comps'][0] = -comp
+            result["comps"][0] = -comp
 
     # For component 2 (y-axis) - similar logic
-    if len(result['comps']) > 1:
-        comp = result['comps'][1]
+    if len(result["comps"]) > 1:
+        comp = result["comps"][1]
 
         # Determine the quadrant with most variance
         pos_sum = np.sum(comp[comp > 0])
@@ -530,25 +517,25 @@ def align_with_clojure(pca_results: dict[str, np.ndarray]) -> dict[str, np.ndarr
         if comp.shape[0] > 300:  # Biodiversity
             # Biodiversity: Second component should have more negative weight
             if pos_sum > neg_sum:
-                result['comps'][1] = -comp
+                result["comps"][1] = -comp
         # VW: Second component should have more positive weight
         elif pos_sum < neg_sum:
-            result['comps'][1] = -comp
+            result["comps"][1] = -comp
 
     return result
 
 
-def pca_project_named_matrix(nmat: NamedMatrix,
-                           n_comps: int = 2,
-                           align_with_clojure_output: bool = True) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray]]:
+def pca_project_named_matrix(
+    nmat: NamedMatrix, n_comps: int = 2, align_with_clojure_output: bool = True
+) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray]]:
     """
     Perform PCA on a NamedMatrix and project the data.
-    
+
     Args:
         nmat: NamedMatrix containing the data
         n_comps: Number of components to find
         align_with_clojure_output: Whether to align output with Clojure conventions
-        
+
     Returns:
         Tuple of (pca_results, projections)
     """
@@ -582,10 +569,7 @@ def pca_project_named_matrix(nmat: NamedMatrix,
     n_rows, n_cols = matrix_data_no_nan.shape
     if n_rows < 2 or n_cols < 2:
         # Create minimal PCA results
-        pca_results = {
-            'center': np.zeros(n_cols),
-            'comps': np.zeros((min(n_comps, 2), n_cols))
-        }
+        pca_results = {"center": np.zeros(n_cols), "comps": np.zeros((min(n_comps, 2), n_cols))}
         # Create minimal projections (all zeros)
         proj_dict = {pid: np.zeros(2) for pid in nmat.rownames()}
         return pca_results, proj_dict
@@ -604,10 +588,7 @@ def pca_project_named_matrix(nmat: NamedMatrix,
     except Exception as e:
         print(f"Error in PCA computation: {e}")
         # Create fallback PCA results
-        pca_results = {
-            'center': np.zeros(n_cols),
-            'comps': np.zeros((min(n_comps, 2), n_cols))
-        }
+        pca_results = {"center": np.zeros(n_cols), "comps": np.zeros((min(n_comps, 2), n_cols))}
 
     # For projection, we use the original matrix with NaNs
     # to ensure proper sparsity handling

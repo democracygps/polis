@@ -9,7 +9,7 @@ import sys
 import numpy as np
 
 # Add the parent directory to the path to import the module
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from polismath.pca_kmeans_rep.clusters import (
     Cluster,
@@ -74,11 +74,7 @@ class TestCluster:
 
     def test_update_center(self):
         """Test updating a cluster center."""
-        data = np.array([
-            [1.0, 1.0],
-            [2.0, 2.0],
-            [3.0, 3.0]
-        ])
+        data = np.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0]])
 
         # Test unweighted update
         cluster = Cluster(np.array([0.0, 0.0]), [0, 1])
@@ -113,13 +109,7 @@ class TestClusteringUtils:
 
     def test_init_clusters(self):
         """Test cluster initialization."""
-        data = np.array([
-            [1.0, 1.0],
-            [2.0, 2.0],
-            [3.0, 3.0],
-            [4.0, 4.0],
-            [5.0, 5.0]
-        ])
+        data = np.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0], [4.0, 4.0], [5.0, 5.0]])
 
         # Initialize 3 clusters
         clusters = init_clusters(data, 3)
@@ -140,14 +130,8 @@ class TestClusteringUtils:
     def test_same_clustering(self):
         """Test checking if clusterings are the same."""
         # Create two identical clusterings
-        clusters1 = [
-            Cluster(np.array([1.0, 1.0]), [0, 1]),
-            Cluster(np.array([3.0, 3.0]), [2, 3])
-        ]
-        clusters2 = [
-            Cluster(np.array([1.0, 1.0]), [0, 1]),
-            Cluster(np.array([3.0, 3.0]), [2, 3])
-        ]
+        clusters1 = [Cluster(np.array([1.0, 1.0]), [0, 1]), Cluster(np.array([3.0, 3.0]), [2, 3])]
+        clusters2 = [Cluster(np.array([1.0, 1.0]), [0, 1]), Cluster(np.array([3.0, 3.0]), [2, 3])]
 
         assert same_clustering(clusters1, clusters2)
 
@@ -155,37 +139,23 @@ class TestClusteringUtils:
         clusters3 = [
             Cluster(np.array([1.0, 1.0]), [0, 1]),
             Cluster(np.array([3.0, 3.0]), [2, 3]),
-            Cluster(np.array([5.0, 5.0]), [4])
+            Cluster(np.array([5.0, 5.0]), [4]),
         ]
         assert not same_clustering(clusters1, clusters3)
 
         # Same number but different centers
-        clusters4 = [
-            Cluster(np.array([1.1, 1.1]), [0, 1]),
-            Cluster(np.array([3.0, 3.0]), [2, 3])
-        ]
+        clusters4 = [Cluster(np.array([1.1, 1.1]), [0, 1]), Cluster(np.array([3.0, 3.0]), [2, 3])]
         assert not same_clustering(clusters1, clusters4)
 
         # Different number of members shouldn't matter
-        clusters5 = [
-            Cluster(np.array([1.0, 1.0]), [0, 1, 4]),
-            Cluster(np.array([3.0, 3.0]), [2, 3])
-        ]
+        clusters5 = [Cluster(np.array([1.0, 1.0]), [0, 1, 4]), Cluster(np.array([3.0, 3.0]), [2, 3])]
         assert same_clustering(clusters1, clusters5)
 
     def test_assign_points_to_clusters(self):
         """Test assigning points to clusters."""
-        data = np.array([
-            [1.0, 1.0],
-            [2.0, 2.0],
-            [5.0, 5.0],
-            [6.0, 6.0]
-        ])
+        data = np.array([[1.0, 1.0], [2.0, 2.0], [5.0, 5.0], [6.0, 6.0]])
 
-        clusters = [
-            Cluster(np.array([1.5, 1.5])),
-            Cluster(np.array([5.5, 5.5]))
-        ]
+        clusters = [Cluster(np.array([1.5, 1.5])), Cluster(np.array([5.5, 5.5]))]
 
         assign_points_to_clusters(data, clusters)
 
@@ -194,17 +164,9 @@ class TestClusteringUtils:
 
     def test_update_cluster_centers(self):
         """Test updating cluster centers."""
-        data = np.array([
-            [1.0, 1.0],
-            [2.0, 2.0],
-            [5.0, 5.0],
-            [6.0, 6.0]
-        ])
+        data = np.array([[1.0, 1.0], [2.0, 2.0], [5.0, 5.0], [6.0, 6.0]])
 
-        clusters = [
-            Cluster(np.array([0.0, 0.0]), [0, 1]),
-            Cluster(np.array([0.0, 0.0]), [2, 3])
-        ]
+        clusters = [Cluster(np.array([0.0, 0.0]), [0, 1]), Cluster(np.array([0.0, 0.0]), [2, 3])]
 
         update_cluster_centers(data, clusters)
 
@@ -216,7 +178,7 @@ class TestClusteringUtils:
         clusters = [
             Cluster(np.array([1.0, 1.0]), [0, 1]),
             Cluster(np.array([3.0, 3.0]), []),
-            Cluster(np.array([5.0, 5.0]), [2, 3])
+            Cluster(np.array([5.0, 5.0]), [2, 3]),
         ]
 
         filtered = filter_empty_clusters(clusters)
@@ -231,18 +193,10 @@ class TestClusterStep:
 
     def test_cluster_step(self):
         """Test one step of K-means clustering."""
-        data = np.array([
-            [1.0, 1.0],
-            [2.0, 2.0],
-            [5.0, 5.0],
-            [6.0, 6.0]
-        ])
+        data = np.array([[1.0, 1.0], [2.0, 2.0], [5.0, 5.0], [6.0, 6.0]])
 
         # Initial clusters with non-optimal centers
-        clusters = [
-            Cluster(np.array([0.0, 0.0])),
-            Cluster(np.array([7.0, 7.0]))
-        ]
+        clusters = [Cluster(np.array([0.0, 0.0])), Cluster(np.array([7.0, 7.0]))]
 
         # Perform one step
         new_clusters = cluster_step(data, clusters)
@@ -260,12 +214,7 @@ class TestMostDistal:
 
     def test_most_distal(self):
         """Test finding the most distant point in a cluster."""
-        data = np.array([
-            [1.0, 1.0],
-            [2.0, 2.0],
-            [3.0, 3.0],
-            [10.0, 10.0]
-        ])
+        data = np.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0], [10.0, 10.0]])
 
         # Cluster with center at [2,2] and all points
         cluster = Cluster(np.array([2.0, 2.0]), [0, 1, 2, 3])
@@ -284,12 +233,7 @@ class TestSplitCluster:
 
     def test_split_cluster(self):
         """Test splitting a cluster into two."""
-        data = np.array([
-            [1.0, 1.0],
-            [2.0, 2.0],
-            [3.0, 3.0],
-            [10.0, 10.0]
-        ])
+        data = np.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0], [10.0, 10.0]])
 
         # Cluster with center at [4,4] and all points
         cluster = Cluster(np.array([4.0, 4.0]), [0, 1, 2, 3], 0)
@@ -318,12 +262,7 @@ class TestCleanStartClusters:
 
     def test_clean_start_no_last_clusters(self):
         """Test clean_start_clusters with no previous clusters."""
-        data = np.array([
-            [1.0, 1.0],
-            [2.0, 2.0],
-            [5.0, 5.0],
-            [6.0, 6.0]
-        ])
+        data = np.array([[1.0, 1.0], [2.0, 2.0], [5.0, 5.0], [6.0, 6.0]])
 
         # Should behave like init_clusters when no last_clusters
         clusters = clean_start_clusters(data, 2)
@@ -334,18 +273,10 @@ class TestCleanStartClusters:
 
     def test_clean_start_with_last_clusters(self):
         """Test clean_start_clusters with previous clusters."""
-        data = np.array([
-            [1.0, 1.0],
-            [2.0, 2.0],
-            [5.0, 5.0],
-            [6.0, 6.0]
-        ])
+        data = np.array([[1.0, 1.0], [2.0, 2.0], [5.0, 5.0], [6.0, 6.0]])
 
         # Previous clusters
-        last_clusters = [
-            Cluster(np.array([1.5, 1.5]), [0, 1], 0),
-            Cluster(np.array([5.5, 5.5]), [2, 3], 1)
-        ]
+        last_clusters = [Cluster(np.array([1.5, 1.5]), [0, 1], 0), Cluster(np.array([5.5, 5.5]), [2, 3], 1)]
 
         # Same number of clusters
         clusters = clean_start_clusters(data, 2, last_clusters)
@@ -374,12 +305,7 @@ class TestKMeans:
     def test_kmeans_basic(self):
         """Test basic K-means clustering."""
         # Create data with two clear clusters
-        data = np.array([
-            [1.0, 1.0],
-            [1.5, 1.5],
-            [5.0, 5.0],
-            [5.5, 5.5]
-        ])
+        data = np.array([[1.0, 1.0], [1.5, 1.5], [5.0, 5.0], [5.5, 5.5]])
 
         # Run K-means
         clusters = kmeans(data, 2)
@@ -401,12 +327,9 @@ class TestKMeans:
     def test_kmeans_weighted(self):
         """Test weighted K-means clustering."""
         # Create data with two clusters but weighted
-        data = np.array([
-            [1.0, 1.0],  # Weight 1
-            [2.0, 2.0],  # Weight 3
-            [5.0, 5.0],  # Weight 1
-            [6.0, 6.0]   # Weight 1
-        ])
+        data = np.array(
+            [[1.0, 1.0], [2.0, 2.0], [5.0, 5.0], [6.0, 6.0]]  # Weight 1  # Weight 3  # Weight 1  # Weight 1
+        )
 
         weights = np.array([1.0, 3.0, 1.0, 1.0])
 
@@ -431,10 +354,7 @@ class TestKMeans:
 
     def test_kmeans_fewer_points_than_k(self):
         """Test K-means when there are fewer points than clusters."""
-        data = np.array([
-            [1.0, 1.0],
-            [5.0, 5.0]
-        ])
+        data = np.array([[1.0, 1.0], [5.0, 5.0]])
 
         clusters = kmeans(data, 3)
         assert len(clusters) == 2
@@ -446,18 +366,10 @@ class TestSilhouette:
     def test_silhouette_coefficient(self):
         """Test silhouette coefficient calculation."""
         # Create data with two clear clusters
-        data = np.array([
-            [1.0, 1.0],
-            [1.5, 1.5],
-            [5.0, 5.0],
-            [5.5, 5.5]
-        ])
+        data = np.array([[1.0, 1.0], [1.5, 1.5], [5.0, 5.0], [5.5, 5.5]])
 
         # Create ideal clustering
-        clusters = [
-            Cluster(np.array([1.25, 1.25]), [0, 1]),
-            Cluster(np.array([5.25, 5.25]), [2, 3])
-        ]
+        clusters = [Cluster(np.array([1.25, 1.25]), [0, 1]), Cluster(np.array([5.25, 5.25]), [2, 3])]
 
         # Calculate silhouette
         s = silhouette(data, clusters)
@@ -466,10 +378,7 @@ class TestSilhouette:
         assert s > 0.7
 
         # Create bad clustering
-        bad_clusters = [
-            Cluster(np.array([1.0, 1.0]), [0, 2]),
-            Cluster(np.array([5.0, 5.0]), [1, 3])
-        ]
+        bad_clusters = [Cluster(np.array([1.0, 1.0]), [0, 2]), Cluster(np.array([5.0, 5.0]), [1, 3])]
 
         # Calculate silhouette
         bad_s = silhouette(data, bad_clusters)
@@ -479,17 +388,10 @@ class TestSilhouette:
 
     def test_silhouette_edge_cases(self):
         """Test silhouette coefficient edge cases."""
-        data = np.array([
-            [1.0, 1.0],
-            [1.5, 1.5],
-            [5.0, 5.0],
-            [5.5, 5.5]
-        ])
+        data = np.array([[1.0, 1.0], [1.5, 1.5], [5.0, 5.0], [5.5, 5.5]])
 
         # One cluster
-        one_cluster = [
-            Cluster(np.array([3.0, 3.0]), [0, 1, 2, 3])
-        ]
+        one_cluster = [Cluster(np.array([3.0, 3.0]), [0, 1, 2, 3])]
         assert silhouette(data, one_cluster) == 0.0
 
         # Empty data
@@ -501,7 +403,7 @@ class TestSilhouette:
             Cluster(np.array([1.0, 1.0]), [0]),
             Cluster(np.array([1.5, 1.5]), [1]),
             Cluster(np.array([5.0, 5.0]), [2]),
-            Cluster(np.array([5.5, 5.5]), [3])
+            Cluster(np.array([5.5, 5.5]), [3]),
         ]
         assert silhouette(data, singleton_clusters) == 0.0
 
@@ -511,31 +413,28 @@ class TestClusterSerialization:
 
     def test_clusters_to_dict(self):
         """Test converting clusters to dictionary format."""
-        clusters = [
-            Cluster(np.array([1.0, 1.0]), [0, 1], 0),
-            Cluster(np.array([5.0, 5.0]), [2, 3], 1)
-        ]
+        clusters = [Cluster(np.array([1.0, 1.0]), [0, 1], 0), Cluster(np.array([5.0, 5.0]), [2, 3], 1)]
 
         # Convert to dict
         clusters_dict = clusters_to_dict(clusters)
 
         assert len(clusters_dict) == 2
-        assert clusters_dict[0]['id'] == 0
-        assert clusters_dict[0]['center'] == [1.0, 1.0]
-        assert clusters_dict[0]['members'] == [0, 1]
+        assert clusters_dict[0]["id"] == 0
+        assert clusters_dict[0]["center"] == [1.0, 1.0]
+        assert clusters_dict[0]["members"] == [0, 1]
 
         # Test with data indices
-        indices = ['a', 'b', 'c', 'd']
+        indices = ["a", "b", "c", "d"]
         clusters_dict_names = clusters_to_dict(clusters, indices)
 
-        assert clusters_dict_names[0]['members'] == ['a', 'b']
-        assert clusters_dict_names[1]['members'] == ['c', 'd']
+        assert clusters_dict_names[0]["members"] == ["a", "b"]
+        assert clusters_dict_names[1]["members"] == ["c", "d"]
 
     def test_clusters_from_dict(self):
         """Test converting dictionary format to clusters."""
         clusters_dict = [
-            {'id': 0, 'center': [1.0, 1.0], 'members': ['a', 'b']},
-            {'id': 1, 'center': [5.0, 5.0], 'members': ['c', 'd']}
+            {"id": 0, "center": [1.0, 1.0], "members": ["a", "b"]},
+            {"id": 1, "center": [5.0, 5.0], "members": ["c", "d"]},
         ]
 
         # Convert to clusters without index map
@@ -544,10 +443,10 @@ class TestClusterSerialization:
         assert len(clusters) == 2
         assert clusters[0].id == 0
         assert np.array_equal(clusters[0].center, [1.0, 1.0])
-        assert clusters[0].members == ['a', 'b']
+        assert clusters[0].members == ["a", "b"]
 
         # Test with index map
-        index_map = {'a': 0, 'b': 1, 'c': 2, 'd': 3}
+        index_map = {"a": 0, "b": 1, "c": 2, "d": 3}
         clusters_mapped = clusters_from_dict(clusters_dict, index_map)
 
         assert clusters_mapped[0].members == [0, 1]
@@ -560,14 +459,9 @@ class TestClusterNamedMatrix:
     def test_cluster_named_matrix(self):
         """Test clustering a NamedMatrix."""
         # Create a NamedMatrix
-        data = np.array([
-            [1.0, 1.0],
-            [1.5, 1.5],
-            [5.0, 5.0],
-            [5.5, 5.5]
-        ])
-        rownames = ['a', 'b', 'c', 'd']
-        colnames = ['x', 'y']
+        data = np.array([[1.0, 1.0], [1.5, 1.5], [5.0, 5.0], [5.5, 5.5]])
+        rownames = ["a", "b", "c", "d"]
+        colnames = ["x", "y"]
 
         nmat = NamedMatrix(data, rownames, colnames)
 
@@ -579,12 +473,12 @@ class TestClusterNamedMatrix:
         # Check that all row names are in clusters
         all_members = []
         for cluster in clusters_dict:
-            all_members.extend(cluster['members'])
+            all_members.extend(cluster["members"])
 
         assert set(all_members) == set(rownames)
 
         # Test with weights
-        weights = {'a': 1.0, 'b': 3.0, 'c': 1.0, 'd': 1.0}
+        weights = {"a": 1.0, "b": 3.0, "c": 1.0, "d": 1.0}
         clusters_weighted = cluster_named_matrix(nmat, 2, weights=weights)
 
         assert len(clusters_weighted) == 2

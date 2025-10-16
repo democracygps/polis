@@ -25,9 +25,7 @@ from polismath_commentgraph.utils.group_data import GroupDataProcessor
 from polismath_commentgraph.utils.storage import PostgresClient
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -46,9 +44,7 @@ def calculate_and_store_extremity(
     Returns:
         Dictionary mapping comment IDs to extremity values
     """
-    logger.info(
-        f"Calculating comment extremity values for conversation {conversation_id}"
-    )
+    logger.info(f"Calculating comment extremity values for conversation {conversation_id}")
 
     # Initialize PostgreSQL client and GroupDataProcessor
     postgres_client = PostgresClient()
@@ -60,16 +56,12 @@ def calculate_and_store_extremity(
             logger.info("Checking for existing extremity values in DynamoDB")
             existing_values = check_existing_extremity_values(conversation_id)
             if existing_values:
-                logger.info(
-                    f"Found {len(existing_values)} existing extremity values in DynamoDB"
-                )
+                logger.info(f"Found {len(existing_values)} existing extremity values in DynamoDB")
                 return existing_values
 
         # Process the conversation data - this will calculate comment extremity
         # values and store them in DynamoDB
-        export_data = group_processor.get_export_data(
-            int(conversation_id), include_moderation
-        )
+        export_data = group_processor.get_export_data(int(conversation_id), include_moderation)
 
         # Extract extremity values from the processed data
         extremity_values = {}
@@ -96,9 +88,7 @@ def calculate_and_store_extremity(
             logger.info("Extremity statistics:")
             logger.info(f"  Range: {min_extremity:.4f} to {max_extremity:.4f}")
             logger.info(f"  Mean: {mean_extremity:.4f}")
-            logger.info(
-                f"  Distribution: {low_count} low (<0.3), {mid_count} medium, {high_count} high (>=0.7)"
-            )
+            logger.info(f"  Distribution: {low_count} low (<0.3), {mid_count} medium, {high_count} high (>=0.7)")
 
         return extremity_values
 
@@ -127,9 +117,7 @@ def check_existing_extremity_values(conversation_id: int) -> dict[int, float]:
         group_processor = GroupDataProcessor(postgres_client)
 
         # Get all extremity values for this conversation
-        extremity_values = group_processor.get_all_comment_extremity_values(
-            conversation_id
-        )
+        extremity_values = group_processor.get_all_comment_extremity_values(conversation_id)
 
         # Clean up PostgreSQL connection
         postgres_client.shutdown()
@@ -166,21 +154,13 @@ def print_extremity_report(extremity_values: dict[int, float]) -> None:
     high_count = sum(1 for v in values_list if v >= 0.7)
 
     print("\nExtremity distribution:")
-    print(
-        f"  Low (<0.3): {low_count} comments ({low_count / len(values_list) * 100:.1f}%)"
-    )
-    print(
-        f"  Medium (0.3-0.7): {mid_count} comments ({mid_count / len(values_list) * 100:.1f}%)"
-    )
-    print(
-        f"  High (>0.7): {high_count} comments ({high_count / len(values_list) * 100:.1f}%)"
-    )
+    print(f"  Low (<0.3): {low_count} comments ({low_count / len(values_list) * 100:.1f}%)")
+    print(f"  Medium (0.3-0.7): {mid_count} comments ({mid_count / len(values_list) * 100:.1f}%)")
+    print(f"  High (>0.7): {high_count} comments ({high_count / len(values_list) * 100:.1f}%)")
 
     # Most extreme comments
     if values_list:
-        sorted_items = sorted(
-            extremity_values.items(), key=lambda x: x[1], reverse=True
-        )
+        sorted_items = sorted(extremity_values.items(), key=lambda x: x[1], reverse=True)
         print("\nMost divisive comments (top 5):")
         for i, (tid, value) in enumerate(sorted_items[:5]):
             print(f"  {i + 1}. Comment {tid}: {value:.4f}")
@@ -190,9 +170,7 @@ def main() -> None:
     """Main entry point for script when run directly."""
     parser = argparse.ArgumentParser(description="Calculate comment extremity values")
     parser.add_argument("--zid", type=int, required=True, help="Conversation ID")
-    parser.add_argument(
-        "--force", action="store_true", help="Force recalculation of values"
-    )
+    parser.add_argument("--force", action="store_true", help="Force recalculation of values")
     parser.add_argument("--verbose", action="store_true", help="Show detailed output")
     parser.add_argument(
         "--include_moderation",
@@ -207,17 +185,13 @@ def main() -> None:
         logging.getLogger().setLevel(logging.DEBUG)
 
     # Calculate and store extremity values
-    extremity_values = calculate_and_store_extremity(
-        args.zid, args.force, args.include_moderation
-    )
+    extremity_values = calculate_and_store_extremity(args.zid, args.force, args.include_moderation)
 
     # Print report
     print_extremity_report(extremity_values)
 
     if extremity_values:
-        print(
-            f"\nSuccessfully calculated and stored extremity values for {len(extremity_values)} comments."
-        )
+        print(f"\nSuccessfully calculated and stored extremity values for {len(extremity_values)} comments.")
     else:
         print("\nNo extremity values were calculated. Check logs for errors.")
 

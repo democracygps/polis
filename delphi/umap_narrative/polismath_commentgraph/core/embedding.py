@@ -12,6 +12,7 @@ from sentence_transformers import SentenceTransformer
 
 logger = logging.getLogger(__name__)
 
+
 class EmbeddingEngine:
     """
     Generates and manages comment embeddings using SentenceTransformer.
@@ -19,15 +20,10 @@ class EmbeddingEngine:
     and nearest neighbor search.
     """
 
-    def __init__(
-        self,
-        model_name: str | None = None,
-        cache_dir: str | None = None,
-        device: str | None = None
-    ):
+    def __init__(self, model_name: str | None = None, cache_dir: str | None = None, device: str | None = None):
         """
         Initialize the embedding engine with a specific model.
-        
+
         Args:
             model_name: The name of the SentenceTransformer model to use
             cache_dir: Optional directory to cache models
@@ -65,16 +61,9 @@ class EmbeddingEngine:
                 # Load with cache dir if specified
                 if self.cache_dir:
                     os.makedirs(self.cache_dir, exist_ok=True)
-                    self._model = SentenceTransformer(
-                        self.model_name,
-                        cache_folder=self.cache_dir,
-                        device=self.device
-                    )
+                    self._model = SentenceTransformer(self.model_name, cache_folder=self.cache_dir, device=self.device)
                 else:
-                    self._model = SentenceTransformer(
-                        self.model_name,
-                        device=self.device
-                    )
+                    self._model = SentenceTransformer(self.model_name, device=self.device)
 
                 self.vector_dim = self._model.get_sentence_embedding_dimension()
                 logger.info(
@@ -93,10 +82,10 @@ class EmbeddingEngine:
     def embed_text(self, text: str) -> np.ndarray:
         """
         Generate an embedding vector for a single text string.
-        
+
         Args:
             text: The text to embed
-            
+
         Returns:
             A numpy array containing the embedding vector
         """
@@ -113,20 +102,15 @@ class EmbeddingEngine:
             logger.error(f"Error generating embedding: {str(e)}")
             return np.zeros(self.vector_dim)
 
-    def embed_batch(
-        self,
-        texts: list[str],
-        batch_size: int = 32,
-        show_progress: bool = False
-    ) -> np.ndarray:
+    def embed_batch(self, texts: list[str], batch_size: int = 32, show_progress: bool = False) -> np.ndarray:
         """
         Generate embeddings for a batch of texts.
-        
+
         Args:
             texts: List of text strings to embed
             batch_size: Batch size for processing
             show_progress: Whether to show a progress bar
-            
+
         Returns:
             A numpy array of shape (len(texts), embedding_dim)
         """
@@ -149,10 +133,7 @@ class EmbeddingEngine:
         try:
             # Generate embeddings for valid texts
             embeddings = self.model.encode(
-                valid_texts,
-                convert_to_numpy=True,
-                batch_size=batch_size,
-                show_progress_bar=show_progress
+                valid_texts, convert_to_numpy=True, batch_size=batch_size, show_progress_bar=show_progress
             )
 
             # Create result array with zeros for invalid texts
@@ -165,18 +146,14 @@ class EmbeddingEngine:
             logger.error(f"Error generating batch embeddings: {str(e)}")
             return np.zeros((len(texts), self.vector_dim))
 
-    def calculate_similarity(
-        self,
-        embedding1: np.ndarray,
-        embedding2: np.ndarray
-    ) -> float:
+    def calculate_similarity(self, embedding1: np.ndarray, embedding2: np.ndarray) -> float:
         """
         Calculate cosine similarity between two embeddings.
-        
+
         Args:
             embedding1: First embedding vector
             embedding2: Second embedding vector
-            
+
         Returns:
             Cosine similarity score (float between -1 and 1)
         """
@@ -190,18 +167,14 @@ class EmbeddingEngine:
         # Calculate cosine similarity
         return np.dot(embedding1, embedding2) / (norm1 * norm2)
 
-    def calculate_similarities(
-        self,
-        query_embedding: np.ndarray,
-        embeddings: np.ndarray
-    ) -> np.ndarray:
+    def calculate_similarities(self, query_embedding: np.ndarray, embeddings: np.ndarray) -> np.ndarray:
         """
         Calculate cosine similarities between a query and multiple embeddings.
-        
+
         Args:
             query_embedding: The query embedding vector
             embeddings: Matrix of embedding vectors to compare against
-            
+
         Returns:
             Array of similarity scores
         """
@@ -226,21 +199,17 @@ class EmbeddingEngine:
         return similarities
 
     def find_nearest_neighbors(
-        self,
-        query_embedding: np.ndarray,
-        embeddings: np.ndarray,
-        k: int = 5,
-        include_distances: bool = True
+        self, query_embedding: np.ndarray, embeddings: np.ndarray, k: int = 5, include_distances: bool = True
     ) -> dict[str, list]:
         """
         Find k nearest neighbors to a query embedding.
-        
+
         Args:
             query_embedding: The query embedding vector
             embeddings: Matrix of embedding vectors to search
             k: Number of neighbors to return
             include_distances: Whether to include distances in the result
-            
+
         Returns:
             Dictionary with 'indices' and optionally 'distances' lists
         """
@@ -258,9 +227,7 @@ class EmbeddingEngine:
 
         nearest_indices = np.argsort(distances)[:k]
 
-        result = {
-            "indices": nearest_indices.tolist()
-        }
+        result = {"indices": nearest_indices.tolist()}
 
         if include_distances:
             nearest_distances = distances[nearest_indices]

@@ -34,18 +34,18 @@ from polismath.pca_kmeans_rep.named_matrix import NamedMatrix
 def create_test_conversation(dataset_name: str) -> Conversation:
     """
     Create a test conversation with real data.
-    
+
     Args:
         dataset_name: 'biodiversity' or 'vw'
-        
+
     Returns:
         Conversation with the dataset loaded
     """
     # Set paths based on dataset
-    if dataset_name == 'biodiversity':
-        votes_path = os.path.join('real_data/biodiversity', '2025-03-18-2000-3atycmhmer-votes.csv')
-    elif dataset_name == 'vw':
-        votes_path = os.path.join('real_data/vw', '2025-03-18-1954-4anfsauat2-votes.csv')
+    if dataset_name == "biodiversity":
+        votes_path = os.path.join("real_data/biodiversity", "2025-03-18-2000-3atycmhmer-votes.csv")
+    elif dataset_name == "vw":
+        votes_path = os.path.join("real_data/vw", "2025-03-18-1954-4anfsauat2-votes.csv")
     else:
         raise ValueError(f"Unknown dataset: {dataset_name}")
 
@@ -53,8 +53,8 @@ def create_test_conversation(dataset_name: str) -> Conversation:
     df = pd.read_csv(votes_path)
 
     # Get unique participant and comment IDs
-    ptpt_ids = sorted(df['voter-id'].unique())
-    cmt_ids = sorted(df['comment-id'].unique())
+    ptpt_ids = sorted(df["voter-id"].unique())
+    cmt_ids = sorted(df["comment-id"].unique())
 
     # Create a matrix of NaNs
     vote_matrix = np.full((len(ptpt_ids), len(cmt_ids)), np.nan)
@@ -65,12 +65,12 @@ def create_test_conversation(dataset_name: str) -> Conversation:
 
     # Fill the matrix with votes
     for _, row in df.iterrows():
-        pid = row['voter-id']
-        cid = row['comment-id']
+        pid = row["voter-id"]
+        cid = row["comment-id"]
 
         # Convert vote to numeric value
         try:
-            vote_val = float(row['vote'])
+            vote_val = float(row["vote"])
             # Normalize to ensure only -1, 0, or 1
             if vote_val > 0:
                 vote_val = 1.0
@@ -80,10 +80,10 @@ def create_test_conversation(dataset_name: str) -> Conversation:
                 vote_val = 0.0
         except ValueError:
             # Handle text values
-            vote_text = str(row['vote']).lower()
-            if vote_text == 'agree':
+            vote_text = str(row["vote"]).lower()
+            if vote_text == "agree":
                 vote_val = 1.0
-            elif vote_text == 'disagree':
+            elif vote_text == "disagree":
                 vote_val = -1.0
             else:
                 vote_val = 0.0  # Pass or unknown
@@ -94,11 +94,7 @@ def create_test_conversation(dataset_name: str) -> Conversation:
         vote_matrix[r_idx, c_idx] = vote_val
 
     # Convert to DataFrame
-    df_matrix = pd.DataFrame(
-        vote_matrix,
-        index=[str(pid) for pid in ptpt_ids],
-        columns=[str(cid) for cid in cmt_ids]
-    )
+    df_matrix = pd.DataFrame(vote_matrix, index=[str(pid) for pid in ptpt_ids], columns=[str(cid) for cid in cmt_ids])
 
     # Create a NamedMatrix
     named_matrix = NamedMatrix(df_matrix, enforce_numeric=True)
@@ -118,80 +114,85 @@ def create_test_conversation(dataset_name: str) -> Conversation:
 def save_results(dataset_name: str, conversation: Conversation) -> None:
     """
     Save the results of the pipeline to a JSON file.
-    
+
     Args:
         dataset_name: Name of the dataset
         conversation: Conversation object with results
     """
     # Create results directory if it doesn't exist
-    results_dir = os.path.join('pipeline_results')
+    results_dir = os.path.join("pipeline_results")
     os.makedirs(results_dir, exist_ok=True)
 
     # Create result object
     result = {
-        'dataset': dataset_name,
-        'participants': conversation.participant_count,
-        'comments': conversation.comment_count,
-        'pca': {
-            'center_shape': conversation.pca['center'].shape[0] if 'center' in conversation.pca else 0,
-            'comps_shape': conversation.pca['comps'].shape if 'comps' in conversation.pca else (0, 0)
+        "dataset": dataset_name,
+        "participants": conversation.participant_count,
+        "comments": conversation.comment_count,
+        "pca": {
+            "center_shape": conversation.pca["center"].shape[0] if "center" in conversation.pca else 0,
+            "comps_shape": conversation.pca["comps"].shape if "comps" in conversation.pca else (0, 0),
         },
-        'clusters': []
+        "clusters": [],
     }
 
     # Add group cluster information
     for i, cluster in enumerate(conversation.group_clusters):
         cluster_info = {
-            'id': cluster.get('id', i),
-            'members_count': len(cluster.get('members', [])),
-            'center': cluster.get('center', [0, 0]).tolist()
+            "id": cluster.get("id", i),
+            "members_count": len(cluster.get("members", [])),
+            "center": cluster.get("center", [0, 0]).tolist(),
         }
-        result['clusters'].append(cluster_info)
+        result["clusters"].append(cluster_info)
 
     # Add representativeness information
-    if hasattr(conversation, 'repness') and conversation.repness:
-        result['repness'] = {}
-        for group_id, comments in conversation.repness.get('group_repness', {}).items():
+    if hasattr(conversation, "repness") and conversation.repness:
+        result["repness"] = {}
+        for group_id, comments in conversation.repness.get("group_repness", {}).items():
             comment_info = []
             for comment in comments:
-                comment_info.append({
-                    'id': comment.get('comment_id', ''),
-                    'type': comment.get('repful', ''),
-                    'agree': comment.get('pa', 0),
-                    'disagree': comment.get('pd', 0),
-                    'agree_metric': comment.get('agree_metric', 0),
-                    'disagree_metric': comment.get('disagree_metric', 0)
-                })
-            result['repness'][str(group_id)] = comment_info
+                comment_info.append(
+                    {
+                        "id": comment.get("comment_id", ""),
+                        "type": comment.get("repful", ""),
+                        "agree": comment.get("pa", 0),
+                        "disagree": comment.get("pd", 0),
+                        "agree_metric": comment.get("agree_metric", 0),
+                        "disagree_metric": comment.get("disagree_metric", 0),
+                    }
+                )
+            result["repness"][str(group_id)] = comment_info
 
     # Add participant stats summary
-    if hasattr(conversation, 'participant_stats') and conversation.participant_stats:
+    if hasattr(conversation, "participant_stats") and conversation.participant_stats:
         stats_summary = {
-            'participants_with_stats': len(conversation.participant_stats.get('stats', {})),
-            'sample_participants': []
+            "participants_with_stats": len(conversation.participant_stats.get("stats", {})),
+            "sample_participants": [],
         }
 
         # Add a few sample participants
-        sample_size = min(5, len(conversation.participant_stats.get('stats', {})))
-        sample_ids = list(conversation.participant_stats.get('stats', {}).keys())[:sample_size]
+        sample_size = min(5, len(conversation.participant_stats.get("stats", {})))
+        sample_ids = list(conversation.participant_stats.get("stats", {}).keys())[:sample_size]
 
         for pid in sample_ids:
-            ptpt_data = conversation.participant_stats['stats'][pid]
-            stats_summary['sample_participants'].append({
-                'id': pid,
-                'group': ptpt_data.get('group'),
-                'votes': ptpt_data.get('n_votes', 0),
-                'agrees': ptpt_data.get('n_agree', 0),
-                'disagrees': ptpt_data.get('n_disagree', 0),
-                'correlation_with_own_group': ptpt_data.get('group_correlations', {}).get(
-                    str(ptpt_data.get('group')), 0)
-            })
+            ptpt_data = conversation.participant_stats["stats"][pid]
+            stats_summary["sample_participants"].append(
+                {
+                    "id": pid,
+                    "group": ptpt_data.get("group"),
+                    "votes": ptpt_data.get("n_votes", 0),
+                    "agrees": ptpt_data.get("n_agree", 0),
+                    "disagrees": ptpt_data.get("n_disagree", 0),
+                    "correlation_with_own_group": ptpt_data.get("group_correlations", {}).get(
+                        str(ptpt_data.get("group")), 0
+                    ),
+                }
+            )
 
-        result['participant_stats'] = stats_summary
+        result["participant_stats"] = stats_summary
 
     # Save to file
     file_path = os.path.join(results_dir, f"{dataset_name}_results.json")
-    with open(file_path, 'w') as f:
+    with open(file_path, "w") as f:
         json.dump(result, f, indent=2)
 
     print(f"Results saved to {file_path}")
@@ -200,7 +201,7 @@ def save_results(dataset_name: str, conversation: Conversation) -> None:
 def test_full_pipeline(dataset_name: str) -> None:
     """
     Run the full pipeline test for a dataset.
-    
+
     Args:
         dataset_name: 'biodiversity' or 'vw'
     """
@@ -226,7 +227,7 @@ def test_full_pipeline(dataset_name: str) -> None:
 
         # Check PCA results
         print("\nPCA Results:")
-        if hasattr(updated_conv, 'pca') and updated_conv.pca:
+        if hasattr(updated_conv, "pca") and updated_conv.pca:
             print(f"  - Center shape: {updated_conv.pca['center'].shape}")
             print(f"  - Components shape: {updated_conv.pca['comps'].shape}")
             print(f"  - Projections count: {len(updated_conv.proj)}")
@@ -243,7 +244,7 @@ def test_full_pipeline(dataset_name: str) -> None:
 
         # Check clustering results
         print("\nClustering Results:")
-        if hasattr(updated_conv, 'group_clusters') and updated_conv.group_clusters:
+        if hasattr(updated_conv, "group_clusters") and updated_conv.group_clusters:
             print(f"  - Number of clusters: {len(updated_conv.group_clusters)}")
             for i, cluster in enumerate(updated_conv.group_clusters):
                 print(f"  - Cluster {i+1}: {len(cluster['members'])} participants")
@@ -253,43 +254,49 @@ def test_full_pipeline(dataset_name: str) -> None:
 
         # Check representativeness results
         print("\nRepresentativeness Results:")
-        if hasattr(updated_conv, 'repness') and updated_conv.repness:
+        if hasattr(updated_conv, "repness") and updated_conv.repness:
             print(f"  - Number of comment IDs: {len(updated_conv.repness.get('comment_ids', []))}")
 
-            for group_id, comments in updated_conv.repness.get('group_repness', {}).items():
+            for group_id, comments in updated_conv.repness.get("group_repness", {}).items():
                 print(f"\n  Group {group_id}:")
                 print(f"    - Number of representative comments: {len(comments)}")
 
                 for i, comment in enumerate(comments[:3]):  # Show top 3
                     print(f"    - Comment {i+1}: ID {comment.get('comment_id')}, Type: {comment.get('repful')}")
                     print(f"      Agree: {comment.get('pa', 0):.2f}, Disagree: {comment.get('pd', 0):.2f}")
-                    print(f"      Metrics: A={comment.get('agree_metric', 0):.2f}, D={comment.get('disagree_metric', 0):.2f}")
+                    print(
+                        f"      Metrics: A={comment.get('agree_metric', 0):.2f}, D={comment.get('disagree_metric', 0):.2f}"
+                    )
 
             # Check consensus comments
             print("\n  Consensus Comments:")
-            for i, comment in enumerate(updated_conv.repness.get('consensus_comments', [])):
-                print(f"    - Comment {i+1}: ID {comment.get('comment_id')}, Avg Agree: {comment.get('avg_agree', 0):.2f}")
+            for i, comment in enumerate(updated_conv.repness.get("consensus_comments", [])):
+                print(
+                    f"    - Comment {i+1}: ID {comment.get('comment_id')}, Avg Agree: {comment.get('avg_agree', 0):.2f}"
+                )
         else:
             print("  No representativeness results available")
 
         # Check participant stats
         print("\nParticipant Statistics:")
-        if hasattr(updated_conv, 'participant_stats') and updated_conv.participant_stats:
+        if hasattr(updated_conv, "participant_stats") and updated_conv.participant_stats:
             print(f"  - Number of participant IDs: {len(updated_conv.participant_stats.get('participant_ids', []))}")
             print(f"  - Number of participants with stats: {len(updated_conv.participant_stats.get('stats', {}))}")
 
             # Sample a few participants
-            sample_size = min(3, len(updated_conv.participant_stats.get('stats', {})))
-            sample_participants = list(updated_conv.participant_stats.get('stats', {}).keys())[:sample_size]
+            sample_size = min(3, len(updated_conv.participant_stats.get("stats", {})))
+            sample_participants = list(updated_conv.participant_stats.get("stats", {}).keys())[:sample_size]
 
             for ptpt_id in sample_participants:
-                ptpt_data = updated_conv.participant_stats['stats'][ptpt_id]
+                ptpt_data = updated_conv.participant_stats["stats"][ptpt_id]
                 print(f"\n  Participant {ptpt_id}:")
                 print(f"    - Group: {ptpt_data.get('group')}")
-                print(f"    - Votes: {ptpt_data.get('n_votes')} (Agree: {ptpt_data.get('n_agree')}, Disagree: {ptpt_data.get('n_disagree')}, Pass: {ptpt_data.get('n_pass')})")
+                print(
+                    f"    - Votes: {ptpt_data.get('n_votes')} (Agree: {ptpt_data.get('n_agree')}, Disagree: {ptpt_data.get('n_disagree')}, Pass: {ptpt_data.get('n_pass')})"
+                )
 
                 print("    - Group correlations:")
-                for group_id, corr in ptpt_data.get('group_correlations', {}).items():
+                for group_id, corr in ptpt_data.get("group_correlations", {}).items():
                     print(f"      - Group {group_id}: {corr:.2f}")
         else:
             print("  No participant statistics available")
@@ -307,6 +314,6 @@ def test_full_pipeline(dataset_name: str) -> None:
 
 if __name__ == "__main__":
     # Test on both datasets
-    test_full_pipeline('biodiversity')
-    print("\n" + "="*70 + "\n")
-    test_full_pipeline('vw')
+    test_full_pipeline("biodiversity")
+    print("\n" + "=" * 70 + "\n")
+    test_full_pipeline("vw")
