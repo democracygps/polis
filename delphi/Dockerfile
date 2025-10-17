@@ -64,23 +64,11 @@
       (ls -lhR /usr/local/lib/python3.12/site-packages/nvidia || echo "NVIDIA directory not found.") && \
       (ls -lhR /usr/local/lib/python3.12/site-packages/torch/lib/*cuda* || echo "No CUDA libs in torch/lib.")
 
-
-  # EVōC will be installed via pyproject.toml dependencies
-  # RUN git clone https://github.com/TutteInstitute/evoc && \
-  #     cd evoc && \
-  #     pip install --no-cache-dir .
-
-  # EVōC verification
-  RUN echo "--- EVōC Installation Check ---" && \
-      python -c "import evoc; print(f'EVōC version: {getattr(evoc, \"__version__\", \"unknown\")}')" && \
-      echo "--- EVōC imported successfully ---"
-
   # ---- Stage 2: Final ----
   FROM python:3.12-slim AS final
 
   ENV PYTHONDONTWRITEBYTECODE=1
   ENV PYTHONUNBUFFERED=1
-  ENV NUMBA_DISABLE_JIT=${NUMBA_DISABLE_JIT:--1}
   ENV AWS_REGION=${AWS_REGION:-us-east-1}
 
   RUN apt-get update && \
