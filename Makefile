@@ -17,7 +17,10 @@ $(if $(filter false,$(1)),false,true)
 endef
 
 # Default environment and settings (dev)
-export ENV_FILE = .env
+ENV_FILE ?= .env
+export ENV_FILE
+PROFILES ?=
+APP_PROFILE ?= dev
 
 # Lazy evaluation of expensive environment parsing - only when needed
 define get_env_vars
@@ -33,8 +36,11 @@ define get_env_vars
 	$(eval export POSTGRES_VOLUME = $(if $(filter true,$(USE_PRODCLONE)),prodclone_data,postgres_data))
 	# Only set COMPOSE_FILE_ARGS if not already set by environment-specific targets
 	$(eval COMPOSE_FILE_ARGS ?= -f docker-compose.yml -f docker-compose.dev.yml)
-	$(eval COMPOSE_FILE_ARGS += $(if $(POSTGRES_DOCKER),--profile postgres,))
-	$(eval COMPOSE_FILE_ARGS += $(if $(LOCAL_SERVICES_DOCKER),--profile local-services,))
+	$(eval COMPOSE_PROFILE_ARGS := $(foreach p,$(subst ',', ,$(PROFILES)),--profile $(p)))
+	$(if $(strip $(PROFILES)),,\
+		$(eval COMPOSE_PROFILE_ARGS += $(if $(POSTGRES_DOCKER),--profile postgres,))\
+		$(eval COMPOSE_PROFILE_ARGS += $(if $(LOCAL_SERVICES_DOCKER),--profile local-services,))\
+	)
 endef
 
 # Support for detached mode
@@ -56,13 +62,16 @@ define setup_env
 	$(eval DB_INIT_MODE = $(if $(filter true,$(USE_PRODCLONE)),pdb,db))
 	$(eval POSTGRES_VOLUME = $(if $(filter true,$(USE_PRODCLONE)),prodclone_data,postgres_data))
 	$(eval COMPOSE_FILE_ARGS = $(2))
-	$(eval COMPOSE_FILE_ARGS += $(if $(POSTGRES_DOCKER),--profile postgres,))
-	$(eval COMPOSE_FILE_ARGS += $(if $(LOCAL_SERVICES_DOCKER),--profile local-services,))
+	$(eval COMPOSE_PROFILE_ARGS := $(foreach p,$(subst ',', ,$(PROFILES)),--profile $(p)))
+	$(if $(strip $(PROFILES)),,\
+		$(eval COMPOSE_PROFILE_ARGS += $(if $(POSTGRES_DOCKER),--profile postgres,))\
+		$(eval COMPOSE_PROFILE_ARGS += $(if $(LOCAL_SERVICES_DOCKER),--profile local-services,))\
+	)
 endef
 
 # Function to open psql shell
 define psql_shell
-	@docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} exec postgres \
+	@docker compose ${COMPOSE_FILE_ARGS} ${COMPOSE_PROFILE_ARGS} --env-file ${ENV_FILE} exec postgres \
 	psql -U $(call parse_env_value,POSTGRES_USER) \
 	-d $(call parse_env_value,POSTGRES_DB)
 endef
@@ -78,19 +87,21 @@ echo_vars:
 	@echo ENV_FILE=${ENV_FILE}
 	@echo POSTGRES_DOCKER=${POSTGRES_DOCKER}
 	@echo LOCAL_SERVICES_DOCKER=${LOCAL_SERVICES_DOCKER}
+	@echo PROFILES=${PROFILES}
+	@echo APP_PROFILE=${APP_PROFILE}
 	@echo USE_PRODCLONE=${USE_PRODCLONE}
 	@echo DB_INIT_MODE=${DB_INIT_MODE}
 	@echo POSTGRES_VOLUME=${POSTGRES_VOLUME}
 	@echo TAG=${TAG}
 
 pull: echo_vars ## Pull most recent Docker container builds (nightlies)
-	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} pull
+	docker compose ${COMPOSE_FILE_ARGS} ${COMPOSE_PROFILE_ARGS} --env-file ${ENV_FILE} pull
 
 start: echo_vars ## Start all Docker containers
-	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DETACH_ARG}
+	docker compose ${COMPOSE_FILE_ARGS} ${COMPOSE_PROFILE_ARGS} --env-file ${ENV_FILE} up ${DETACH_ARG}
 
 stop: echo_vars ## Stop all Docker containers
-	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} down
+	docker compose ${COMPOSE_FILE_ARGS} ${COMPOSE_PROFILE_ARGS} --env-file ${ENV_FILE} down
 
 rm-containers: echo_vars ## Remove Docker containers where (polis_tag="${TAG}")
 	@echo 'removing filtered containers (polis_tag="${TAG}")'
@@ -111,37 +122,37 @@ hash: ## Show current short hash
 	@echo Git hash: ${GIT_HASH}
 
 build: echo_vars ## [Re]Build all Docker containers
-	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} build
+	docker compose ${COMPOSE_FILE_ARGS} ${COMPOSE_PROFILE_ARGS} --env-file ${ENV_FILE} build
 
 build-no-cache: echo_vars ## Build all Docker containers without cache
-	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} build --no-cache
+	docker compose ${COMPOSE_FILE_ARGS} ${COMPOSE_PROFILE_ARGS} --env-file ${ENV_FILE} build --no-cache
 
 start-recreate: echo_vars ## Start all Docker containers with recreated environments
-	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DETACH_ARG} --force-recreate
+	docker compose ${COMPOSE_FILE_ARGS} ${COMPOSE_PROFILE_ARGS} --env-file ${ENV_FILE} up ${DETACH_ARG} --force-recreate
 
 start-rebuild: echo_vars ## Start all Docker containers, [re]building as needed
-	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DETACH_ARG} --build
+	docker compose ${COMPOSE_FILE_ARGS} ${COMPOSE_PROFILE_ARGS} --env-file ${ENV_FILE} up ${DETACH_ARG} --build
 
 start-FULL-REBUILD: echo_vars stop rm-ALL ## Remove and restart all Docker containers, volumes, and images (including db), as with rm-ALL
-	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} build --no-cache
-	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DETACH_ARG}
+	docker compose ${COMPOSE_FILE_ARGS} ${COMPOSE_PROFILE_ARGS} --env-file ${ENV_FILE} build --no-cache
+	docker compose ${COMPOSE_FILE_ARGS} ${COMPOSE_PROFILE_ARGS} --env-file ${ENV_FILE} up ${DETACH_ARG}
 
 rebuild-web: echo_vars ## Rebuild and restart just the file-server container and its static assets, and client-participation-alpha
-	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DETACH_ARG} --build --force-recreate file-server client-participation-alpha
+	docker compose ${COMPOSE_FILE_ARGS} ${COMPOSE_PROFILE_ARGS} --env-file ${ENV_FILE} up ${DETACH_ARG} --build --force-recreate file-server client-participation-alpha
 
 rebuild-server: echo_vars ## Rebuild and restart just the server container
-	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DETACH_ARG} --build --force-recreate server
+	docker compose ${COMPOSE_FILE_ARGS} ${COMPOSE_PROFILE_ARGS} --env-file ${ENV_FILE} up ${DETACH_ARG} --build --force-recreate server
 
 rebuild-delphi: echo_vars ## Rebuild and restart just the delphi container
-	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DETACH_ARG} --build --force-recreate delphi
+	docker compose ${COMPOSE_FILE_ARGS} ${COMPOSE_PROFILE_ARGS} --env-file ${ENV_FILE} up ${DETACH_ARG} --build --force-recreate delphi
 
 build-web-assets: ## Build and extract static web assets for cloud deployment to `build` dir
-	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} create --build --force-recreate file-server
+	docker compose ${COMPOSE_FILE_ARGS} ${COMPOSE_PROFILE_ARGS} --env-file ${ENV_FILE} create --build --force-recreate file-server
 	$(MAKE) extract-web-assets
 
 extract-web-assets: ## Extract static web assets from file-server to `build` dir
 	/bin/rm -rf build
-	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} cp file-server:/app/build/ build
+	docker compose ${COMPOSE_FILE_ARGS} ${COMPOSE_PROFILE_ARGS} --env-file ${ENV_FILE} cp file-server:/app/build/ build
 
 generate-jwt-keys: ## Generate JWT keys for participant authentication
 	@echo "Generating JWT keys for participant authentication..."
@@ -158,14 +169,14 @@ regenerate-jwt-keys: ## Regenerate JWT keys (overwrites existing)
 
 # Database refresh helpers
 refresh-db: echo_vars ## Stop stack, drop current DB volume (${POSTGRES_VOLUME}), and restart (re-inits from migrations or prodclone.dump)
-	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} down --remove-orphans
+	docker compose ${COMPOSE_FILE_ARGS} ${COMPOSE_PROFILE_ARGS} --env-file ${ENV_FILE} down --remove-orphans
 	@echo 'removing any containers still referencing volume ${POSTGRES_VOLUME}'
 	@-docker rm -f $$(docker ps -aq --filter "volume=${COMPOSE_PROJECT_NAME}_${POSTGRES_VOLUME}") >/dev/null 2>&1 || true
 	@echo 'removing database volume ${POSTGRES_VOLUME} (polis_tag=${TAG})'
 	@-docker volume rm -f $(shell docker volume ls -q --filter "label=polis_tag=${TAG}" --filter "name=${POSTGRES_VOLUME}")
 	@echo 'rebuilding postgres image using Dockerfile-${DB_INIT_MODE} (USE_PRODCLONE=${USE_PRODCLONE})'
-	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} build --no-cache postgres
-	docker compose ${COMPOSE_FILE_ARGS} --env-file ${ENV_FILE} up ${DETACH_ARG}
+	docker compose ${COMPOSE_FILE_ARGS} ${COMPOSE_PROFILE_ARGS} --env-file ${ENV_FILE} build --no-cache postgres
+	docker compose ${COMPOSE_FILE_ARGS} ${COMPOSE_PROFILE_ARGS} --env-file ${ENV_FILE} up ${DETACH_ARG}
 
 refresh-prodclone: ## Force prodclone mode, drop prodclone volume, and restart from prodclone.dump
 	$(MAKE) USE_PRODCLONE=true refresh-db

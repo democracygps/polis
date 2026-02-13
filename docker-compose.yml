@@ -263,6 +263,7 @@ services:
       polis_tag: ${TAG:-dev}
     profiles:
       - local-services
+      - dynamodb
   
   ses-local:
     image: dasprid/aws-ses-v2-local:latest
@@ -280,6 +281,7 @@ services:
       polis_tag: ${TAG:-dev}
     profiles:
       - local-services
+      - ses
 
   # Ollama for LLM processing
   ollama:
@@ -299,6 +301,9 @@ services:
     # Run ollama server
     command: serve
     restart: unless-stopped
+    profiles:
+      - local-services
+      - ollama
     
 
   # MinIO S3-compatible storage
@@ -322,6 +327,7 @@ services:
       - "polis-net"
     profiles:
       - local-services
+      - minio
   
   # datadog
   datadog-agent:
