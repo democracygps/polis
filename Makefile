@@ -22,6 +22,11 @@ export ENV_FILE
 PROFILES ?=
 APP_PROFILE ?= dev
 
+# A literal comma can't be passed directly as a function argument -- Make's
+# parser splits on every top-level comma before evaluating, so it has to be
+# held in a variable instead (classic GNU Make gotcha).
+COMMA := ,
+
 # Lazy evaluation of expensive environment parsing - only when needed
 define get_env_vars
 	$(eval export TAG = $(call parse_env_value,TAG))
@@ -36,7 +41,7 @@ define get_env_vars
 	$(eval export POSTGRES_VOLUME = $(if $(filter true,$(USE_PRODCLONE)),prodclone_data,postgres_data))
 	# Only set COMPOSE_FILE_ARGS if not already set by environment-specific targets
 	$(eval COMPOSE_FILE_ARGS ?= -f docker-compose.yml -f docker-compose.dev.yml)
-	$(eval COMPOSE_PROFILE_ARGS := $(foreach p,$(subst ',', ,$(PROFILES)),--profile $(p)))
+	$(eval COMPOSE_PROFILE_ARGS := $(foreach p,$(subst $(COMMA), ,$(PROFILES)),--profile $(p)))
 	$(if $(strip $(PROFILES)),,\
 		$(eval COMPOSE_PROFILE_ARGS += $(if $(POSTGRES_DOCKER),--profile postgres,))\
 		$(eval COMPOSE_PROFILE_ARGS += $(if $(LOCAL_SERVICES_DOCKER),--profile local-services,))\
@@ -62,7 +67,7 @@ define setup_env
 	$(eval DB_INIT_MODE = $(if $(filter true,$(USE_PRODCLONE)),pdb,db))
 	$(eval POSTGRES_VOLUME = $(if $(filter true,$(USE_PRODCLONE)),prodclone_data,postgres_data))
 	$(eval COMPOSE_FILE_ARGS = $(2))
-	$(eval COMPOSE_PROFILE_ARGS := $(foreach p,$(subst ',', ,$(PROFILES)),--profile $(p)))
+	$(eval COMPOSE_PROFILE_ARGS := $(foreach p,$(subst $(COMMA), ,$(PROFILES)),--profile $(p)))
 	$(if $(strip $(PROFILES)),,\
 		$(eval COMPOSE_PROFILE_ARGS += $(if $(POSTGRES_DOCKER),--profile postgres,))\
 		$(eval COMPOSE_PROFILE_ARGS += $(if $(LOCAL_SERVICES_DOCKER),--profile local-services,))\
