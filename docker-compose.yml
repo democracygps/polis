@@ -128,6 +128,10 @@ services:
       - DATABASE_URL=${DATABASE_URL}
       - LOG_LEVEL=${DELPHI_LOG_LEVEL:-INFO}
       - DELPHI_DEV_OR_PROD=${DELPHI_DEV_OR_PROD:-prod}
+      # Must match the server/math math_env value below, or delphi's writes
+      # to math_main/math_report_correlationmatrix land in rows the server
+      # never reads (delphi defaults to "dev" internally if this isn't set).
+      - MATH_ENV=${MATH_ENV:-prod}
       # DynamoDB connection settings for local mode (will be overridden in prod)
       - DYNAMODB_ENDPOINT=${DYNAMODB_ENDPOINT}
       - POLL_INTERVAL=${POLL_INTERVAL:-2}
