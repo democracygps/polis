@@ -115,6 +115,8 @@ services:
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    profiles:
+      - math
 
   delphi:
     image: 050917022930.dkr.ecr.us-east-1.amazonaws.com/polis/delphi:latest
@@ -176,6 +178,8 @@ services:
           memory: ${DELPHI_CONTAINER_MEMORY:-16g}
           cpus: ${DELPHI_CONTAINER_CPUS:-2}
     restart: unless-stopped
+    profiles:
+      - delphi
 
   postgres:
     restart: always
