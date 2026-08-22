@@ -6,6 +6,7 @@ import {
   verifyCustomNamespaceClaims,
   verifyIDTokenClaims,
   verifyServerJWTValidation,
+  withTrailingSlash,
 } from '../../support/auth-helpers.js'
 
 describe('OIDC Standard User Authentication', () => {
@@ -134,22 +135,38 @@ describe('OIDC Standard User Authentication', () => {
   })
 
   it('should fail authentication with invalid credentials', () => {
-    const authUrl = Cypress.env('AUTH_ISSUER')
+    // Cognito's hosted UI serves /oauth2/authorize on AUTH_DOMAIN, distinct
+    // from the issuer host; oidc-simulator/Auth0 serve /authorize on the
+    // issuer itself. redirect_uri must exactly match what the real app
+    // sends (client-admin/src/index.js: window.location.origin, no path)
+    // -- Cognito rejects any other registered-callback mismatch outright.
+    const authDomain = Cypress.env('AUTH_DOMAIN')
+    const authOrigin = authDomain
+      ? `https://${authDomain}`
+      : Cypress.env('AUTH_ISSUER')
+    const authorizePath = authDomain ? 'oauth2/authorize' : 'authorize'
 
-    cy.visit(`${authUrl}authorize`, {
+    cy.visit(`${withTrailingSlash(authOrigin)}${authorizePath}`, {
       qs: {
         response_type: 'code',
         client_id: Cypress.env('AUTH_CLIENT_ID'),
-        redirect_uri: `${Cypress.config('baseUrl')}/auth/callback`,
+        redirect_uri: Cypress.config('baseUrl'),
         scope: 'openid profile email',
         audience: Cypress.env('AUTH_AUDIENCE'),
       },
     })
 
     // Try invalid credentials
-    cy.get('#username').type('invalid@polis.test')
-    cy.get('#password').type('wrongpassword')
-    cy.get('button[type="submit"]').click()
+    cy.get('input[type="email"], input[name="username"]')
+      .filter(':visible')
+      .first()
+      .type('invalid@polis.test')
+    cy.get('input[type="password"]').filter(':visible').first().type('wrongpassword')
+    cy.get('button, input[type="submit" i]')
+      .filter(':contains("Sign in"), [value="Sign in"]')
+      .filter(':visible')
+      .first()
+      .click()
 
     // Should show error or stay on login page
     cy.url().should('not.include', '/auth/callback')

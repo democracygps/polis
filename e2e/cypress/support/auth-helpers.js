@@ -7,6 +7,19 @@
  */
 
 /**
+ * AUTH_ISSUER is also consumed as-is by the running server for JWT issuer
+ * validation (an exact string match against the token's `iss` claim), so it
+ * can't be normalized to always have a trailing slash at the source --
+ * Cognito's real issuer string has none. Use this wherever a path is
+ * appended to it (e.g. `${authUrl}.well-known/...`).
+ * @param {string} url
+ * @returns {string} url with exactly one trailing slash
+ */
+export function withTrailingSlash(url) {
+  return url.endsWith('/') ? url : `${url}/`
+}
+
+/**
  * Helper to authenticate a standard user via OIDC simulator using UI
  * @param {string} email - User email
  * @param {string} password - User password
@@ -36,17 +49,36 @@ export function loginStandardUser(email, password, options = {}) {
     // Click sign in button and fill OIDC form
     cy.get('#signinButton', { timeout }).should('be.visible').click()
 
+    // The hosted-UI sign-in page lives on the same host as the issuer for
+    // Auth0/oidc-simulator, but Cognito splits these: the issuer
+    // (cognito-idp.<region>.amazonaws.com) only serves JWKS/tokens, while
+    // sign-in is served from a separate *.auth.<region>.amazoncognito.com
+    // domain -- AUTH_DOMAIN overrides to that host when set.
+    const authDomain = Cypress.env('AUTH_DOMAIN')
     const authIssuer = Cypress.env('AUTH_ISSUER')
-    const authOrigin = new URL(authIssuer).origin
-    const authHost = new URL(authIssuer).host
+    const authOrigin = authDomain ? `https://${authDomain}` : new URL(authIssuer).origin
+    const authHost = authDomain || new URL(authIssuer).host
 
     cy.origin(
       authOrigin,
       { args: { email, password, timeout } },
       ({ email, password, timeout }) => {
-        cy.get('input[type="email"]', { timeout }).should('be.visible').type(email)
-        cy.get('input[type="password"]').type(password)
-        cy.contains('button', 'Sign in').click()
+        // oidc-simulator renders type="email"; Cognito's hosted UI renders
+        // the same field as type="text" name="username" -- twice (a
+        // display:none mobile-modal copy comes first in DOM order, then
+        // the real desktop one), so filter to the visible one.
+        cy.get('input[type="email"], input[name="username"]', { timeout })
+          .filter(':visible')
+          .first()
+          .type(email)
+        cy.get('input[type="password"]').filter(':visible').first().type(password)
+        // oidc-simulator renders a <button>; Cognito's hosted UI renders
+        // <input type="Submit" value="Sign in"> instead.
+        cy.get('button, input[type="submit" i]')
+          .filter(':contains("Sign in"), [value="Sign in"]')
+          .filter(':visible')
+          .first()
+          .click()
       },
     )
 
@@ -68,17 +100,35 @@ export function loginStandardUser(email, password, options = {}) {
 }
 
 /**
- * Get JWT token directly from OIDC simulator API
+ * Get JWT token directly via password auth against the test env's auth provider.
+ * Cognito (used by dev/prod) has no OAuth2 password grant, so it goes through
+ * the InitiateAuth API (via a Cypress task, since that needs the client
+ * secret) instead of oidc-simulator/Auth0's REST oauth/token endpoint.
  * @param {string} email - User email
  * @param {string} password - User password
  * @returns {Promise<string>} JWT access token
  */
-function getOidcTokenDirect(email, password) {
+export function getOidcTokenDirect(email, password) {
   const authUrl = Cypress.env('AUTH_ISSUER')
+
+  if (/^https:\/\/cognito-idp\./.test(authUrl)) {
+    return cy
+      .task('cognitoPasswordAuth', {
+        issuer: authUrl,
+        clientId: Cypress.env('AUTH_CLIENT_ID'),
+        clientSecret: Cypress.env('AUTH_CLIENT_SECRET'),
+        username: email,
+        password: password,
+      })
+      .then((token) => {
+        expect(token, 'Cognito IdToken').to.exist
+        return token
+      })
+  }
+
   const audience = Cypress.env('AUTH_AUDIENCE')
   const clientId = Cypress.env('AUTH_CLIENT_ID')
-
-  const tokenUrl = authUrl.endsWith('/') ? `${authUrl}oauth/token` : `${authUrl}/oauth/token`
+  const tokenUrl = `${withTrailingSlash(authUrl)}oauth/token`
 
   return cy
     .request({
@@ -633,7 +683,7 @@ export function checkOidcSimulator(options = {}) {
 
   // Check JWKS endpoint with retries for CI stability
   cy.request({
-    url: `${authUrl}.well-known/jwks.json`,
+    url: `${withTrailingSlash(authUrl)}.well-known/jwks.json`,
     headers: {
       Accept: 'application/json',
     },
@@ -648,7 +698,7 @@ export function checkOidcSimulator(options = {}) {
 
   // Also check the OpenID configuration endpoint for completeness
   cy.request({
-    url: `${authUrl}.well-known/openid-configuration`,
+    url: `${withTrailingSlash(authUrl)}.well-known/openid-configuration`,
     headers: {
       Accept: 'application/json',
     },

@@ -5,6 +5,8 @@
  * It might fail intermittently even when the code is working correctly.
  */
 
+import { getOidcTokenDirect } from '../../support/auth-helpers.js'
+
 describe('Visualization', function () {
   let conversationId
   const participationView = '[data-view-name="participationView"]'
@@ -14,21 +16,8 @@ describe('Visualization', function () {
     cy.log('🚀 Setting up visualization test with clean auth')
 
     // Step 1: Get admin token and create conversation via API
-    cy.request({
-      method: 'POST',
-      url: `${Cypress.env('AUTH_ISSUER')}oauth/token`,
-      body: {
-        grant_type: 'password',
-        username: 'admin@polis.test',
-        password: 'Te$tP@ssw0rd*',
-        audience: Cypress.env('AUTH_AUDIENCE'),
-        client_id: Cypress.env('AUTH_CLIENT_ID'),
-        scope: 'openid profile email',
-      },
-    })
-      .then((authResponse) => {
-        const adminToken = authResponse.body.access_token
-
+    getOidcTokenDirect('admin@polis.test', 'Te$tP@ssw0rd*')
+      .then((adminToken) => {
         // Create conversation with visualization enabled
         return cy.request({
           method: 'POST',
@@ -50,22 +39,9 @@ describe('Visualization', function () {
         cy.log(`✅ Created conversation with visualization: ${conversationId}`)
 
         // Get admin token again for adding comments
-        return cy.request({
-          method: 'POST',
-          url: `${Cypress.env('AUTH_ISSUER')}oauth/token`,
-          body: {
-            grant_type: 'password',
-            username: 'admin@polis.test',
-            password: 'Te$tP@ssw0rd*',
-            audience: Cypress.env('AUTH_AUDIENCE'),
-            client_id: Cypress.env('AUTH_CLIENT_ID'),
-            scope: 'openid profile email',
-          },
-        })
+        return getOidcTokenDirect('admin@polis.test', 'Te$tP@ssw0rd*')
       })
-      .then((authResponse) => {
-        const adminToken = authResponse.body.access_token
-
+      .then((adminToken) => {
         // Add 3 comments
         const comments = ['Comment 1', 'Comment 2', 'Comment 3']
         const addComments = comments.map((comment) => {
@@ -89,22 +65,9 @@ describe('Visualization', function () {
         cy.log('✅ Added all comments')
 
         // Get admin token to enable visualization
-        return cy.request({
-          method: 'POST',
-          url: `${Cypress.env('AUTH_ISSUER')}oauth/token`,
-          body: {
-            grant_type: 'password',
-            username: 'admin@polis.test',
-            password: 'Te$tP@ssw0rd*',
-            audience: Cypress.env('AUTH_AUDIENCE'),
-            client_id: Cypress.env('AUTH_CLIENT_ID'),
-            scope: 'openid profile email',
-          },
-        })
+        return getOidcTokenDirect('admin@polis.test', 'Te$tP@ssw0rd*')
       })
-      .then((authResponse) => {
-        const adminToken = authResponse.body.access_token
-
+      .then((adminToken) => {
         // First get current conversation data
         return cy
           .request({

@@ -21,6 +21,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.1116.0",
     "@faker-js/faker": "^10.1.0",
     "cypress": "^15.7.1",
     "cypress-terminal-report": "^7.3.3",
