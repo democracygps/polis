@@ -247,6 +247,15 @@ interface CommentModerationResult {
 }
 
 export async function isProConvo(owner: number): Promise<boolean> {
+  // TODO(prod-auth-decision): this calls Auth0's Management API directly
+  // (usersByEmail, getRoles) to check the delphi-enabled role -- it has no
+  // equivalent against Cognito, which uses User Pool Groups instead. Bypassed
+  // to always-true in dev mode for now; decide before Cognito is used for
+  // prod whether to port this to Cognito Groups or keep Auth0 just for this
+  // entitlement check.
+  if (Config.isDevMode) {
+    return true;
+  }
   try {
     const { email } = await getUserInfoForUid2(owner);
     if (!email) {
