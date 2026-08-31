@@ -40,12 +40,12 @@ function createUserPool(size = 50): Array<{
     {
       email: "admin@polis.test",
       name: "Test Admin",
-      password: "Te$tP@ssw0rd*",
+      password: "Coast-Feast-Vista-Apple7",
     },
     {
       email: "moderator@polis.test",
       name: "Test Moderator",
-      password: "Te$tP@ssw0rd*",
+      password: "Coast-Feast-Vista-Apple7",
     },
   ];
 
@@ -65,7 +65,7 @@ function createUserPool(size = 50): Array<{
     users.push({
       email: `test.user.${i}@polis.test`,
       name: `Test User ${i}`,
-      password: `Te$tP@ssw0rd*`,
+      password: `Coast-Feast-Vista-Apple7`,
       email_verified: true,
       user_id: `auth0|test_user_${i}`,
       created_at: new Date(Date.now() - i * 3600000).toISOString(), // Hourly stagger
@@ -76,7 +76,7 @@ function createUserPool(size = 50): Array<{
   users.push({
     email: "jwt.test@polis.test",
     name: "JWT Test User",
-    password: "Te$tP@ssw0rd*",
+    password: "Coast-Feast-Vista-Apple7",
     email_verified: true,
     user_id: "auth0|jwt_test",
     created_at: new Date().toISOString(),
