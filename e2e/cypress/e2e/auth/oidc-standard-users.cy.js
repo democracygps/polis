@@ -62,7 +62,7 @@ describe('OIDC Standard User Authentication', () => {
 
   it('should authenticate admin user via OIDC simulator', () => {
     const email = 'admin@polis.test'
-    const password = 'Te$tP@ssw0rd*'
+    const password = 'Coast-Feast-Vista-Apple7'
     const timeout = Cypress.env('CI') ? 15000 : 10000
 
     loginStandardUser(email, password, { timeout })
@@ -99,7 +99,7 @@ describe('OIDC Standard User Authentication', () => {
 
   it('should authenticate moderator user via OIDC simulator', () => {
     const email = 'moderator@polis.test'
-    const password = 'Te$tP@ssw0rd*'
+    const password = 'Coast-Feast-Vista-Apple7'
     const timeout = Cypress.env('CI') ? 15000 : 10000
 
     loginStandardUser(email, password, { timeout })
@@ -162,8 +162,10 @@ describe('OIDC Standard User Authentication', () => {
       .first()
       .type('invalid@polis.test')
     cy.get('input[type="password"]').filter(':visible').first().type('wrongpassword')
+    // oidc-simulator/Cognito label the submit "Sign in"; Auth0's Universal
+    // Login labels it "Continue" (see auth-helpers.js's loginStandardUser).
     cy.get('button, input[type="submit" i]')
-      .filter(':contains("Sign in"), [value="Sign in"]')
+      .filter(':contains("Sign in"), [value="Sign in"], :contains("Continue")')
       .filter(':visible')
       .first()
       .click()
@@ -174,7 +176,7 @@ describe('OIDC Standard User Authentication', () => {
 
   it('should verify custom claims in JWT token', () => {
     const email = 'admin@polis.test'
-    const password = 'Te$tP@ssw0rd*'
+    const password = 'Coast-Feast-Vista-Apple7'
     const timeout = Cypress.env('CI') ? 15000 : 10000
 
     loginStandardUser(email, password, { timeout })

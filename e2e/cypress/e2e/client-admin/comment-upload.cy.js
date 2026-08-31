@@ -10,13 +10,13 @@ describe('Client Admin: Comment CSV Upload', () => {
     logout()
 
     // Login as admin user for all tests
-    loginStandardUser('admin@polis.test', 'Te$tP@ssw0rd*')
+    loginStandardUser('admin@polis.test', 'Coast-Feast-Vista-Apple7')
   })
 
   describe('CSV Upload Functionality', () => {
     it('should upload comments from CSV file successfully', () => {
       // Create a test conversation first
-      loginStandardUserAPI('admin@polis.test', 'Te$tP@ssw0rd*')
+      loginStandardUserAPI('admin@polis.test', 'Coast-Feast-Vista-Apple7')
         .then(() => {
           return createTestConversationAPI({
             topic: 'CSV Upload Test Conversation',
@@ -117,7 +117,7 @@ describe('Client Admin: Comment CSV Upload', () => {
 
     it('should handle empty CSV file gracefully', () => {
       // Create a test conversation
-      loginStandardUserAPI('admin@polis.test', 'Te$tP@ssw0rd*')
+      loginStandardUserAPI('admin@polis.test', 'Coast-Feast-Vista-Apple7')
         .then(() => {
           return createTestConversationAPI({
             topic: 'Empty CSV Test Conversation',
@@ -170,7 +170,7 @@ describe('Client Admin: Comment CSV Upload', () => {
 
     it('should allow manual comment entry alongside CSV upload', () => {
       // Create a test conversation
-      loginStandardUserAPI('admin@polis.test', 'Te$tP@ssw0rd*')
+      loginStandardUserAPI('admin@polis.test', 'Coast-Feast-Vista-Apple7')
         .then(() => {
           return createTestConversationAPI({
             topic: 'Manual + CSV Comments Test Conversation',

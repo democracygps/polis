@@ -20,7 +20,7 @@ describe('Client Admin: Conversation Management', () => {
 
   before(() => {
     // Create a conversation that will exist for all tests
-    loginStandardUserAPI('admin@polis.test', 'Te$tP@ssw0rd*')
+    loginStandardUserAPI('admin@polis.test', 'Coast-Feast-Vista-Apple7')
       .then(() => {
         return createTestConversationAPI({
           topic: 'Pre-existing Test Conversation',
@@ -42,7 +42,7 @@ describe('Client Admin: Conversation Management', () => {
     logout()
 
     // Login as admin user for all tests using UI-based approach
-    loginStandardUser('admin@polis.test', 'Te$tP@ssw0rd*')
+    loginStandardUser('admin@polis.test', 'Coast-Feast-Vista-Apple7')
   })
 
   describe('Create New Conversation', () => {

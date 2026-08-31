@@ -33,7 +33,7 @@ describe('Client Admin: Comment Moderation', () => {
         topic: 'Comment Moderation Test',
         description: 'Testing comment moderation features',
         userEmail: 'admin@polis.test',
-        userPassword: 'Te$tP@ssw0rd*',
+        userPassword: 'Coast-Feast-Vista-Apple7',
       })
         .then((convId) => {
           conversationId = convId
@@ -44,7 +44,7 @@ describe('Client Admin: Comment Moderation', () => {
             conversationId,
             seedComments,
             'admin@polis.test',
-            'Te$tP@ssw0rd*',
+            'Coast-Feast-Vista-Apple7',
           )
         })
         .then(() => {
@@ -64,7 +64,7 @@ describe('Client Admin: Comment Moderation', () => {
   describe('Moderation Settings', () => {
     beforeEach(() => {
       logout()
-      loginStandardUser('admin@polis.test', 'Te$tP@ssw0rd*')
+      loginStandardUser('admin@polis.test', 'Coast-Feast-Vista-Apple7')
     })
 
     it('should toggle "No comments shown without moderator approval" setting', () => {
@@ -113,7 +113,7 @@ describe('Client Admin: Comment Moderation', () => {
   describe('Comment Lists', () => {
     beforeEach(() => {
       logout()
-      loginStandardUser('admin@polis.test', 'Te$tP@ssw0rd*')
+      loginStandardUser('admin@polis.test', 'Coast-Feast-Vista-Apple7')
       navigateToConversationSection(conversationId, 'moderate')
     })
 
@@ -189,7 +189,7 @@ describe('Client Admin: Comment Moderation', () => {
   describe('Comment Actions', () => {
     beforeEach(() => {
       logout()
-      loginStandardUser('admin@polis.test', 'Te$tP@ssw0rd*')
+      loginStandardUser('admin@polis.test', 'Coast-Feast-Vista-Apple7')
       navigateToConversationSection(conversationId, 'moderate')
     })
 
@@ -257,7 +257,7 @@ describe('Client Admin: Comment Moderation', () => {
   describe('Seed Comments', () => {
     beforeEach(() => {
       logout()
-      loginStandardUser('admin@polis.test', 'Te$tP@ssw0rd*')
+      loginStandardUser('admin@polis.test', 'Coast-Feast-Vista-Apple7')
     })
 
     it('should show seed comments as automatically approved', () => {

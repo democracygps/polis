@@ -68,7 +68,7 @@ export function createTestConversation(options = {}) {
     topic = `Test Conversation ${Date.now()}`,
     description = `Test conversation created for e2e testing at ${new Date().toISOString()}`,
     userEmail = 'moderator@polis.test',
-    userPassword = 'Te$tP@ssw0rd*',
+    userPassword = 'Coast-Feast-Vista-Apple7',
   } = options
 
   cy.log(`🏗️ Creating test conversation via UI: ${topic}`)
@@ -156,7 +156,7 @@ export function addCommentToConversation(
   conversationId,
   text,
   userEmail = 'moderator@polis.test',
-  userPassword = 'Te$tP@ssw0rd*',
+  userPassword = 'Coast-Feast-Vista-Apple7',
 ) {
   cy.log(`💬 Adding single comment to conversation ${conversationId}: ${text}`)
 
@@ -200,7 +200,7 @@ export function addCommentsToConversation(
   conversationId,
   comments,
   userEmail = 'moderator@polis.test',
-  userPassword = 'Te$tP@ssw0rd*',
+  userPassword = 'Coast-Feast-Vista-Apple7',
 ) {
   cy.log(`💬 Adding ${comments.length} comments to conversation ${conversationId} via API`)
 
@@ -291,7 +291,7 @@ export function addCommentsToConversationNoAuth(conversationId, comments) {
 function enableVisualizationForConversation(
   conversationId,
   userEmail = 'admin@polis.test',
-  userPassword = 'Te$tP@ssw0rd*',
+  userPassword = 'Coast-Feast-Vista-Apple7',
 ) {
   cy.log(`🎨 Enabling visualization for conversation ${conversationId}`)
 
@@ -359,7 +359,7 @@ export function setupTestConversation(options = {}) {
       'A third comment for comprehensive testing',
     ],
     userEmail = 'moderator@polis.test',
-    userPassword = 'Te$tP@ssw0rd*',
+    userPassword = 'Coast-Feast-Vista-Apple7',
     visualizationEnabled = false,
   } = options
 

@@ -15,7 +15,7 @@ describe('Reports - Functionality & Features', () => {
     // Phase 1: Admin setup (isolated window context)
     cy.window().then(() => {
       // Use API-only approach to avoid UI authentication complexity
-      cy.loginStandardUserAPI('admin@polis.test', 'Te$tP@ssw0rd*').then(() => {
+      cy.loginStandardUserAPI('admin@polis.test', 'Coast-Feast-Vista-Apple7').then(() => {
         cy.log('✅ Admin authenticated via API')
 
         // Create conversation using helper
@@ -38,7 +38,7 @@ describe('Reports - Functionality & Features', () => {
                 'Small businesses need more support',
               ],
               'admin@polis.test',
-              'Te$tP@ssw0rd*',
+              'Coast-Feast-Vista-Apple7',
             )
           })
           .then(() => {
@@ -142,7 +142,7 @@ describe('Reports - Functionality & Features', () => {
 
     it('should handle empty/minimal data gracefully', () => {
       // Create a new conversation with no data using API
-      cy.loginStandardUserAPI('admin@polis.test', 'Te$tP@ssw0rd*').then(() => {
+      cy.loginStandardUserAPI('admin@polis.test', 'Coast-Feast-Vista-Apple7').then(() => {
         return getAuthToken().then((token) => {
           return cy
             .request({
@@ -223,7 +223,7 @@ describe('Reports - Functionality & Features', () => {
 
   describe('Report Metadata Updates', () => {
     beforeEach(() => {
-      cy.loginStandardUserAPI('admin@polis.test', 'Te$tP@ssw0rd*')
+      cy.loginStandardUserAPI('admin@polis.test', 'Coast-Feast-Vista-Apple7')
     })
 
     it('should update report name', () => {

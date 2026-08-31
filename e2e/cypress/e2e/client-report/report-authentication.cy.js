@@ -15,7 +15,7 @@ describe('Reports - Authentication & Access Control', () => {
     // Phase 1: Admin setup (isolated window context)
     cy.window().then(() => {
       // Use API-only approach to avoid UI authentication complexity
-      cy.loginStandardUserAPI('admin@polis.test', 'Te$tP@ssw0rd*').then(() => {
+      cy.loginStandardUserAPI('admin@polis.test', 'Coast-Feast-Vista-Apple7').then(() => {
         cy.log('✅ Admin authenticated via API')
 
         // Create conversation using helper
@@ -32,7 +32,7 @@ describe('Reports - Authentication & Access Control', () => {
               conversationId,
               ['First test comment for reports', 'Second test comment for reports'],
               'admin@polis.test',
-              'Te$tP@ssw0rd*',
+              'Coast-Feast-Vista-Apple7',
             )
           })
           .then(() => {
@@ -83,7 +83,7 @@ describe('Reports - Authentication & Access Control', () => {
 
   describe('Report Creation Permissions', () => {
     it('should allow conversation owner to create reports', () => {
-      cy.loginStandardUser('admin@polis.test', 'Te$tP@ssw0rd*')
+      cy.loginStandardUser('admin@polis.test', 'Coast-Feast-Vista-Apple7')
 
       // Wait for login to complete
       cy.url().should('not.include', '/signin')
@@ -111,7 +111,7 @@ describe('Reports - Authentication & Access Control', () => {
     })
 
     it('should show "No Permission" for logged in non-owner', () => {
-      cy.loginStandardUser('moderator@polis.test', 'Te$tP@ssw0rd*')
+      cy.loginStandardUser('moderator@polis.test', 'Coast-Feast-Vista-Apple7')
 
       // Wait for login to complete
       cy.url().should('not.include', '/signin')
@@ -176,7 +176,7 @@ describe('Reports - Authentication & Access Control', () => {
 
     it('should allow owner to view reports', () => {
       // Login as a different user
-      cy.loginStandardUser('admin@polis.test', 'Te$tP@ssw0rd*')
+      cy.loginStandardUser('admin@polis.test', 'Coast-Feast-Vista-Apple7')
 
       // Wait for login to complete
       cy.url().should('not.include', '/signin')
@@ -197,7 +197,7 @@ describe('Reports - Authentication & Access Control', () => {
 
     it('should allow non-owner to view reports', () => {
       // Login as a different user
-      cy.loginStandardUser('moderator@polis.test', 'Te$tP@ssw0rd*')
+      cy.loginStandardUser('moderator@polis.test', 'Coast-Feast-Vista-Apple7')
 
       // Wait for login to complete
       cy.url().should('not.include', '/signin')
@@ -426,7 +426,7 @@ describe('Reports - Authentication & Access Control', () => {
 
     it('should allow authenticated users to fetch reports', () => {
       // Login and get auth token
-      cy.loginStandardUserAPI('admin@polis.test', 'Te$tP@ssw0rd*').then(() => {
+      cy.loginStandardUserAPI('admin@polis.test', 'Coast-Feast-Vista-Apple7').then(() => {
         // Get auth token
         return getAuthToken().then((token) => {
           // Fetch reports for conversation
@@ -448,7 +448,7 @@ describe('Reports - Authentication & Access Control', () => {
     })
 
     it('should allow fetching specific report by ID', () => {
-      cy.loginStandardUserAPI('admin@polis.test', 'Te$tP@ssw0rd*').then(() => {
+      cy.loginStandardUserAPI('admin@polis.test', 'Coast-Feast-Vista-Apple7').then(() => {
         // Get auth token
         return getAuthToken().then((token) => {
           // Fetch specific report

@@ -11,7 +11,7 @@ describe('Client Admin: Routes', () => {
     // Phase 1: Admin setup (isolated window context)
     cy.window().then(() => {
       // Use API authentication for reliable setup
-      loginStandardUserAPI('admin@polis.test', 'Te$tP@ssw0rd*').then(() => {
+      loginStandardUserAPI('admin@polis.test', 'Coast-Feast-Vista-Apple7').then(() => {
         cy.log('✅ Admin authenticated via API')
 
         // Create test conversation using API helper
@@ -51,7 +51,7 @@ describe('Client Admin: Routes', () => {
 
     it('should sign out when visiting /signout', () => {
       // First ensure we're logged in using UI auth (needed for UI signout test)
-      loginStandardUser('admin@polis.test', 'Te$tP@ssw0rd*')
+      loginStandardUser('admin@polis.test', 'Coast-Feast-Vista-Apple7')
 
       // Visit signout route
       cy.visit('/signout')
@@ -70,7 +70,7 @@ describe('Client Admin: Routes', () => {
   describe('Main Admin Routes', () => {
     beforeEach(() => {
       logout()
-      loginStandardUser('admin@polis.test', 'Te$tP@ssw0rd*')
+      loginStandardUser('admin@polis.test', 'Coast-Feast-Vista-Apple7')
     })
 
     it('should display all conversations page at /', () => {
@@ -115,7 +115,7 @@ describe('Client Admin: Routes', () => {
   describe('Conversation-Specific Routes', () => {
     beforeEach(() => {
       logout()
-      loginStandardUser('admin@polis.test', 'Te$tP@ssw0rd*')
+      loginStandardUser('admin@polis.test', 'Coast-Feast-Vista-Apple7')
     })
 
     it('should display conversation configure page at /m/:id', () => {
@@ -195,7 +195,7 @@ describe('Client Admin: Routes', () => {
   describe('Route Navigation', () => {
     beforeEach(() => {
       logout()
-      loginStandardUser('admin@polis.test', 'Te$tP@ssw0rd*')
+      loginStandardUser('admin@polis.test', 'Coast-Feast-Vista-Apple7')
     })
 
     it('should maintain authentication across route navigation', () => {
@@ -268,7 +268,7 @@ describe('Client Admin: Routes', () => {
       cy.url().should('not.include', deepLink)
 
       // Now login
-      loginStandardUser('admin@polis.test', 'Te$tP@ssw0rd*')
+      loginStandardUser('admin@polis.test', 'Coast-Feast-Vista-Apple7')
 
       // Try deep link again
       cy.visit(deepLink)

@@ -22,7 +22,7 @@ describe('Client Admin: Share/Distribute', () => {
       topic: 'Share Test - With Comments',
       description: 'Testing share functionality with comments',
       userEmail: 'admin@polis.test',
-      userPassword: 'Te$tP@ssw0rd*',
+      userPassword: 'Coast-Feast-Vista-Apple7',
     }).then((convId) => {
       conversationWithComments = convId
       cy.log(`✅ Created conversation with comments: ${conversationWithComments}`)
@@ -32,7 +32,7 @@ describe('Client Admin: Share/Distribute', () => {
         convId,
         ['First comment for testing', 'Second comment for testing', 'Third comment for testing'],
         'admin@polis.test',
-        'Te$tP@ssw0rd*',
+        'Coast-Feast-Vista-Apple7',
       )
     })
 
@@ -43,7 +43,7 @@ describe('Client Admin: Share/Distribute', () => {
       topic: 'Share Test - No Comments',
       description: 'Testing share functionality without comments',
       userEmail: 'admin@polis.test',
-      userPassword: 'Te$tP@ssw0rd*',
+      userPassword: 'Coast-Feast-Vista-Apple7',
     }).then((convId) => {
       conversationWithoutComments = convId
       cy.log(`✅ Created conversation without comments: ${conversationWithoutComments}`)
@@ -53,7 +53,7 @@ describe('Client Admin: Share/Distribute', () => {
   describe('Page Structure', () => {
     beforeEach(() => {
       logout()
-      loginStandardUser('admin@polis.test', 'Te$tP@ssw0rd*')
+      loginStandardUser('admin@polis.test', 'Coast-Feast-Vista-Apple7')
     })
 
     it('should display "Distribute" heading and main sections', () => {
@@ -75,7 +75,7 @@ describe('Client Admin: Share/Distribute', () => {
   describe('Share Link', () => {
     beforeEach(() => {
       logout()
-      loginStandardUser('admin@polis.test', 'Te$tP@ssw0rd*')
+      loginStandardUser('admin@polis.test', 'Coast-Feast-Vista-Apple7')
     })
 
     it('should display share link with proper format', () => {
@@ -111,7 +111,7 @@ describe('Client Admin: Share/Distribute', () => {
   describe('Embed Code', () => {
     beforeEach(() => {
       logout()
-      loginStandardUser('admin@polis.test', 'Te$tP@ssw0rd*')
+      loginStandardUser('admin@polis.test', 'Coast-Feast-Vista-Apple7')
     })
 
     it('should display embed code with exact format from component', () => {
@@ -152,7 +152,7 @@ describe('Client Admin: Share/Distribute', () => {
   describe('ConversationHasCommentsCheck Component', () => {
     beforeEach(() => {
       logout()
-      loginStandardUser('admin@polis.test', 'Te$tP@ssw0rd*')
+      loginStandardUser('admin@polis.test', 'Coast-Feast-Vista-Apple7')
     })
 
     it('should show warning for conversation without comments', () => {
@@ -200,7 +200,7 @@ describe('Client Admin: Share/Distribute', () => {
   describe('ParticipantXids Component', () => {
     beforeEach(() => {
       logout()
-      loginStandardUser('admin@polis.test', 'Te$tP@ssw0rd*')
+      loginStandardUser('admin@polis.test', 'Coast-Feast-Vista-Apple7')
     })
 
     it('should include ParticipantXids component', () => {
@@ -218,7 +218,7 @@ describe('Client Admin: Share/Distribute', () => {
   describe('Embedded Page Display', () => {
     beforeEach(() => {
       logout()
-      loginStandardUser('admin@polis.test', 'Te$tP@ssw0rd*')
+      loginStandardUser('admin@polis.test', 'Coast-Feast-Vista-Apple7')
     })
 
     it('should show embedded page info when parent_url exists', () => {

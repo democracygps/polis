@@ -9,7 +9,7 @@ import {
 } from '../../support/conversation-helpers.js'
 
 const ADMIN_EMAIL = 'admin@polis.test'
-const ADMIN_PASSWORD = 'Te$tP@ssw0rd*'
+const ADMIN_PASSWORD = 'Coast-Feast-Vista-Apple7'
 
 function createConversationWithSeedComment(topicSuffix = 'Conversation') {
   const timestamp = Date.now()

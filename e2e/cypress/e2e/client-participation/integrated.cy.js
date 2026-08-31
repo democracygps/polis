@@ -6,7 +6,7 @@ describe('Integrated Conversations', function () {
     cy.log('🚀 Setting up integrated conversation test suite')
 
     // Login as admin to get site_id
-    loginStandardUser('admin@polis.test', 'Te$tP@ssw0rd*')
+    loginStandardUser('admin@polis.test', 'Coast-Feast-Vista-Apple7')
 
     cy.visit('/integrate')
 
@@ -116,7 +116,7 @@ describe('Integrated Conversations', function () {
       cy.wait('@participationInit').its('response.body.conversation.conversation_id').as('convoId')
 
       // Login to check conversation properties
-      loginStandardUser('admin@polis.test', 'Te$tP@ssw0rd*')
+      loginStandardUser('admin@polis.test', 'Coast-Feast-Vista-Apple7')
 
       cy.get('@convoId').then((convoId) => {
         cy.visit('/m/' + convoId)
@@ -166,7 +166,7 @@ describe('Integrated Conversations', function () {
     })
 
     it('shows the integration code on admin page', function () {
-      loginStandardUser('admin@polis.test', 'Te$tP@ssw0rd*')
+      loginStandardUser('admin@polis.test', 'Coast-Feast-Vista-Apple7')
 
       cy.visit('/integrate')
       cy.get('pre')

@@ -22,14 +22,14 @@ Standard users (`admin@polis.test`, `moderator@polis.test`) use OIDC authenticat
 
 ```javascript
 // Use this when tests need to access admin UI pages
-loginStandardUser('admin@polis.test', 'Te$tP@ssw0rd*')
+loginStandardUser('admin@polis.test', 'Coast-Feast-Vista-Apple7')
 ```
 
 #### API Authentication (for API-only operations)
 
 ```javascript
 // Use this for API calls only, not UI access
-loginStandardUserAPI('admin@polis.test', 'Te$tP@ssw0rd*')
+loginStandardUserAPI('admin@polis.test', 'Coast-Feast-Vista-Apple7')
 ```
 
 **Critical Rule: Use `loginStandardUser()` (UI auth) when tests visit admin interface pages (`/m/:id`). Use `loginStandardUserAPI()` only for pure API testing.**

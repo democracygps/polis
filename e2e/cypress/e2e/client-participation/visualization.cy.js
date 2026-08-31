@@ -16,7 +16,7 @@ describe('Visualization', function () {
     cy.log('🚀 Setting up visualization test with clean auth')
 
     // Step 1: Get admin token and create conversation via API
-    getOidcTokenDirect('admin@polis.test', 'Te$tP@ssw0rd*')
+    getOidcTokenDirect('admin@polis.test', 'Coast-Feast-Vista-Apple7')
       .then((adminToken) => {
         // Create conversation with visualization enabled
         return cy.request({
@@ -39,7 +39,7 @@ describe('Visualization', function () {
         cy.log(`✅ Created conversation with visualization: ${conversationId}`)
 
         // Get admin token again for adding comments
-        return getOidcTokenDirect('admin@polis.test', 'Te$tP@ssw0rd*')
+        return getOidcTokenDirect('admin@polis.test', 'Coast-Feast-Vista-Apple7')
       })
       .then((adminToken) => {
         // Add 3 comments
@@ -65,7 +65,7 @@ describe('Visualization', function () {
         cy.log('✅ Added all comments')
 
         // Get admin token to enable visualization
-        return getOidcTokenDirect('admin@polis.test', 'Te$tP@ssw0rd*')
+        return getOidcTokenDirect('admin@polis.test', 'Coast-Feast-Vista-Apple7')
       })
       .then((adminToken) => {
         // First get current conversation data

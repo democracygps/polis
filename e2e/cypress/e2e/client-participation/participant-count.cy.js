@@ -7,7 +7,7 @@ describe('Participant Count Test', function () {
     // Phase 1: Admin actions (in isolated window context)
     cy.window().then(() => {
       // Login as admin
-      loginStandardUserAPI('admin@polis.test', 'Te$tP@ssw0rd*')
+      loginStandardUserAPI('admin@polis.test', 'Coast-Feast-Vista-Apple7')
 
       getAuthToken().then((token) => {
         // Create conversation

@@ -19,7 +19,7 @@ describe('Client Admin: Access Control', () => {
   before(() => {
     // Create admin conversation first using API approach
     logout()
-    loginStandardUserAPI('admin@polis.test', 'Te$tP@ssw0rd*')
+    loginStandardUserAPI('admin@polis.test', 'Coast-Feast-Vista-Apple7')
       .then(() => {
         return createTestConversationAPI({
           topic: 'Admin Access Control Test',
@@ -31,7 +31,7 @@ describe('Client Admin: Access Control', () => {
 
         // Then create moderator conversation
         logout()
-        return loginStandardUserAPI('moderator@polis.test', 'Te$tP@ssw0rd*')
+        return loginStandardUserAPI('moderator@polis.test', 'Coast-Feast-Vista-Apple7')
       })
       .then(() => {
         return createTestConversationAPI({
@@ -48,7 +48,7 @@ describe('Client Admin: Access Control', () => {
     beforeEach(() => {
       logout()
       // Use UI authentication for admin interface access
-      loginStandardUser('admin@polis.test', 'Te$tP@ssw0rd*')
+      loginStandardUser('admin@polis.test', 'Coast-Feast-Vista-Apple7')
     })
 
     it('should allow admin to access configuration page of own conversation', () => {
@@ -79,7 +79,7 @@ describe('Client Admin: Access Control', () => {
     beforeEach(() => {
       logout()
       // Use UI authentication for admin interface access
-      loginStandardUser('admin@polis.test', 'Te$tP@ssw0rd*')
+      loginStandardUser('admin@polis.test', 'Coast-Feast-Vista-Apple7')
     })
 
     it('should deny admin access to conversations owned by another admin', () => {
@@ -193,7 +193,7 @@ describe('Client Admin: Access Control', () => {
   describe('Access Control Edge Cases', () => {
     it('should handle non-existent conversation IDs gracefully', () => {
       logout()
-      loginStandardUser('admin@polis.test', 'Te$tP@ssw0rd*')
+      loginStandardUser('admin@polis.test', 'Coast-Feast-Vista-Apple7')
 
       const fakeConversationId = 'nonexistent123'
 
@@ -233,7 +233,7 @@ describe('Client Admin: Access Control', () => {
 
     it('should maintain access control after logout', () => {
       logout()
-      loginStandardUser('admin@polis.test', 'Te$tP@ssw0rd*')
+      loginStandardUser('admin@polis.test', 'Coast-Feast-Vista-Apple7')
 
       // Verify access works
       cy.visit(`/m/${adminConversationId}`)

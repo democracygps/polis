@@ -20,6 +20,21 @@ export function withTrailingSlash(url) {
 }
 
 /**
+ * Decode a JWT's payload segment. JWTs use base64url (RFC 7515) -- `-`/`_`
+ * instead of `+`/`/`, and no padding -- which window.atob rejects outright
+ * ("not correctly encoded") whenever a token's payload happens to contain
+ * one of those characters, intermittently depending on token content.
+ * @param {Window} win - browser window (for atob)
+ * @param {string} token - full JWT (header.payload.signature)
+ */
+export function decodeJwtPayload(win, token) {
+  const base64Url = token.split('.')[1]
+  const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+  const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4)
+  return JSON.parse(win.atob(padded))
+}
+
+/**
  * Helper to authenticate a standard user via OIDC simulator using UI
  * @param {string} email - User email
  * @param {string} password - User password
@@ -72,10 +87,11 @@ export function loginStandardUser(email, password, options = {}) {
           .first()
           .type(email)
         cy.get('input[type="password"]').filter(':visible').first().type(password)
-        // oidc-simulator renders a <button>; Cognito's hosted UI renders
-        // <input type="Submit" value="Sign in"> instead.
+        // oidc-simulator renders a <button> labeled "Sign in"; Cognito's
+        // hosted UI renders <input type="Submit" value="Sign in"> instead;
+        // Auth0's Universal Login renders a <button> labeled "Continue".
         cy.get('button, input[type="submit" i]')
-          .filter(':contains("Sign in"), [value="Sign in"]')
+          .filter(':contains("Sign in"), [value="Sign in"], :contains("Continue")')
           .filter(':visible')
           .first()
           .click()
@@ -130,12 +146,21 @@ export function getOidcTokenDirect(email, password) {
   const clientId = Cypress.env('AUTH_CLIENT_ID')
   const tokenUrl = `${withTrailingSlash(authUrl)}oauth/token`
 
+  // Auth0's plain "password" grant type requires a tenant-wide "Default
+  // Directory" (Dashboard > Settings > General > API Authorization
+  // Settings) to be configured, or it 500s with "Authorization server not
+  // configured with default connection" -- the realm-specific variant
+  // names the connection directly in the request instead, so it works
+  // without that extra per-tenant manual setup step (see RUNBOOK.md's
+  // Auth0 account setup, step 6/7, for the "Username-Password-Authentication"
+  // connection this assumes).
   return cy
     .request({
       method: 'POST',
       url: tokenUrl,
       body: {
-        grant_type: 'password',
+        grant_type: 'http://auth0.com/oauth/grant-type/password-realm',
+        realm: 'Username-Password-Authentication',
         username: email,
         password: password,
         audience: audience,
@@ -347,7 +372,7 @@ export function verifyJWTClaims(tokenKey, expectedClaims) {
 
       // Decode JWT payload using window.atob from browser context
       return cy.window().then((win) => {
-        const payload = JSON.parse(win.atob(token.split('.')[1]))
+        const payload = decodeJwtPayload(win, token)
         cy.log('🔍 verifyJWTClaims::payload', payload)
 
         const namespace = Cypress.env('AUTH_NAMESPACE')
@@ -360,10 +385,21 @@ export function verifyJWTClaims(tokenKey, expectedClaims) {
           // For OIDC access tokens, check custom namespace claims first, then standard claims
           actualValue = payload[`${namespace}${claim}`] || payload[claim]
 
-          expect(actualValue).to.equal(
-            expectedValue,
-            `Expected ${claim} to be ${expectedValue}, but got ${actualValue}`,
-          )
+          // Auth0's `aud` is an array once a request's audience is joined by
+          // the standard `/userinfo` endpoint (any OIDC scope + a custom API
+          // audience triggers this) -- Cognito's is always a single string.
+          // Accept either shape: exact match, or membership when it's an array.
+          if (Array.isArray(actualValue)) {
+            expect(actualValue).to.include(
+              expectedValue,
+              `Expected ${claim} to include ${expectedValue}, but got ${JSON.stringify(actualValue)}`,
+            )
+          } else {
+            expect(actualValue).to.equal(
+              expectedValue,
+              `Expected ${claim} to be ${expectedValue}, but got ${actualValue}`,
+            )
+          }
         })
       })
     })
@@ -374,7 +410,7 @@ export function verifyJWTClaims(tokenKey, expectedClaims) {
       expect(token).to.exist
 
       // Decode JWT payload using window.atob
-      const payload = JSON.parse(win.atob(token.split('.')[1]))
+      const payload = decodeJwtPayload(win, token)
 
       // Verify expected claims
       Object.keys(expectedClaims).forEach((claim) => {
@@ -434,7 +470,7 @@ export function verifyCustomNamespaceClaims(tokenKey, expectedClaims, options = 
 
           // Decode JWT payload using window.atob from browser context
           return cy.window().then((win) => {
-            const payload = JSON.parse(win.atob(token.split('.')[1]))
+            const payload = decodeJwtPayload(win, token)
             const namespace = Cypress.env('AUTH_NAMESPACE')
 
             // Verify custom namespace claims
@@ -457,7 +493,7 @@ export function verifyCustomNamespaceClaims(tokenKey, expectedClaims, options = 
       expect(token).to.exist
 
       // Decode JWT payload using window.atob
-      const payload = JSON.parse(win.atob(token.split('.')[1]))
+      const payload = decodeJwtPayload(win, token)
       const namespace = Cypress.env('AUTH_NAMESPACE')
 
       // Verify custom namespace claims
@@ -519,7 +555,7 @@ export function verifyIDTokenClaims(expectedClaims, options = {}) {
       cy.log('✅ ID token found, verifying claims...')
 
       // Decode JWT payload using window.atob
-      const payload = JSON.parse(win.atob(token.split('.')[1]))
+      const payload = decodeJwtPayload(win, token)
 
       // Verify standard claims
       Object.keys(expectedClaims).forEach((claim) => {
@@ -633,7 +669,7 @@ export function verifyJWTExists(tokenKey = 'participant_token', expectedClaims =
     expect(parts).to.have.length(3)
 
     // Decode and verify payload using window.atob
-    const payload = JSON.parse(win.atob(parts[1]))
+    const payload = decodeJwtPayload(win, token)
 
     // Verify expected claims
     Object.keys(expectedClaims).forEach((claim) => {

@@ -9,10 +9,10 @@ describe('Client Report: Comment Report Generation', () => {
     logout()
 
     // Login as admin user and create conversation with CSV comments
-    loginStandardUser('admin@polis.test', 'Te$tP@ssw0rd*')
+    loginStandardUser('admin@polis.test', 'Coast-Feast-Vista-Apple7')
 
     // Create a test conversation and upload CSV comments
-    loginStandardUserAPI('admin@polis.test', 'Te$tP@ssw0rd*')
+    loginStandardUserAPI('admin@polis.test', 'Coast-Feast-Vista-Apple7')
       .then(() => {
         return createTestConversationAPI({
           topic: 'Comment Report Test Conversation',
@@ -89,7 +89,7 @@ describe('Client Report: Comment Report Generation', () => {
     logout()
 
     // Login as admin user for all tests
-    loginStandardUser('admin@polis.test', 'Te$tP@ssw0rd*')
+    loginStandardUser('admin@polis.test', 'Coast-Feast-Vista-Apple7')
   })
 
   describe('Report Generation', () => {
