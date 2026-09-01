@@ -19,6 +19,7 @@ import {
   updateLastInteractionTimeForConversation,
   updateVoteCount,
 } from "../server-helpers";
+import { enqueueMathJobForConversation } from "./delphi/enqueueMathJob";
 
 const sql_votes_latest_unique = SQL.sql_votes_latest_unique;
 
@@ -205,6 +206,7 @@ async function handle_POST_votes(req: RequestWithP, res: any) {
       updateConversationModifiedTime(zid, createdTimeMillis);
       updateLastInteractionTimeForConversation(zid, uid);
       updateVoteCount(zid, pid);
+      enqueueMathJobForConversation(zid);
     }, 100);
 
     // 3. Handle star if present
