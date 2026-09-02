@@ -2,9 +2,9 @@ name: E2E Tests
 
 on:
   push:
-    branches: [ edge, stable ]
+    branches: [ edge, stable, dgps-deployment-tweaks, dgps-prod ]
   pull_request:
-    branches: [ edge, stable ]
+    branches: [ edge, stable, dgps-deployment-tweaks, dgps-prod ]
 
 jobs:
   cypress-run:
