@@ -135,6 +135,24 @@ h1 {
   cursor: pointer;
   font-size: 16px;
 }
+.vote-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.vote-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: vote-spinner-spin 0.6s linear infinite;
+}
+@keyframes vote-spinner-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 .agree {
   color: #28a745;
   border-color: #28a745;
@@ -253,6 +271,24 @@ h1 {
 }
 .error-message {
   padding: 3rem 1rem;
+}
+.loading-conversation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 4rem 1rem;
+  text-align: center;
+  color: #555;
+}
+.loading-conversation-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #ddd;
+  border-top-color: #666;
+  border-radius: 50%;
+  animation: vote-spinner-spin 0.8s linear infinite;
 }
 .error-message h2 {
   margin-top: 0;

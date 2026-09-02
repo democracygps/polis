@@ -2,11 +2,21 @@ import React, { useState } from 'react';
 
 export function Statement({ statement, onVote, isVoting, s, isStatementImportant, setIsStatmentImportant, voteError }) {
   const [showImportanceDesc, setShowImportanceDesc] = useState(false);
+  const [pendingVote, setPendingVote] = useState(null);
 
   const handleVoteClick = (voteType) => {
     if (isVoting) return;
+    setPendingVote(voteType);
     onVote(voteType, statement.tid);
   };
+
+  // Clear the pending marker once voting finishes (success or failure) so
+  // the next click starts from a clean state.
+  React.useEffect(() => {
+    if (!isVoting) {
+      setPendingVote(null);
+    }
+  }, [isVoting]);
 
   const passUnsureText = s.pass;
 
@@ -60,13 +70,13 @@ export function Statement({ statement, onVote, isVoting, s, isStatementImportant
 
       <div className="vote-buttons">
         <button className="vote-button agree" onClick={() => handleVoteClick(-1)} disabled={isVoting}>
-          {isVoting ? s.voting : `✔ ${s.agree}`}
+          {pendingVote === -1 ? <span className="vote-spinner" aria-label={s.voting || 'Voting...'} /> : `✔ ${s.agree}`}
         </button>
         <button className="vote-button disagree" onClick={() => handleVoteClick(1)} disabled={isVoting}>
-          {isVoting ? s.voting : `✘ ${s.disagree}`}
+          {pendingVote === 1 ? <span className="vote-spinner" aria-label={s.voting || 'Voting...'} /> : `✘ ${s.disagree}`}
         </button>
         <button className="vote-button pass" onClick={() => handleVoteClick(0)} disabled={isVoting}>
-          {isVoting ? s.voting : passUnsureText}
+          {pendingVote === 0 ? <span className="vote-spinner" aria-label={s.voting || 'Voting...'} /> : passUnsureText}
         </button>
       </div>
       {voteError && (
