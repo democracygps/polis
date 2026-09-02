@@ -40,15 +40,18 @@ class PriorityCalculator:
         # Prepare arguments for the boto3 resource.
         boto3_kwargs = {
             'region_name': os.environ.get('AWS_REGION', 'us-east-1'),
-            'aws_access_key_id': os.environ.get('AWS_ACCESS_KEY_ID', 'dummy'),
-            'aws_secret_access_key': os.environ.get('AWS_SECRET_ACCESS_KEY', 'dummy')
         }
 
-        # Only add the endpoint_url if it's actually provided.
-        # If it's None (like in a production environment), boto3 will correctly
-        # use its default AWS endpoint resolution.
+        # Only add the endpoint_url (and matching dummy credentials) if it's
+        # actually provided -- that's local/dynamodb-local mode. If it's
+        # None (like in a production environment), boto3 will correctly use
+        # its default AWS endpoint resolution AND its default credential
+        # chain (IAM role) -- explicitly passing 'dummy' credentials here
+        # would override that chain and break real AWS auth.
         if endpoint_url:
             boto3_kwargs['endpoint_url'] = endpoint_url
+            boto3_kwargs['aws_access_key_id'] = os.environ.get('AWS_ACCESS_KEY_ID', 'dummy')
+            boto3_kwargs['aws_secret_access_key'] = os.environ.get('AWS_SECRET_ACCESS_KEY', 'dummy')
 
         # Initialize DynamoDB connection using the prepared arguments
         self.dynamodb = boto3.resource('dynamodb', **boto3_kwargs)

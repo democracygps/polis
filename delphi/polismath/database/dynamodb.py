@@ -45,12 +45,17 @@ class DynamoDBClient:
         
     def initialize(self):
         """Initialize DynamoDB connection and create tables if needed."""
-        # Set up environment variables for credentials if not provided and not already set
-        if not self.aws_access_key_id and not os.environ.get('AWS_ACCESS_KEY_ID'):
-            os.environ['AWS_ACCESS_KEY_ID'] = 'dummy'
-        
-        if not self.aws_secret_access_key and not os.environ.get('AWS_SECRET_ACCESS_KEY'):
-            os.environ['AWS_SECRET_ACCESS_KEY'] = 'dummy'
+        # Dummy credentials are only appropriate for local/dynamodb-local
+        # mode (self.endpoint_url set). Against real AWS (no endpoint_url),
+        # leave credentials unset so boto3's default credential chain (IAM
+        # role) applies -- writing 'dummy' into the process environment
+        # here would override that chain and break real AWS auth.
+        if self.endpoint_url:
+            if not self.aws_access_key_id and not os.environ.get('AWS_ACCESS_KEY_ID'):
+                os.environ['AWS_ACCESS_KEY_ID'] = 'dummy'
+
+            if not self.aws_secret_access_key and not os.environ.get('AWS_SECRET_ACCESS_KEY'):
+                os.environ['AWS_SECRET_ACCESS_KEY'] = 'dummy'
         
         # Create DynamoDB client
         kwargs = {
