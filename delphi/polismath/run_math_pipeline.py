@@ -384,11 +384,16 @@ def main():
             logger.info(f"[{time.time() - start_time:.2f}s] Initializing DynamoDB client...")
             from polismath.database.dynamodb import DynamoDBClient
 
-            # Use environment variables or sensible defaults for local/test
+            # Use environment variables or sensible defaults for local/test.
+            # The 'dummy' fallback only applies when DYNAMODB_ENDPOINT is
+            # set (local/dynamodb-local mode) -- against real AWS, leaving
+            # these unset lets boto3's default credential chain (IAM role)
+            # take over. Explicitly passing 'dummy' there would override
+            # that chain and break real AWS auth.
             endpoint_url = os.environ.get('DYNAMODB_ENDPOINT')
             region_name = os.environ.get('AWS_REGION', 'us-east-1')
-            aws_access_key_id = os.environ.get('AWS_ACCESS_KEY_ID', 'dummy')
-            aws_secret_access_key = os.environ.get('AWS_SECRET_ACCESS_KEY', 'dummy')
+            aws_access_key_id = os.environ.get('AWS_ACCESS_KEY_ID') or ('dummy' if endpoint_url else None)
+            aws_secret_access_key = os.environ.get('AWS_SECRET_ACCESS_KEY') or ('dummy' if endpoint_url else None)
             dynamodb_client = DynamoDBClient(
                 endpoint_url=endpoint_url,
                 region_name=region_name,
