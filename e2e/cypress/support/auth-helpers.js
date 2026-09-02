@@ -146,19 +146,23 @@ export function getOidcTokenDirect(email, password) {
   const clientId = Cypress.env('AUTH_CLIENT_ID')
   const tokenUrl = `${withTrailingSlash(authUrl)}oauth/token`
 
-  // Auth0's plain "password" grant type requires a tenant-wide "Default
-  // Directory" (Dashboard > Settings > General > API Authorization
-  // Settings) to be configured, or it 500s with "Authorization server not
-  // configured with default connection" -- the realm-specific variant
-  // names the connection directly in the request instead, so it works
-  // without that extra per-tenant manual setup step (see RUNBOOK.md's
-  // Auth0 account setup, step 6/7, for the "Username-Password-Authentication"
-  // connection this assumes).
-  return cy
-    .request({
-      method: 'POST',
-      url: tokenUrl,
-      body: {
+  // Real Auth0's plain "password" grant type requires a tenant-wide
+  // "Default Directory" (Dashboard > Settings > General > API
+  // Authorization Settings) to be configured, or it 500s with
+  // "Authorization server not configured with default connection" -- the
+  // realm-specific variant names the connection directly in the request
+  // instead, so it works without that extra per-tenant manual setup step
+  // (see RUNBOOK.md's Auth0 account setup, step 6/7, for the
+  // "Username-Password-Authentication" connection this assumes).
+  //
+  // oidc-simulator (@simulacrum/auth0-simulator, used for the local/CI
+  // target) only implements the plain "password" grant -- its own
+  // test-auth.js uses grant_type: 'password' -- and 400s with "no code in
+  // /oauth/token" on the realm-specific grant. Distinguish by issuer host
+  // so each target gets a grant type it actually supports.
+  const isRealAuth0 = /\.auth0\.com/.test(authUrl)
+  const body = isRealAuth0
+    ? {
         grant_type: 'http://auth0.com/oauth/grant-type/password-realm',
         realm: 'Username-Password-Authentication',
         username: email,
@@ -166,7 +170,21 @@ export function getOidcTokenDirect(email, password) {
         audience: audience,
         client_id: clientId,
         scope: 'openid profile email',
-      },
+      }
+    : {
+        grant_type: 'password',
+        username: email,
+        password: password,
+        audience: audience,
+        client_id: clientId,
+        scope: 'openid profile email',
+      }
+
+  return cy
+    .request({
+      method: 'POST',
+      url: tokenUrl,
+      body,
     })
     .then((response) => {
       expect(response.status).to.eq(200)
